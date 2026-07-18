@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>Dorm Management</title>
+  </head>
+
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/index.html">
+        <span class="brand-logo">DM</span>
+
+        <span class="brand-text">
+          <strong>Dorm Management</strong>
+          <small>ระบบจัดการหอพักออนไลน์</small>
+        </span>
+      </a>
+
+      <div class="user-area">
+        <div
+          id="user-info"
+          class="user-info"
+          hidden
+        >
+          <span id="current-user"></span>
+          <small id="current-role"></small>
+        </div>
+
+        <button
+          id="auth-button"
+          class="auth-button"
+          type="button"
+        >
+          เข้าสู่ระบบ
+        </button>
+      </div>
+    </header>
+
+    <main class="home-page">
+      <section class="home-heading">
+        <span>HOME</span>
+        <h1>ระบบจัดการหอพัก</h1>
+
+        <p id="home-description">
+          กรุณาเข้าสู่ระบบก่อนใช้งานฟีเจอร์ต่าง ๆ
+        </p>
+      </section>
+
+      <section
+        class="menu-grid"
+        aria-label="เมนูระบบ"
+      >
+        <a
+          class="menu-card"
+          href="/src/pages/Room/room.html"
+          data-protected-link
+        >
+          <div class="menu-icon">🏠</div>
+
+          <div>
+            <h2>จัดการห้องพัก</h2>
+            <p>เพิ่ม แก้ไข และตรวจสอบสถานะห้องพัก</p>
+          </div>
+
+          <span class="menu-status">🔒</span>
+        </a>
+
+        <a
+          class="menu-card"
+          href="/src/pages/Tenant/tenant.html"
+          data-protected-link
+        >
+          <div class="menu-icon">👤</div>
+
+          <div>
+            <h2>รายชื่อผู้เช่า</h2>
+            <p>เพิ่มและจัดการข้อมูลผู้เช่า</p>
+          </div>
+
+          <span class="menu-status">🔒</span>
+        </a>
+
+        <a
+          class="menu-card"
+          href="/src/pages/Meter/meter.html"
+          data-protected-link
+        >
+          <div class="menu-icon">⚡</div>
+
+          <div>
+            <h2>ค่าน้ำและค่าไฟ</h2>
+            <p>บันทึกมิเตอร์และคำนวณค่าใช้จ่าย</p>
+          </div>
+
+          <span class="menu-status">🔒</span>
+        </a>
+
+        <a
+          class="menu-card"
+          href="/src/pages/Bill/bill.html"
+          data-protected-link
+        >
+          <div class="menu-icon">🧾</div>
+
+          <div>
+            <h2>Bill</h2>
+            <p>สร้างและตรวจสอบใบแจ้งหนี้</p>
+          </div>
+
+          <span class="menu-status">🔒</span>
+        </a>
+
+        <a
+          class="menu-card"
+          href="/src/pages/Report/report.html"
+          data-protected-link
+        >
+          <div class="menu-icon">📊</div>
+
+          <div>
+            <h2>Dashboard / Report</h2>
+            <p>ตรวจสอบภาพรวมและรายงานของระบบ</p>
+          </div>
+
+          <span class="menu-status">🔒</span>
+        </a>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/src/pages/Home/home.ts"
+    ></script>
+  </body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+      Dashboard / Report | Dorm Management
+    </title>
+  </head>
+
+  <body>
+    <header class="page-header">
+      <a
+        class="back-link"
+        href="/index.html"
+      >
+        ← กลับหน้า Home
+      </a>
+
+      <h1>Dashboard / Report</h1>
+
+      <button
+        id="logout-button"
+        type="button"
+      >
+        ออกจากระบบ
+      </button>
+    </header>
+
+    <main class="page-content">
+      <section class="empty-state">
+        <div class="empty-icon">📊</div>
+
+        <h2>หน้า Dashboard / Report</h2>
+
+        <p>
+          พื้นที่สำหรับแสดงภาพรวมสถานะห้อง
+          จำนวนผู้เช่า รายรับ และยอดค้างชำระ
+        </p>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/src/pages/Report/report.ts"
+    ></script>
+  </body>
+</html>

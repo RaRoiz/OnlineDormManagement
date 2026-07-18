@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>จัดการห้องพัก | Dorm Management</title>
+  </head>
+
+  <body>
+    <header class="page-header">
+      <a class="back-link" href="/index.html">
+        ← กลับหน้า Home
+      </a>
+
+      <h1>จัดการห้องพัก</h1>
+
+      <button
+        id="logout-button"
+        class="logout-button"
+        type="button"
+      >
+        ออกจากระบบ
+      </button>
+    </header>
+
+    <main class="room-page">
+      <section class="page-title">
+        <div>
+          <p class="eyebrow">ROOM MANAGEMENT</p>
+          <h2>ข้อมูลห้องพัก</h2>
+          <p>ตรวจสอบสถานะห้องพัก</p>
+        </div>
+
+        <button
+          id="open-form-button"
+          class="primary-button"
+          type="button"
+        >
+          + เพิ่มห้องพัก
+        </button>
+      </section>
+
+      <section
+        id="room-form-panel"
+        class="form-panel"
+        hidden
+      >
+        <div class="form-panel-header">
+          <h3 id="form-title">เพิ่มห้องพัก</h3>
+
+          <button
+            id="close-form-button"
+            class="icon-button"
+            type="button"
+            aria-label="ปิดแบบฟอร์ม"
+          >
+            ×
+          </button>
+        </div>
+
+        <form id="room-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="room-no">เลขห้อง</label>
+
+              <input
+                id="room-no"
+                name="roomNo"
+                type="text"
+                placeholder="เช่น 101"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="room-type">
+                ประเภทห้อง
+              </label>
+
+              <input
+                id="room-type"
+                name="roomType"
+                type="text"
+                list="room-type-options"
+                placeholder="เลือกหรือกรอกประเภทห้อง"
+                required
+              />
+
+              <datalist id="room-type-options">
+                <option value="ห้องพัดลม"></option>
+                <option value="ห้องแอร์"></option>
+                <option value="ห้องมาตรฐาน"></option>
+                <option value="ห้องพิเศษ"></option>
+                <option value="ห้องครอบครัว"></option>
+              </datalist>
+            </div>
+
+            <div class="form-group">
+              <label for="room-floor">ชั้น</label>
+
+              <input
+                id="room-floor"
+                name="floor"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="เช่น 1"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="room-price">
+                ค่าเช่าต่อเดือน
+              </label>
+
+              <input
+                id="room-price"
+                name="price"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="เช่น 3500"
+                required
+              />
+            </div>
+
+            <div
+              class="form-group form-group-full"
+            >
+              <label for="room-detail">
+                ลักษณะหรือรายละเอียดห้อง
+              </label>
+
+              <textarea
+                id="room-detail"
+                name="roomDetail"
+                rows="3"
+                placeholder="เช่น เตียง 5 ฟุต มีระเบียง มีตู้เย็น"
+              ></textarea>
+            </div>
+          </div>
+
+          <div
+            id="form-message"
+            class="form-message"
+            role="alert"
+          ></div>
+
+          <div class="form-actions">
+            <button
+              id="cancel-button"
+              class="secondary-button"
+              type="button"
+            >
+              ยกเลิก
+            </button>
+
+            <button
+              id="save-button"
+              class="primary-button"
+              type="submit"
+            >
+              บันทึก
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="toolbar">
+        <div class="search-box">
+          <input
+            id="search-input"
+            type="search"
+            placeholder="ค้นหาเลขห้อง ประเภท หรือลักษณะห้อง..."
+          />
+        </div>
+
+        <select id="status-filter">
+          <option value="">ทุกสถานะ</option>
+          <option value="ว่าง">ว่าง</option>
+          <option value="ไม่ว่าง">ไม่ว่าง</option>
+        </select>
+      </section>
+
+      <section class="table-card">
+        <div
+          id="page-message"
+          class="page-message"
+          role="alert"
+        ></div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>เลขห้อง</th>
+                <th>ประเภทห้อง</th>
+                <th>ลักษณะห้อง</th>
+                <th>ชั้น</th>
+                <th>ค่าเช่า</th>
+                <th>สถานะ</th>
+                <th class="action-column">
+                  จัดการ
+                </th>
+              </tr>
+            </thead>
+
+            <tbody id="room-table-body">
+              <tr>
+                <td
+                  class="loading-cell"
+                  colspan="7"
+                >
+                  กำลังโหลดข้อมูล...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/src/pages/Room/room.ts"
+    ></script>
+  </body>
+</html>

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>เข้าสู่ระบบ | Dorm Management</title>
+  </head>
+
+  <body>
+    <main class="login-page">
+      <section class="login-card">
+        <header class="brand">
+          <div class="brand-logo">DM</div>
+
+          <div class="brand-text">
+            <h1>Dorm Management</h1>
+            <p>ระบบจัดการหอพักออนไลน์</p>
+          </div>
+        </header>
+
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label for="username">
+              ชื่อผู้ใช้
+            </label>
+
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autocomplete="username"
+              placeholder="กรอกชื่อผู้ใช้"
+            />
+
+            <small
+              id="username-error"
+              class="field-error"
+            ></small>
+          </div>
+
+          <div class="form-group">
+            <label for="password">
+              รหัสผ่าน
+            </label>
+
+            <div class="password-wrapper">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="กรอกรหัสผ่าน"
+              />
+
+              <button
+                id="toggle-password"
+                class="toggle-password"
+                type="button"
+              >
+                แสดง
+              </button>
+            </div>
+
+            <small
+              id="password-error"
+              class="field-error"
+            ></small>
+          </div>
+
+          <div
+            id="login-message"
+            class="login-message"
+            role="alert"
+            aria-live="polite"
+          ></div>
+
+          <button
+            id="login-button"
+            class="login-button"
+            type="submit"
+          >
+            <span id="login-button-text">
+              เข้าสู่ระบบ
+            </span>
+
+            <span
+              id="login-spinner"
+              class="spinner hidden"
+            ></span>
+          </button>
+        </form>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/src/pages/Login/login.ts"
+    ></script>
+  </body>
+</html>
