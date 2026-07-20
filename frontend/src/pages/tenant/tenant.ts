@@ -26,100 +26,43 @@ import type {
   Room
 } from "../../types/room";
 
-const formPanel =
-  document.querySelector<HTMLElement>(
-    "#tenant-form-panel"
-  );
+const formPanel = document.querySelector<HTMLElement>("#tenant-form-panel");
 
-const form =
-  document.querySelector<HTMLFormElement>(
-    "#tenant-form"
-  );
+const form = document.querySelector<HTMLFormElement>("#tenant-form");
 
-const formTitle =
-  document.querySelector<HTMLElement>(
-    "#form-title"
-  );
+const formTitle = document.querySelector<HTMLElement>("#form-title");
 
-const fullNameInput =
-  document.querySelector<HTMLInputElement>(
-    "#full-name"
-  );
+const fullNameInput = document.querySelector<HTMLInputElement>("#full-name");
 
-const citizenIdInput =
-  document.querySelector<HTMLInputElement>(
-    "#citizen-id"
-  );
+const citizenIdInput = document.querySelector<HTMLInputElement>("#citizen-id");
 
-const phoneInput =
-  document.querySelector<HTMLInputElement>(
-    "#phone"
-  );
+const phoneInput = document.querySelector<HTMLInputElement>("#phone");
 
-const roomInput =
-  document.querySelector<HTMLSelectElement>(
-    "#tenant-room"
-  );
+const roomInput = document.querySelector<HTMLSelectElement>("#tenant-room");
 
-const checkInDateInput =
-  document.querySelector<HTMLInputElement>(
-    "#check-in-date"
-  );
+const checkInDateInput = document.querySelector<HTMLInputElement>("#check-in-date");
 
-const formMessage =
-  document.querySelector<HTMLElement>(
-    "#form-message"
-  );
+const formMessage = document.querySelector<HTMLElement>("#form-message");
 
-const pageMessage =
-  document.querySelector<HTMLElement>(
-    "#page-message"
-  );
+const pageMessage = document.querySelector<HTMLElement>("#page-message");
 
-const tableBody =
-  document.querySelector<HTMLTableSectionElement>(
-    "#tenant-table-body"
-  );
+const tableBody = document.querySelector<HTMLTableSectionElement>("#tenant-table-body");
 
-const searchInput =
-  document.querySelector<HTMLInputElement>(
-    "#search-input"
-  );
+const searchInput = document.querySelector<HTMLInputElement>("#search-input");
 
-const statusFilter =
-  document.querySelector<HTMLSelectElement>(
-    "#status-filter"
-  );
+const statusFilter = document.querySelector<HTMLSelectElement>("#status-filter");
 
-const openFormButton =
-  document.querySelector<HTMLButtonElement>(
-    "#open-form-button"
-  );
+const openFormButton = document.querySelector<HTMLButtonElement>("#open-form-button");
 
-const closeFormButton =
-  document.querySelector<HTMLButtonElement>(
-    "#close-form-button"
-  );
+const closeFormButton = document.querySelector<HTMLButtonElement>("#close-form-button");
 
-const cancelButton =
-  document.querySelector<HTMLButtonElement>(
-    "#cancel-button"
-  );
+const cancelButton = document.querySelector<HTMLButtonElement>("#cancel-button");
 
-const saveButton =
-  document.querySelector<HTMLButtonElement>(
-    "#save-button"
-  );
+const saveButton = document.querySelector<HTMLButtonElement>("#save-button");
 
-  const lineIdInput =
-  document.querySelector<HTMLInputElement>(
-    "#line-id"
-  );
+const lineIdInput = document.querySelector<HTMLInputElement>("#line-id");
 
-const emailInput =
-  document.querySelector<HTMLInputElement>(
-    "#email"
-  );
+const emailInput = document.querySelector<HTMLInputElement>("#email");
 
 let tenants: Tenant[] = [];
 let rooms: Room[] = [];

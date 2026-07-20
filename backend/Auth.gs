@@ -1,4 +1,5 @@
-const SPREADSHEET_ID = "Spreadsheet ID";
+const SPREADSHEET_ID = 
+  "SPREADSHEET_ID";
 const USERS_SHEET = "Users";
 const SESSION_SECONDS = 21600; // 6 ชั่วโมง
 
@@ -165,24 +166,44 @@ function createHeaderIndex(headers) {
 }
 
 function createInitialAdmin() {
-  const sheet = SpreadsheetApp
-    .openById(SPREADSHEET_ID)
-    .getSheetByName(USERS_SHEET);
+  const spreadsheet =
+    SpreadsheetApp.openById(SPREADSHEET_ID);
 
+  let sheet =
+    spreadsheet.getSheetByName(USERS_SHEET);
+
+  // หากยังไม่มีชีต Users ให้สร้างอัตโนมัติ
   if (!sheet) {
-    throw new Error("กรุณาสร้างชีต Users ก่อน");
+    sheet = spreadsheet.insertSheet(USERS_SHEET);
   }
 
+  const headers = [
+    "userId",
+    "username",
+    "passwordHash",
+    "salt",
+    "fullName",
+    "role",
+    "active"
+  ];
+
+  // สร้างหัวตารางเมื่อชีตยังว่าง
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow([
-      "userId",
-      "username",
-      "passwordHash",
-      "salt",
-      "fullName",
-      "role",
-      "active"
-    ]);
+    sheet.appendRow(headers);
+  }
+
+  // ตรวจสอบว่ามี admin อยู่แล้วหรือไม่
+  const values = sheet.getDataRange().getValues();
+
+  const adminExists = values
+    .slice(1)
+    .some(row =>
+      String(row[1]).trim().toLowerCase() === "admin"
+    );
+
+  if (adminExists) {
+    Logger.log("มีบัญชี admin อยู่แล้ว");
+    return;
   }
 
   const username = "admin";
@@ -201,4 +222,6 @@ function createInitialAdmin() {
   ]);
 
   Logger.log("สร้างบัญชี admin สำเร็จ");
+  Logger.log("Username: admin");
+  Logger.log("Password: Admin@1234");
 }

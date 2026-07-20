@@ -2,11 +2,15 @@
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
+
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <title>ค่าน้ำค่าไฟ | Dorm Management</title>
+
+    <title>
+      ค่าน้ำและค่าไฟ | Dorm Management
+    </title>
   </head>
 
   <body>
@@ -15,20 +19,340 @@
         ← กลับหน้า Home
       </a>
 
-      <h1>ค่าน้ำและค่าไฟ</h1>
+      <h1>ค่าน้ำ/ค่าไฟ และคำนวณหน่วยไฟ</h1>
 
-      <button id="logout-button" type="button">
+      <button
+        id="logout-button"
+        class="logout-button"
+        type="button"
+      >
         ออกจากระบบ
       </button>
     </header>
 
-    <main class="page-content">
-      <section class="empty-state">
-        <div class="empty-icon">⚡</div>
-        <h2>หน้าค่าน้ำและค่าไฟ</h2>
-        <p>
-          พื้นที่สำหรับบันทึกเลขมิเตอร์และคำนวณค่าใช้จ่าย
-        </p>
+    <main class="meter-page">
+      <section class="page-title">
+        <div>
+          <p class="eyebrow">
+            WATER & ELECTRICITY
+          </p>
+
+          <h2>บันทึกมิเตอร์</h2>
+
+          <p>
+            บันทึกหน่วยน้ำและไฟฟ้าประจำเดือน
+          </p>
+        </div>
+
+        <button
+          id="open-form-button"
+          class="primary-button"
+          type="button"
+        >
+          + เพิ่มข้อมูลมิเตอร์
+        </button>
+      </section>
+
+      <section
+        id="meter-form-panel"
+        class="form-panel"
+        hidden
+      >
+        <div class="form-panel-header">
+          <h3 id="form-title">
+            เพิ่มข้อมูลมิเตอร์
+          </h3>
+
+          <button
+            id="close-form-button"
+            class="icon-button"
+            type="button"
+            aria-label="ปิดแบบฟอร์ม"
+          >
+            ×
+          </button>
+        </div>
+
+        <form id="meter-form" novalidate>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="meter-room">
+                ห้องพัก
+              </label>
+
+              <select
+                id="meter-room"
+                name="roomId"
+                required
+              >
+                <option value="">
+                  เลือกห้องพัก
+                </option>
+              </select>
+
+              <small class="field-hint">
+                แสดงเฉพาะห้องที่มีผู้เช่าพัก
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label for="billing-month">
+                ประจำเดือน
+              </label>
+
+              <input
+                id="billing-month"
+                name="billingMonth"
+                type="month"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="meter-section">
+            <div class="meter-section-header">
+              <h4>ค่าน้ำ</h4>
+            </div>
+
+            <div class="form-grid meter-input-grid">
+              <div class="form-group">
+                <label for="water-previous">
+                  มิเตอร์ครั้งก่อน
+                </label>
+
+                <input
+                  id="water-previous"
+                  name="waterPrevious"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="0"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="water-current">
+                  มิเตอร์ปัจจุบัน
+                </label>
+
+                <input
+                  id="water-current"
+                  name="waterCurrent"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="water-rate">
+                  ราคาต่อหน่วย
+                </label>
+
+                <input
+                  id="water-rate"
+                  name="waterRate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="18"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="calculation-preview">
+              <div>
+                <span>หน่วยน้ำที่ใช้</span>
+                <strong id="water-units-preview">
+                  0 หน่วย
+                </strong>
+              </div>
+
+              <div>
+                <span>ค่าน้ำ</span>
+                <strong id="water-amount-preview">
+                  ฿0
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="meter-section">
+            <div class="meter-section-header">
+              <h4>ค่าไฟ</h4>
+            </div>
+
+            <div class="form-grid meter-input-grid">
+              <div class="form-group">
+                <label for="electric-previous">
+                  มิเตอร์ครั้งก่อน
+                </label>
+
+                <input
+                  id="electric-previous"
+                  name="electricPrevious"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="0"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="electric-current">
+                  มิเตอร์ปัจจุบัน
+                </label>
+
+                <input
+                  id="electric-current"
+                  name="electricCurrent"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="electric-rate">
+                  ราคาต่อหน่วย
+                </label>
+
+                <input
+                  id="electric-rate"
+                  name="electricRate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="8"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="calculation-preview">
+              <div>
+                <span>หน่วยไฟที่ใช้</span>
+                <strong id="electric-units-preview">
+                  0 หน่วย
+                </strong>
+              </div>
+
+              <div>
+                <span>ค่าไฟ</span>
+                <strong id="electric-amount-preview">
+                  ฿0
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="total-preview">
+            <span>รวมค่าน้ำและค่าไฟ</span>
+
+            <strong id="total-utility-preview">
+              ฿0
+            </strong>
+          </div>
+
+          <div
+            id="form-message"
+            class="form-message"
+            role="alert"
+          ></div>
+
+          <div class="form-actions">
+            <button
+              id="cancel-button"
+              class="secondary-button"
+              type="button"
+            >
+              ยกเลิก
+            </button>
+
+            <button
+              id="save-button"
+              class="primary-button"
+              type="submit"
+            >
+              บันทึก
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="toolbar">
+  <input
+    id="search-input"
+    type="search"
+    placeholder="ค้นหาเลขห้องหรือชื่อผู้เช่า..."
+  />
+
+  <div class="month-filter-box">
+    <label for="month-filter">
+      เลือกเดือนและปี
+    </label>
+
+    <div class="month-filter-control">
+      <input
+        id="month-filter"
+        type="month"
+        aria-label="เลือกเดือนและปี"
+      />
+
+      <button
+        id="clear-month-filter"
+        class="clear-filter-button"
+        type="button"
+      >
+        แสดงทั้งหมด
+      </button>
+    </div>
+  </div>
+</section>
+
+      <section class="table-card">
+        <div
+          id="page-message"
+          class="page-message"
+          role="alert"
+        ></div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>เดือน</th>
+                <th>ห้อง</th>
+                <th>ผู้เช่า</th>
+                <th>หน่วยน้ำ</th>
+                <th>ค่าน้ำ</th>
+                <th>หน่วยไฟ</th>
+                <th>ค่าไฟ</th>
+                <th>รวม</th>
+
+                <th class="action-column">
+                  จัดการ
+                </th>
+              </tr>
+            </thead>
+
+            <tbody id="meter-table-body">
+              <tr>
+                <td
+                  class="loading-cell"
+                  colspan="9"
+                >
+                  กำลังโหลดข้อมูลมิเตอร์...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
 

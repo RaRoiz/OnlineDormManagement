@@ -8,14 +8,20 @@
       content="width=device-width, initial-scale=1.0"
     />
 
-    <title>
-      ข้อมูลผู้เช่า | Dorm Management
-    </title>
+    <meta
+      name="description"
+      content="หน้าจัดการข้อมูลผู้เช่าระบบจัดการหอพัก"
+    />
+
+    <title>ข้อมูลผู้เช่า | Dorm Management</title>
   </head>
 
   <body>
     <header class="page-header">
-      <a class="back-link" href="/index.html">
+      <a
+        class="back-link"
+        href="/index.html"
+      >
         ← กลับหน้า Home
       </a>
 
@@ -53,6 +59,7 @@
         </button>
       </section>
 
+      <!-- แบบฟอร์มเพิ่มและแก้ไขผู้เช่า -->
       <section
         id="tenant-form-panel"
         class="form-panel"
@@ -73,8 +80,12 @@
           </button>
         </div>
 
-        <form id="tenant-form">
+        <form
+          id="tenant-form"
+          novalidate
+        >
           <div class="form-grid">
+            <!-- ชื่อผู้เช่า -->
             <div class="form-group">
               <label for="full-name">
                 ชื่อ-นามสกุล
@@ -84,11 +95,13 @@
                 id="full-name"
                 name="fullName"
                 type="text"
-                placeholder="ชื่อและนามสกุล"
+                autocomplete="name"
+                placeholder="กรอกชื่อและนามสกุล"
                 required
               />
             </div>
 
+            <!-- เลขประจำตัว -->
             <div class="form-group">
               <label for="citizen-id">
                 เลขบัตรประชาชน / Passport
@@ -98,70 +111,108 @@
                 id="citizen-id"
                 name="citizenId"
                 type="text"
-                placeholder="เลขประจำตัวผู้เช่า"
+                autocomplete="off"
+                placeholder="กรอกเลขประจำตัวผู้เช่า"
                 required
               />
             </div>
 
+            <!-- เบอร์โทรศัพท์ -->
             <div class="form-group">
-  <label for="phone">เบอร์โทรศัพท์</label>
-  <input
-    id="phone"
-    name="phone"
-    type="tel"
-    inputmode="numeric"
-    maxlength="10"
-    placeholder="เช่น 0812345678"
-    required
-  />
-</div>
+              <label for="phone">
+                เบอร์โทรศัพท์
+              </label>
 
-<div class="form-group">
-  <label for="line-id">Line ID</label>
-  <input
-    id="line-id"
-    name="lineId"
-    type="text"
-    placeholder="เช่น somchai.line"
-  />
-</div>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputmode="numeric"
+                autocomplete="tel"
+                minlength="10"
+                maxlength="10"
+                pattern="[0-9]{10}"
+                placeholder="เช่น 0812345678"
+                title="กรุณากรอกตัวเลข 10 หลัก"
+                required
+              />
 
-<div class="form-group">
-  <label for="email">E-mail</label>
-  <input
-    id="email"
-    name="email"
-    type="email"
-    placeholder="เช่น user@email.com"
-  />
-</div>
+              <small class="field-hint">
+                กรอกตัวเลขจำนวน 10 หลัก
+              </small>
+            </div>
 
-<div class="form-group">
-  <label for="tenant-room">ห้องพัก</label>
-  <select
-    id="tenant-room"
-    name="roomId"
-    required
-  >
-    <option value="">เลือกห้องพัก</option>
-  </select>
-</div>
+            <!-- Line ID -->
+            <div class="form-group">
+              <label for="line-id">
+                Line ID
+              </label>
 
-<div class="form-group">
-  <label for="check-in-date">วันที่และเวลาเข้าพัก</label>
-  <input
-    id="check-in-date"
-    name="checkInDate"
-    type="datetime-local"
-    required
-  />
-</div>
+              <input
+                id="line-id"
+                name="lineId"
+                type="text"
+                autocomplete="off"
+                placeholder="เช่น @somchai.line"
+              />
+            </div>
+
+            <!-- E-mail -->
+            <div class="form-group">
+              <label for="email">
+                E-mail
+              </label>
+
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="เช่น user@email.com"
+              />
+            </div>
+
+            <!-- ห้องพัก -->
+            <div class="form-group">
+              <label for="tenant-room">
+                ห้องพัก
+              </label>
+
+              <select
+                id="tenant-room"
+                name="roomId"
+                required
+              >
+                <option value="">
+                  เลือกห้องพัก
+                </option>
+              </select>
+
+              <small class="field-hint">
+                แสดงเฉพาะห้องว่าง
+              </small>
+            </div>
+
+            <!-- วันที่และเวลาเข้าพัก -->
+            <div class="form-group">
+              <label for="check-in-date">
+                วันที่และเวลาเข้าพัก
+              </label>
+
+              <input
+                id="check-in-date"
+                name="checkInDate"
+                type="datetime-local"
+                required
+              />
+            </div>
           </div>
 
           <div
             id="form-message"
             class="form-message"
             role="alert"
+            aria-live="polite"
           ></div>
 
           <div class="form-actions">
@@ -184,14 +235,22 @@
         </form>
       </section>
 
-      <section class="toolbar">
+      <!-- ค้นหาและกรองสถานะ -->
+      <section
+        class="toolbar"
+        aria-label="ค้นหาและกรองข้อมูลผู้เช่า"
+      >
         <input
           id="search-input"
           type="search"
-          placeholder="ค้นหาชื่อ เลขบัตร ห้อง หรือเบอร์โทร..."
+          placeholder="ค้นหาชื่อ เลขบัตร เบอร์โทร Line E-mail หรือห้อง..."
+          aria-label="ค้นหาข้อมูลผู้เช่า"
         />
 
-        <select id="status-filter">
+        <select
+          id="status-filter"
+          aria-label="กรองสถานะผู้เช่า"
+        >
           <option value="">
             ทุกสถานะ
           </option>
@@ -206,28 +265,33 @@
         </select>
       </section>
 
+      <!-- ตารางข้อมูลผู้เช่า -->
       <section class="table-card">
         <div
           id="page-message"
           class="page-message"
           role="alert"
+          aria-live="polite"
         ></div>
 
         <div class="table-wrapper">
           <table>
             <thead>
               <tr>
-    <th>ชื่อผู้เช่า</th>
-    <th>เลขประจำตัว</th>
-    <th>เบอร์โทร</th>
-    <th>Line</th>
-    <th>E-mail</th>
-    <th>ห้อง</th>
-    <th>วันที่เข้าพัก</th>
-    <th>วันที่ย้ายออก</th>
-    <th>สถานะ</th>
-    <th class="action-column">จัดการ</th>
-  </tr>
+                <th>ชื่อผู้เช่า</th>
+                <th>เลขประจำตัว</th>
+                <th>เบอร์โทร</th>
+                <th>Line ID</th>
+                <th>E-mail</th>
+                <th>ห้อง</th>
+                <th>วันที่และเวลาเข้าพัก</th>
+                <th>วันที่และเวลาย้ายออก</th>
+                <th>สถานะ</th>
+
+                <th class="action-column">
+                  จัดการ
+                </th>
+              </tr>
             </thead>
 
             <tbody id="tenant-table-body">
@@ -236,7 +300,7 @@
                   class="loading-cell"
                   colspan="10"
                 >
-                  กำลังโหลดข้อมูล...
+                  กำลังโหลดข้อมูลผู้เช่า...
                 </td>
               </tr>
             </tbody>
