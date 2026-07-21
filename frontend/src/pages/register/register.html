@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+      เพิ่มบัญชีผู้ใช้ | Dorm Management
+    </title>
+  </head>
+
+  <header class="page-header">
+  <a
+    class="back-link"
+    href="/src/pages/Login/login.html"
+  >
+    ← กลับหน้าเข้าสู่ระบบ
+  </a>
+
+  <h1>สมัครสมาชิก</h1>
+
+  <div class="header-placeholder"></div>
+</header>
+
+    <main class="register-page">
+      <section class="register-card">
+        <div class="register-heading">
+  <p class="eyebrow">
+    CREATE ACCOUNT
+  </p>
+
+  <h2>สมัครสมาชิก</h2>
+
+  <p>
+    สร้างบัญชีสำหรับเข้าใช้งานระบบจัดการหอพัก
+  </p>
+</div>
+
+        <form
+          id="register-form"
+          novalidate
+        >
+          <div class="form-group">
+            <label for="full-name">
+              ชื่อ-นามสกุล
+            </label>
+
+            <input
+              id="full-name"
+              name="fullName"
+              type="text"
+              autocomplete="name"
+              placeholder="กรอกชื่อและนามสกุล"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="username">
+              ชื่อผู้ใช้
+            </label>
+
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autocomplete="off"
+              minlength="4"
+              placeholder="อย่างน้อย 4 ตัวอักษร"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">
+              รหัสผ่าน
+            </label>
+
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              minlength="8"
+              placeholder="อย่างน้อย 8 ตัวอักษร"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="confirm-password">
+              ยืนยันรหัสผ่าน
+            </label>
+
+            <input
+              id="confirm-password"
+              name="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              minlength="8"
+              placeholder="กรอกรหัสผ่านอีกครั้ง"
+              required
+            />
+          </div>
+
+          <div
+            id="register-message"
+            class="register-message"
+            role="alert"
+            aria-live="polite"
+          ></div>
+
+          <button
+            id="register-button"
+            class="register-button"
+            type="submit"
+          >
+            เพิ่มบัญชีผู้ใช้
+          </button>
+
+          <div class="login-section">
+  <span>มีบัญชีอยู่แล้ว?</span>
+
+  <a
+    href="/src/pages/login/login.html"
+    class="login-link"
+  >
+    เข้าสู่ระบบ
+  </a>
+</div>
+        </form>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/src/pages/Register/register.ts"
+    ></script>
+  </body>
+</html>

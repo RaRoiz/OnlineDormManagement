@@ -9,7 +9,7 @@
     />
 
     <title>
-      Dashboard / Report | Dorm Management
+      Dashboard และ Report | Dorm Management
     </title>
   </head>
 
@@ -26,22 +26,224 @@
 
       <button
         id="logout-button"
+        class="logout-button"
         type="button"
       >
         ออกจากระบบ
       </button>
     </header>
 
-    <main class="page-content">
-      <section class="empty-state">
-        <div class="empty-icon">📊</div>
+    <main class="report-page">
+      <section class="page-title">
+        <div>
+          <p class="eyebrow">
+            DASHBOARD & REPORT
+          </p>
 
-        <h2>หน้า Dashboard / Report</h2>
+          <h2>ภาพรวมและรายงานระบบ</h2>
 
-        <p>
-          พื้นที่สำหรับแสดงภาพรวมสถานะห้อง
-          จำนวนผู้เช่า รายรับ และยอดค้างชำระ
-        </p>
+          <p>
+            ตรวจสอบข้อมูลห้อง ผู้เช่า
+            ค่าน้ำ ค่าไฟ และใบแจ้งหนี้
+          </p>
+        </div>
+
+        <div class="month-control">
+          <label for="dashboard-month">
+            เดือนที่ต้องการแสดง
+          </label>
+
+          <input
+            id="dashboard-month"
+            type="month"
+          />
+        </div>
+      </section>
+
+      <div
+        id="page-message"
+        class="page-message"
+        role="alert"
+      ></div>
+
+      <!-- Dashboard cards -->
+      <section class="summary-grid">
+        <article class="summary-card">
+          <span>ห้องทั้งหมด</span>
+          <strong id="total-rooms">0</strong>
+          <small>ห้อง</small>
+        </article>
+
+        <article class="summary-card vacant-card">
+          <span>ห้องว่าง</span>
+          <strong id="vacant-rooms">0</strong>
+          <small>ห้อง</small>
+        </article>
+
+        <article class="summary-card occupied-card">
+          <span>ห้องไม่ว่าง</span>
+          <strong id="occupied-rooms">0</strong>
+          <small id="occupancy-rate">
+            อัตราเข้าพัก 0%
+          </small>
+        </article>
+
+        <article class="summary-card">
+          <span>ผู้เช่าปัจจุบัน</span>
+          <strong id="active-tenants">0</strong>
+          <small>ราย</small>
+        </article>
+
+        <article class="summary-card warning-card">
+          <span>บิลยังไม่ชำระ</span>
+          <strong id="unpaid-bills">0</strong>
+          <small id="overdue-bills">
+            เกินกำหนด 0 บิล
+          </small>
+        </article>
+
+        <article class="summary-card danger-card">
+          <span>ยอดค้างชำระ</span>
+          <strong id="outstanding-amount">
+            ฿0
+          </strong>
+          <small>ตามเดือนที่เลือก</small>
+        </article>
+
+        <article class="summary-card success-card">
+          <span>รายรับที่ชำระแล้ว</span>
+          <strong id="paid-amount">
+            ฿0
+          </strong>
+          <small>ตามเดือนที่เลือก</small>
+        </article>
+
+        <article class="summary-card">
+          <span>ค่าน้ำ / ค่าไฟ</span>
+          <strong id="utility-amount">
+            ฿0
+          </strong>
+          <small id="utility-detail">
+            น้ำ ฿0 · ไฟ ฿0
+          </small>
+        </article>
+      </section>
+
+      <!-- Report -->
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">REPORT</p>
+            <h3>รายงานรายละเอียด</h3>
+          </div>
+        </div>
+
+        <div class="report-toolbar">
+          <div class="filter-group">
+            <label for="report-type">
+              ประเภทรายงาน
+            </label>
+
+            <select id="report-type">
+              <option value="ROOM">
+                รายงานห้องพัก
+              </option>
+
+              <option value="TENANT">
+                รายงานผู้เช่า
+              </option>
+
+              <option value="UTILITY">
+                รายงานค่าน้ำและค่าไฟ
+              </option>
+
+              <option value="BILL">
+                รายงานใบแจ้งหนี้
+              </option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="report-month">
+              เดือนและปี
+            </label>
+
+            <input
+              id="report-month"
+              type="month"
+            />
+          </div>
+
+          <div class="filter-group">
+            <label for="room-filter">
+              ห้องพัก
+            </label>
+
+            <select id="room-filter">
+              <option value="">
+                ทุกห้อง
+              </option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="status-filter">
+              สถานะ
+            </label>
+
+            <select id="status-filter">
+              <option value="">
+                ทุกสถานะ
+              </option>
+            </select>
+          </div>
+
+          <div class="filter-group search-group">
+            <label for="keyword-filter">
+              ค้นหา
+            </label>
+
+            <input
+              id="keyword-filter"
+              type="search"
+              placeholder="กรอกคำค้นหา..."
+            />
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button
+            id="clear-filter-button"
+            class="secondary-button"
+            type="button"
+          >
+            ล้างตัวกรอง
+          </button>
+
+          <button
+            id="search-report-button"
+            class="primary-button"
+            type="button"
+          >
+            แสดงรายงาน
+          </button>
+        </div>
+
+        <div class="table-card">
+          <div class="table-wrapper">
+            <table>
+              <thead id="report-table-head"></thead>
+
+              <tbody id="report-table-body">
+                <tr>
+                  <td class="loading-cell">
+                    กำลังโหลดรายงาน...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
     </main>
 

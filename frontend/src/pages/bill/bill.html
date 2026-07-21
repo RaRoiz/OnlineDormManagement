@@ -2,33 +2,334 @@
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
+
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <title>Bill | Dorm Management</title>
+
+    <title>
+      ใบแจ้งค่าใช้จ่าย | Dorm Management
+    </title>
   </head>
 
   <body>
     <header class="page-header">
-      <a class="back-link" href="/index.html">
+      <a
+        class="back-link"
+        href="/index.html"
+      >
         ← กลับหน้า Home
       </a>
 
-      <h1>Bill</h1>
+      <h1>ใบแจ้งค่าใช้จ่าย</h1>
 
-      <button id="logout-button" type="button">
+      <button
+        id="logout-button"
+        class="logout-button"
+        type="button"
+      >
         ออกจากระบบ
       </button>
     </header>
 
-    <main class="page-content">
-      <section class="empty-state">
-        <div class="empty-icon">🧾</div>
-        <h2>หน้าใบแจ้งหนี้</h2>
-        <p>
-          พื้นที่สำหรับสร้างและตรวจสอบใบแจ้งหนี้
-        </p>
+    <main class="bill-page">
+      <section class="page-title">
+        <div>
+          <p class="eyebrow">
+            BILL MANAGEMENT
+          </p>
+
+          <h2>ข้อมูลใบแจ้งค่าใช้จ่าย</h2>
+
+          <p>
+            สร้างใบแจ้งหนี้จากค่าเช่า
+            ค่าน้ำ และค่าไฟ
+          </p>
+        </div>
+
+        <button
+          id="open-form-button"
+          class="primary-button"
+          type="button"
+        >
+          + สร้างใบแจ้งหนี้
+        </button>
+      </section>
+
+      <section
+        id="bill-form-panel"
+        class="form-panel"
+        hidden
+      >
+        <div class="form-panel-header">
+          <h3 id="form-title">
+            สร้างใบแจ้งหนี้
+          </h3>
+
+          <button
+            id="close-form-button"
+            class="icon-button"
+            type="button"
+            aria-label="ปิดแบบฟอร์ม"
+          >
+            ×
+          </button>
+        </div>
+
+        <form
+          id="bill-form"
+          novalidate
+        >
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="bill-meter">
+                รายการมิเตอร์
+              </label>
+
+              <select
+                id="bill-meter"
+                name="meterId"
+                required
+              >
+                <option value="">
+                  เลือกรายการมิเตอร์
+                </option>
+              </select>
+
+              <small class="field-hint">
+                เลือกเดือนและห้องที่บันทึกมิเตอร์แล้ว
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label for="due-date">
+                วันครบกำหนดชำระ
+              </label>
+
+              <input
+                id="due-date"
+                name="dueDate"
+                type="date"
+                required
+              />
+            </div>
+          </div>
+
+          <section class="bill-summary">
+            <div class="summary-item">
+              <span>เดือน</span>
+              <strong id="month-preview">-</strong>
+            </div>
+
+            <div class="summary-item">
+              <span>ห้อง</span>
+              <strong id="room-preview">-</strong>
+            </div>
+
+            <div class="summary-item">
+              <span>ผู้เช่า</span>
+              <strong id="tenant-preview">-</strong>
+            </div>
+          </section>
+
+          <section class="charge-section">
+            <h4>ค่าใช้จ่ายหลัก</h4>
+
+            <div class="charge-grid">
+              <div class="charge-card">
+                <span>ค่าเช่าห้อง</span>
+
+                <strong id="room-rent-preview">
+                  ฿0
+                </strong>
+              </div>
+
+              <div class="charge-card">
+                <span>ค่าน้ำ</span>
+
+                <strong id="water-preview">
+                  ฿0
+                </strong>
+              </div>
+
+              <div class="charge-card">
+                <span>ค่าไฟ</span>
+
+                <strong id="electric-preview">
+                  ฿0
+                </strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="charge-section">
+            <h4>ค่าใช้จ่ายเพิ่มเติม</h4>
+
+            <div class="form-grid extra-charge-grid">
+              <div class="form-group">
+                <label for="deposit-amount">
+                  ค่าประกันเพิ่มเติม
+                </label>
+
+                <input
+                  id="deposit-amount"
+                  name="depositAmount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="0"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="repair-amount">
+                  ค่าซ่อมแซม
+                </label>
+
+                <input
+                  id="repair-amount"
+                  name="repairAmount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="0"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="damage-amount">
+                  ค่าเสียหาย
+                </label>
+
+                <input
+                  id="damage-amount"
+                  name="damageAmount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="0"
+                />
+              </div>
+            </div>
+          </section>
+
+          <div class="form-group note-group">
+            <label for="bill-note">
+              หมายเหตุ
+            </label>
+
+            <textarea
+              id="bill-note"
+              name="note"
+              rows="3"
+              placeholder="รายละเอียดเพิ่มเติมของใบแจ้งหนี้"
+            ></textarea>
+          </div>
+
+          <div class="total-preview">
+            <span>ยอดรวมทั้งหมด</span>
+
+            <strong id="total-preview">
+              ฿0
+            </strong>
+          </div>
+
+          <div
+            id="form-message"
+            class="form-message"
+            role="alert"
+            aria-live="polite"
+          ></div>
+
+          <div class="form-actions">
+            <button
+              id="cancel-button"
+              class="secondary-button"
+              type="button"
+            >
+              ยกเลิก
+            </button>
+
+            <button
+              id="save-button"
+              class="primary-button"
+              type="submit"
+            >
+              บันทึกใบแจ้งหนี้
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="toolbar">
+        <input
+          id="search-input"
+          type="search"
+          placeholder="ค้นหาเลขบิล ห้อง หรือชื่อผู้เช่า..."
+        />
+
+        <select id="status-filter">
+          <option value="">
+            ทุกสถานะ
+          </option>
+
+          <option value="UNPAID">
+            ยังไม่ชำระ
+          </option>
+
+          <option value="PAID">
+            ชำระแล้ว
+          </option>
+
+          <option value="OVERDUE">
+            เกินกำหนด
+          </option>
+        </select>
+      </section>
+
+      <section class="table-card">
+        <div
+          id="page-message"
+          class="page-message"
+          role="alert"
+          aria-live="polite"
+        ></div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>เลขที่บิล</th>
+                <th>เดือน</th>
+                <th>ห้อง</th>
+                <th>ผู้เช่า</th>
+                <th>ค่าเช่า</th>
+                <th>ค่าน้ำ</th>
+                <th>ค่าไฟ</th>
+                <th>เพิ่มเติม</th>
+                <th>ยอดรวม</th>
+                <th>ครบกำหนด</th>
+                <th>สถานะ</th>
+
+                <th class="action-column">
+                  จัดการ
+                </th>
+              </tr>
+            </thead>
+
+            <tbody id="bill-table-body">
+              <tr>
+                <td
+                  class="loading-cell"
+                  colspan="12"
+                >
+                  กำลังโหลดข้อมูลใบแจ้งหนี้...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
 

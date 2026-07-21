@@ -327,3 +327,45 @@ input[type="password"]::-ms-clear {
   font-weight: 700;
   cursor: pointer;
 }
+
+.register-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  margin-top: 18px;
+
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.register-link {
+  color: #e67800;
+
+  font-weight: 800;
+  text-decoration: none;
+
+  transition:
+    color 0.2s ease,
+    text-decoration-color 0.2s ease;
+}
+
+.register-link:hover {
+  color: #ff8a00;
+  text-decoration: underline;
+}
+
+.register-link:focus-visible {
+  outline: 3px solid rgba(255, 138, 0, 0.22);
+  outline-offset: 4px;
+
+  border-radius: 4px;
+}
+
+.login-message.success {
+  color: #166534;
+  background: #f0fdf4;
+
+  border: 1px solid #bbf7d0;
+}

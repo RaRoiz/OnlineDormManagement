@@ -1,4 +1,4 @@
-import { apiRequest } from "./api";
+import { apiRequest } from "../types/api";
 import { getToken } from "./auth.service";
 
 import type {

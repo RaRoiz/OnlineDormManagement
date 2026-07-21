@@ -121,8 +121,27 @@ function showMessage(
   loginMessage.textContent = message;
   loginMessage.className =
     `login-message ${type}`;
-}
 
+const registerSuccessMessage =
+  sessionStorage.getItem(
+    "register_success_message"
+  );
+
+if (
+  registerSuccessMessage &&
+  loginMessage
+) {
+  loginMessage.textContent =
+    registerSuccessMessage;
+
+  loginMessage.className =
+    "login-message success";
+
+  sessionStorage.removeItem(
+    "register_success_message"
+  );
+  }
+}
 function setLoading(loading: boolean): void {
   if (loginButton) {
     loginButton.disabled = loading;
