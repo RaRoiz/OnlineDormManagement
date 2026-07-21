@@ -12,6 +12,8 @@ import {
   updateMeter
 } from "../../services/meter.service";
 
+import { confirmDialog } from "../../utils/dialog";
+
 import { getRooms } from "../../services/room.service";
 import { getTenants } from "../../services/tenant.service";
 
@@ -920,9 +922,12 @@ tableBody?.addEventListener(
       return;
     }
 
-    const confirmed = window.confirm(
-      `ต้องการลบข้อมูลมิเตอร์ห้อง ${record.roomNo} ประจำเดือน ${record.billingMonth} หรือไม่`
-    );
+    const confirmed = await confirmDialog({
+      title: "ลบข้อมูลมิเตอร์",
+      message: `ต้องการลบข้อมูลมิเตอร์ห้อง ${record.roomNo} ประจำเดือน ${record.billingMonth} หรือไม่`,
+      confirmText: "ลบข้อมูล",
+      tone: "danger"
+    });
 
     if (!confirmed) {
       return;

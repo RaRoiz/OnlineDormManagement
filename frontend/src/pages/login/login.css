@@ -1,26 +1,8 @@
-:root {
-  font-family:
-    Inter,
-    "Noto Sans Thai",
-    Arial,
-    sans-serif;
+@import "../../styles/theme.css";
 
-  color: #171717;
-  background: #f5f5f5;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-button,
-input {
-  font: inherit;
-}
+/* =========================
+   Backdrop
+========================= */
 
 .login-page {
   min-height: 100vh;
@@ -31,122 +13,82 @@ input {
 
   background:
     radial-gradient(
-      circle at top left,
-      rgba(255, 255, 255, 0.35),
-      transparent 38%
+      120% 90% at 100% 0%,
+      rgba(192, 86, 31, 0.28),
+      transparent 55%
     ),
-    linear-gradient(
-      135deg,
-      #ff8a00,
-      #ffb44c
-    );
+    radial-gradient(
+      90% 90% at 0% 100%,
+      rgba(122, 52, 16, 0.35),
+      transparent 55%
+    ),
+    #2a221d;
 }
+
+/* =========================
+   Card
+========================= */
 
 .login-card {
   width: 100%;
-  max-width: 440px;
+  max-width: 430px;
 
   padding: 40px;
 
-  background: #ffffff;
-  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-lg);
 
-  box-shadow:
-    0 28px 70px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 40px 80px -32px rgba(0, 0, 0, 0.55);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 15px;
 
-  margin-bottom: 34px;
+  margin-bottom: 32px;
 }
 
 .brand-logo {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
 
   display: grid;
   place-items: center;
 
   flex-shrink: 0;
 
-  color: #ffffff;
-  background: #ff8a00;
+  color: #fff;
+  background: var(--brand);
+  border-radius: var(--r);
 
-  border-radius: 16px;
-
-  font-size: 22px;
-  font-weight: 800;
-
-  box-shadow:
-    0 10px 25px rgba(255, 138, 0, 0.3);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 600;
 }
 
 .brand-text h1 {
   margin: 0;
 
-  font-size: 26px;
+  font-size: 25px;
+  font-weight: 600;
   line-height: 1.2;
 }
 
 .brand-text p {
-  margin: 6px 0 0;
+  margin: 5px 0 0;
 
-  color: #747474;
+  color: var(--muted);
   font-size: 14px;
 }
 
-.form-group {
-  margin-bottom: 20px;
-}
+/* =========================
+   Fields
+========================= */
 
-.form-group label {
-  display: block;
-
-  margin-bottom: 8px;
-
-  color: #333333;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.form-group input {
-  width: 100%;
-  height: 50px;
-
-  padding: 0 14px;
-
-  color: #222222;
-  background: #ffffff;
-
-  border: 1px solid #d5d5d5;
-  border-radius: 10px;
-
-  outline: none;
-
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
-}
-
-.form-group input::placeholder {
-  color: #aaaaaa;
-}
-
-.form-group input:focus {
-  border-color: #ff8a00;
-
-  box-shadow:
-    0 0 0 4px rgba(255, 138, 0, 0.13);
-}
-
-.form-group input.input-error {
-  border-color: #d32f2f;
-
-  box-shadow:
-    0 0 0 4px rgba(211, 47, 47, 0.1);
+.login-card .form-group {
+  margin-bottom: 18px;
 }
 
 .password-wrapper {
@@ -161,38 +103,40 @@ input {
   position: absolute;
   top: 50%;
   right: 12px;
-
   transform: translateY(-50%);
 
   padding: 6px;
 
-  color: #d66f00;
+  color: var(--brand);
   background: transparent;
   border: 0;
 
+  font-family: var(--font-display);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
 
   cursor: pointer;
 }
 
-.field-error {
-  display: block;
-  min-height: 19px;
-
-  margin-top: 5px;
-
-  color: #c62828;
-  font-size: 12px;
+.toggle-password:hover {
+  color: var(--brand-strong);
 }
 
+/* Hide Edge's native reveal button */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+/* =========================
+   Messages
+========================= */
+
 .login-message {
-  min-height: 24px;
+  min-height: 0;
+  margin-bottom: 14px;
 
-  margin-bottom: 12px;
-  padding: 0;
-
-  border-radius: 8px;
+  border-radius: var(--r-sm);
 
   font-size: 14px;
   text-align: center;
@@ -200,45 +144,51 @@ input {
 
 .login-message.error,
 .login-message.success {
-  padding: 10px 12px;
+  padding: 11px 13px;
 }
 
 .login-message.error {
-  color: #a61b1b;
-  background: #ffebee;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-line);
 }
 
 .login-message.success {
-  color: #176b32;
-  background: #e8f5e9;
+  color: var(--ok);
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-line);
 }
+
+/* =========================
+   Submit
+========================= */
 
 .login-button {
   width: 100%;
-  height: 52px;
+  min-height: 50px;
 
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
 
-  color: #ffffff;
-  background: #111111;
+  color: #fff;
+  background: var(--ink);
 
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--r-sm);
 
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 0.01em;
 
   cursor: pointer;
 
-  transition:
-    transform 0.2s,
-    background 0.2s;
+  transition: background 0.18s ease, transform 0.18s ease;
 }
 
 .login-button:hover:not(:disabled) {
-  background: #ff8a00;
+  background: var(--brand);
   transform: translateY(-1px);
 }
 
@@ -252,7 +202,7 @@ input {
   height: 18px;
 
   border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #ffffff;
+  border-top-color: #fff;
   border-radius: 50%;
 
   animation: spin 0.8s linear infinite;
@@ -262,22 +212,38 @@ input {
   display: none;
 }
 
-.login-footer {
-  margin-top: 28px;
-
-  color: #9a9a9a;
-  font-size: 13px;
-  text-align: center;
-}
-
-.login-footer p {
-  margin: 0;
-}
-
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* =========================
+   Register link
+========================= */
+
+.register-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  margin-top: 20px;
+
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.register-link {
+  color: var(--brand);
+  font-weight: 600;
+
+  transition: color 0.18s ease;
+}
+
+.register-link:hover {
+  color: var(--brand-strong);
+  text-decoration: underline;
 }
 
 @media (max-width: 520px) {
@@ -287,85 +253,14 @@ input {
 
   .login-card {
     padding: 30px 22px;
-    border-radius: 16px;
   }
 
   .brand-logo {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
   }
 
   .brand-text h1 {
     font-size: 21px;
   }
-}
-/* ซ่อนปุ่มแสดงรหัสผ่านอัตโนมัติของ Microsoft Edge */
-input[type="password"]::-ms-reveal,
-input[type="password"]::-ms-clear {
-  display: none;
-}
-
-.password-wrapper {
-  position: relative;
-}
-
-.password-wrapper input {
-  padding-right: 75px;
-}
-
-.toggle-password {
-  position: absolute;
-  top: 50%;
-  right: 14px;
-  transform: translateY(-50%);
-
-  border: 0;
-  background: transparent;
-  color: #e87500;
-
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.register-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-
-  margin-top: 18px;
-
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.register-link {
-  color: #e67800;
-
-  font-weight: 800;
-  text-decoration: none;
-
-  transition:
-    color 0.2s ease,
-    text-decoration-color 0.2s ease;
-}
-
-.register-link:hover {
-  color: #ff8a00;
-  text-decoration: underline;
-}
-
-.register-link:focus-visible {
-  outline: 3px solid rgba(255, 138, 0, 0.22);
-  outline-offset: 4px;
-
-  border-radius: 4px;
-}
-
-.login-message.success {
-  color: #166534;
-  background: #f0fdf4;
-
-  border: 1px solid #bbf7d0;
 }

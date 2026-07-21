@@ -14,6 +14,11 @@ import {
 } from "../../services/tenant.service";
 
 import {
+  confirmDialog,
+  promptDialog
+} from "../../utils/dialog";
+
+import {
   getRooms
 } from "../../services/room.service";
 
@@ -584,20 +589,16 @@ tableBody?.addEventListener(
     }
 
     if (action === "checkout") {
-      const checkOutDate = window.prompt(
-        "วันที่และเวลาย้ายออก (YYYY-MM-DDTHH:mm)",
-        nowDateTimeLocal()
-      );
+      const checkOutDate = await promptDialog({
+        title: "ยืนยันการย้ายออก",
+        message: `บันทึกการย้ายออกของ ${tenant.fullName}`,
+        label: "วันที่และเวลาย้ายออก",
+        inputType: "datetime-local",
+        initialValue: nowDateTimeLocal(),
+        confirmText: "ย้ายออก"
+      });
 
       if (!checkOutDate) {
-        return;
-      }
-
-      const confirmed = window.confirm(
-        `ยืนยันการย้ายออกของ ${tenant.fullName} หรือไม่`
-      );
-
-      if (!confirmed) {
         return;
       }
 
@@ -644,9 +645,12 @@ tableBody?.addEventListener(
     }
 
     if (action === "delete") {
-      const confirmed = window.confirm(
-        `ต้องการลบประวัติของ ${tenant.fullName} หรือไม่`
-      );
+      const confirmed = await confirmDialog({
+        title: "ลบประวัติผู้เช่า",
+        message: `ต้องการลบประวัติของ ${tenant.fullName} หรือไม่`,
+        confirmText: "ลบประวัติ",
+        tone: "danger"
+      });
 
       if (!confirmed) {
         return;

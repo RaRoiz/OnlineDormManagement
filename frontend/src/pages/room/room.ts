@@ -7,6 +7,8 @@ import {
 
 import {createRoom,deleteRoom,getRooms,updateRoom} from "../../services/room.service";
 
+import { confirmDialog } from "../../utils/dialog";
+
 import type {Room,RoomInput,} from "../../types/room";
 
 const formPanel = document.querySelector<HTMLElement>("#room-form-panel");
@@ -413,9 +415,12 @@ tableBody?.addEventListener("click", async event => {
     return;
   }
 
-  const confirmed = window.confirm(
-    `ต้องการลบห้อง ${room.roomNo} หรือไม่`
-  );
+  const confirmed = await confirmDialog({
+    title: "ลบห้องพัก",
+    message: `ต้องการลบห้อง ${room.roomNo} หรือไม่`,
+    confirmText: "ลบห้อง",
+    tone: "danger"
+  });
 
   if (!confirmed) {
     return;

@@ -13,6 +13,8 @@ import {
   updateBill
 } from "../../services/bill.service";
 
+import { confirmDialog } from "../../utils/dialog";
+
 import {
   getMeters
 } from "../../services/meter.service";
@@ -972,10 +974,11 @@ tableBody?.addEventListener(
     }
 
     if (action === "paid") {
-      const confirmed =
-        window.confirm(
-          `ยืนยันว่าบิล ${bill.billNo} ชำระเงินแล้วหรือไม่`
-        );
+      const confirmed = await confirmDialog({
+        title: "ยืนยันการชำระเงิน",
+        message: `ยืนยันว่าบิล ${bill.billNo} ชำระเงินแล้วหรือไม่`,
+        confirmText: "ชำระแล้ว"
+      });
 
       if (!confirmed) {
         return;
@@ -1003,10 +1006,12 @@ tableBody?.addEventListener(
     }
 
     if (action === "delete") {
-      const confirmed =
-        window.confirm(
-          `ต้องการลบบิล ${bill.billNo} หรือไม่`
-        );
+      const confirmed = await confirmDialog({
+        title: "ลบใบแจ้งหนี้",
+        message: `ต้องการลบบิล ${bill.billNo} หรือไม่`,
+        confirmText: "ลบบิล",
+        tone: "danger"
+      });
 
       if (!confirmed) {
         return;
