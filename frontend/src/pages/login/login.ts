@@ -121,27 +121,31 @@ function showMessage(
   loginMessage.textContent = message;
   loginMessage.className =
     `login-message ${type}`;
+}
 
-const registerSuccessMessage =
-  sessionStorage.getItem(
-    "register_success_message"
-  );
+/**
+ * แสดงข้อความจากหน้าสมัครสมาชิก (ถ้ามี) ครั้งเดียวตอนเปิดหน้า
+ */
+function showRegisterSuccessMessage(): void {
+  const registerSuccessMessage =
+    sessionStorage.getItem(
+      "register_success_message"
+    );
 
-if (
-  registerSuccessMessage &&
-  loginMessage
-) {
-  loginMessage.textContent =
-    registerSuccessMessage;
-
-  loginMessage.className =
-    "login-message success";
+  if (!registerSuccessMessage) {
+    return;
+  }
 
   sessionStorage.removeItem(
     "register_success_message"
   );
-  }
+
+  showMessage(
+    registerSuccessMessage,
+    "success"
+  );
 }
+
 function setLoading(loading: boolean): void {
   if (loginButton) {
     loginButton.disabled = loading;
@@ -289,6 +293,7 @@ function initializeLoginPage(): void {
     return;
   }
 
+  showRegisterSuccessMessage();
   usernameInput?.focus();
 }
 

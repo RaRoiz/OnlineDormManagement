@@ -36,6 +36,33 @@ function doPost(e) {
       case "deleteRoom":
         return jsonResponse(deleteRoom(request));
 
+      case "getTenants":
+        return jsonResponse(getTenants(request));
+
+      case "createTenant":
+        return jsonResponse(createTenant(request));
+
+      case "updateTenant":
+        return jsonResponse(updateTenant(request));
+
+      case "checkoutTenant":
+        return jsonResponse(checkoutTenant(request));
+
+      case "deleteTenant":
+        return jsonResponse(deleteTenant(request));
+
+      case "getMeters":
+        return jsonResponse(getMeters(request));
+
+      case "createMeter":
+        return jsonResponse(createMeter(request));
+
+      case "updateMeter":
+        return jsonResponse(updateMeter(request));
+
+      case "deleteMeter":
+        return jsonResponse(deleteMeter(request));
+
       default:
         return jsonResponse({
           success: false,
@@ -43,34 +70,6 @@ function doPost(e) {
             "ไม่พบ action ที่ร้องขอ: " +
             String(request.action || "(ไม่มีค่า)")
         });
-
-case "getTenants":
-  return jsonResponse(getTenants(request));
-
-case "createTenant":
-  return jsonResponse(createTenant(request));
-
-case "updateTenant":
-  return jsonResponse(updateTenant(request));
-
-case "checkoutTenant":
-  return jsonResponse(checkoutTenant(request));
-
-case "deleteTenant":
-  return jsonResponse(deleteTenant(request));
-
-  case "getMeters":
-  return jsonResponse(getMeters(request));
-
-case "createMeter":
-  return jsonResponse(createMeter(request));
-
-case "updateMeter":
-  return jsonResponse(updateMeter(request));
-
-case "deleteMeter":
-  return jsonResponse(deleteMeter(request));
-
     }
   } catch (error) {
     console.error(error);
@@ -84,12 +83,6 @@ case "deleteMeter":
     });
   }
 
-}
-
-function jsonResponse(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function jsonResponse(data) {

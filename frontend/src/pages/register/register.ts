@@ -170,13 +170,11 @@ form?.addEventListener(
       }
 
       sessionStorage.setItem(
-  "register_success_message",
-  "สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ"
-  );
+        "register_success_message",
+        "สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ"
+      );
 
-  window.location.href =
-  "/src/pages/Login/login.html";
-      fullNameInput?.focus();
+      window.location.href = "/login.html";
     } catch (error) {
       console.error(
         "Register error:",

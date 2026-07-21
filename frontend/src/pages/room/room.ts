@@ -21,8 +21,6 @@ const floorInput = document.querySelector<HTMLInputElement>("#room-floor");
 
 const priceInput = document.querySelector<HTMLInputElement>("#room-price");
 
-const statusInput = document.querySelector<HTMLSelectElement>("#room-status");
-
 const formMessage = document.querySelector<HTMLElement>("#form-message");
 
 const pageMessage = document.querySelector<HTMLElement>("#page-message");
@@ -251,7 +249,7 @@ async function loadRooms(): Promise<void> {
   if (tableBody) {
     tableBody.innerHTML = `
       <tr>
-        <td class="loading-cell" colspan="5">
+        <td class="loading-cell" colspan="7">
           กำลังโหลดข้อมูล...
         </td>
       </tr>
@@ -355,17 +353,17 @@ form?.addEventListener("submit", async event => {
 
     if (!result.success) {
       showFormMessage(result.message);
-    return;
-        }
+      return;
+    }
 
-      closeForm();
+    closeForm();
 
-      showPageMessage(
-        isEditing
-          ? "แก้ไขข้อมูลห้องพักสำเร็จ"
-          : "เพิ่มห้องพักสำเร็จ",
-          "success"
-  );
+    showPageMessage(
+      isEditing
+        ? "แก้ไขข้อมูลห้องพักสำเร็จ"
+        : "เพิ่มห้องพักสำเร็จ",
+      "success"
+    );
 
     await loadRooms();
   } catch (error) {

@@ -95,10 +95,19 @@ function formatDateTime(value: string): string {
   }).format(date);
 }
 
-function today(): string {
-  return new Date()
+/**
+ * คืนค่าวันและเวลาปัจจุบันในรูปแบบของ input[type="datetime-local"]
+ * (YYYY-MM-DDTHH:mm) โดยอิงเวลาท้องถิ่นของเครื่อง
+ */
+function nowDateTimeLocal(): string {
+  const now = new Date();
+  const offset = now.getTimezoneOffset();
+
+  return new Date(
+    now.getTime() - offset * 60 * 1000
+  )
     .toISOString()
-    .slice(0, 10);
+    .slice(0, 16);
 }
 
 function showPageMessage(
@@ -369,8 +378,6 @@ function renderTenants(): void {
         <td class="empty-cell" colspan="10">
           ไม่พบข้อมูลผู้เช่า
         </td>
-        <td class="line-cell" colspan="2"></td>
-        <td class="email-cell" colspan="2"></td>
       </tr>
     `;
     return;
@@ -577,11 +584,11 @@ tableBody?.addEventListener(
     }
 
     if (action === "checkout") {
-      const checkOutDate =
-  window.prompt(
-    "วันที่และเวลาย้ายออก (YYYY-MM-DDTHH:mm)",
-    nowDateTimeLocal()
-  );
+      const checkOutDate = window.prompt(
+        "วันที่และเวลาย้ายออก (YYYY-MM-DDTHH:mm)",
+        nowDateTimeLocal()
+      );
+
       if (!checkOutDate) {
         return;
       }
@@ -594,26 +601,45 @@ tableBody?.addEventListener(
         return;
       }
 
-      const result = await checkoutTenant(
-        tenantId,
-        checkOutDate
-      );
+      target.disabled = true;
 
-      if (!result.success) {
-        showPageMessage(
-          result.message,
-          "error"
+      try {
+        const result = await checkoutTenant(
+          tenantId,
+          checkOutDate
         );
 
-        return;
+        if (!result.success) {
+          showPageMessage(
+            result.message,
+            "error"
+          );
+
+          return;
+        }
+
+        showPageMessage(
+          "บันทึกการย้ายออกสำเร็จ",
+          "success"
+        );
+
+        await loadData();
+      } catch (error) {
+        console.error(
+          "Checkout tenant error:",
+          error
+        );
+
+        showPageMessage(
+          error instanceof Error
+            ? error.message
+            : "ไม่สามารถบันทึกการย้ายออกได้",
+          "error"
+        );
+      } finally {
+        target.disabled = false;
       }
 
-      showPageMessage(
-        "บันทึกการย้ายออกสำเร็จ",
-        "success"
-      );
-
-      await loadData();
       return;
     }
 
@@ -626,25 +652,43 @@ tableBody?.addEventListener(
         return;
       }
 
-      const result = await deleteTenant(
-        tenantId
-      );
+      target.disabled = true;
 
-      if (!result.success) {
-        showPageMessage(
-          result.message,
-          "error"
+      try {
+        const result = await deleteTenant(
+          tenantId
         );
 
-        return;
+        if (!result.success) {
+          showPageMessage(
+            result.message,
+            "error"
+          );
+
+          return;
+        }
+
+        showPageMessage(
+          "ลบข้อมูลผู้เช่าสำเร็จ",
+          "success"
+        );
+
+        await loadData();
+      } catch (error) {
+        console.error(
+          "Delete tenant error:",
+          error
+        );
+
+        showPageMessage(
+          error instanceof Error
+            ? error.message
+            : "ไม่สามารถลบข้อมูลผู้เช่าได้",
+          "error"
+        );
+      } finally {
+        target.disabled = false;
       }
-
-      showPageMessage(
-        "ลบข้อมูลผู้เช่าสำเร็จ",
-        "success"
-      );
-
-      await loadData();
     }
   }
 );
@@ -684,7 +728,3 @@ async function initializeTenantPage(): Promise<void> {
 }
 
 void initializeTenantPage();
-
-function nowDateTimeLocal(): string {
-  throw new Error("Function not implemented.");
-}

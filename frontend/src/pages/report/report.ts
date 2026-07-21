@@ -513,9 +513,17 @@ function renderReport(
 
 async function loadReport(): Promise<void> {
   if (tableBody) {
+    const columnCount = Math.max(
+      1,
+      tableHead?.querySelectorAll("th").length ?? 1
+    );
+
     tableBody.innerHTML = `
       <tr>
-        <td class="loading-cell">
+        <td
+          class="loading-cell"
+          colspan="${columnCount}"
+        >
           กำลังโหลดรายงาน...
         </td>
       </tr>
@@ -626,7 +634,17 @@ clearButton?.addEventListener(
       keywordInput.value = "";
     }
 
-    await loadReport();
+    try {
+      clearMessage();
+      await loadReport();
+    } catch (error) {
+      showMessage(
+        error instanceof Error
+          ? error.message
+          : "ไม่สามารถโหลดรายงานได้",
+        "error"
+      );
+    }
   }
 );
 
