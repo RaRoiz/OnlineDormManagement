@@ -160,6 +160,8 @@ sheet.appendRow([
   createdTenant.updatedAt
 ]);
 
+bumpDormCache_();
+
     return {
       success: true,
       message: "เพิ่มผู้เช่าสำเร็จ",
@@ -341,6 +343,10 @@ sheet
     updatedTenant.createdAt,
     updatedTenant.updatedAt
   ]]);
+
+    // ล้าง cache (กระทบสถานะห้องด้วย)
+    bumpDormCache_();
+
     return {
       success: true,
       message: "แก้ไขผู้เช่าสำเร็จ",
@@ -524,6 +530,9 @@ function checkoutTenant(request) {
           checkedOutTenant.updatedAt
         ]]);
 
+      // ล้าง cache (ห้องกลับมาว่าง)
+      bumpDormCache_();
+
       return {
         success: true,
         message:
@@ -608,6 +617,9 @@ function deleteTenant(request) {
 
       sheet.deleteRow(i + 1);
 
+      // ล้าง cache ให้หน้าอื่นเห็นข้อมูลใหม่ทันที
+      bumpDormCache_();
+
       return {
         success: true,
         message:
@@ -626,8 +638,8 @@ function deleteTenant(request) {
 }
 
 function getTenantsSheet_() {
-  const spreadsheet =
-    SpreadsheetApp.openById(SPREADSHEET_ID);
+  // ใช้ handle กลางจาก Performance.js
+  const spreadsheet = getSpreadsheet_();
 
   let sheet =
     spreadsheet.getSheetByName(

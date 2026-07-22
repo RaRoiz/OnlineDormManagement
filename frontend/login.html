@@ -8,7 +8,23 @@
       content="width=device-width, initial-scale=1.0"
     />
 
-    <title>เข้าสู่ระบบ | Dorm Management</title>
+    <title>เข้าสู่ระบบ | Online Dorm Management</title>
+
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("dorm_theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia(
+              "(prefers-color-scheme: dark)"
+            ).matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body>
@@ -18,7 +34,7 @@
           <div class="brand-logo">DM</div>
 
           <div class="brand-text">
-            <h1>Dorm Management</h1>
+            <h1>Online Dorm Management</h1>
             <p>ระบบจัดการหอพักออนไลน์</p>
           </div>
         </header>

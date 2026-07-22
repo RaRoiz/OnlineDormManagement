@@ -1,4 +1,5 @@
 import "./room.css";
+import "../../utils/theme";
 
 import {
   requireLogin,

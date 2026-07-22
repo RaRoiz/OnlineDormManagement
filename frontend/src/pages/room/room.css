@@ -2,6 +2,12 @@
 
 /* Room-specific */
 
+/* บทบาท USER: เพิ่มห้องพักไม่ได้ — ซ่อนปุ่มเพิ่ม
+   (backend บังคับสิทธิ์ createRoom ซ้ำอีกชั้น) */
+.role-user .room-page #open-form-button {
+  display: none;
+}
+
 .room-detail-cell {
   max-width: 280px;
   white-space: normal;

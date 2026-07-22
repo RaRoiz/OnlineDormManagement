@@ -1,4 +1,5 @@
 import "./login.css";
+import "../../utils/theme";
 
 import {
   isLoggedIn,

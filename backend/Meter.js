@@ -219,6 +219,9 @@ function createMeter(request) {
       createdMeter.updatedAt
     ]);
 
+    // ล้าง cache ให้หน้าอื่นเห็นข้อมูลใหม่ทันที
+    bumpDormCache_();
+
     return {
       success: true,
       message:
@@ -411,6 +414,9 @@ function updateMeter(request) {
         updatedMeter.updatedAt
       ]]);
 
+    // ล้าง cache ให้หน้าอื่นเห็นข้อมูลใหม่ทันที
+    bumpDormCache_();
+
     return {
       success: true,
       message:
@@ -465,6 +471,9 @@ function deleteMeter(request) {
 
       sheet.deleteRow(i + 1);
 
+      // ล้าง cache ให้หน้าอื่นเห็นข้อมูลใหม่ทันที
+      bumpDormCache_();
+
       return {
         success: true,
         message:
@@ -490,9 +499,10 @@ function validateMeterInput_(meterInput) {
   ).trim();
 
   const billingMonth =
-  normalizeBillingMonth_(
-    input.billingMonth
-  );
+    normalizeBillingMonth_(
+      input.billingMonth
+    );
+
   if (!roomId) {
     throw new Error(
       "กรุณาเลือกห้องพัก"
@@ -615,8 +625,9 @@ function calculateMeter_(input) {
 }
 
 function getMetersSheet_() {
-  const spreadsheet =
-    SpreadsheetApp.openById(SPREADSHEET_ID);
+  // ใช้ handle กลางจาก Performance.gs
+  // แทนการ openById ใหม่ทุกครั้ง
+  const spreadsheet = getSpreadsheet_();
 
   let sheet =
     spreadsheet.getSheetByName(
@@ -638,6 +649,12 @@ function getMetersSheet_() {
         METER_HEADERS.length
       )
       .setValues([METER_HEADERS]);
+
+    // ป้องกัน Google Sheets แปลง 2026-01 เป็น Date
+    // ตั้งครั้งเดียวตอนสร้างชีต ไม่ต้องตั้งซ้ำทุกการอ่าน
+    sheet
+      .getRange("E:E")
+      .setNumberFormat("@");
   }
 
   const actualHeaders = sheet
@@ -662,19 +679,15 @@ function getMetersSheet_() {
     );
 
   if (!headersCorrect) {
-  throw new Error(
-    "หัวตารางชีต Meters ไม่ถูกต้อง " +
-    "กรุณาเรียงเป็น: " +
-    METER_HEADERS.join(" | ")
-  );
+    throw new Error(
+      "หัวตารางชีต Meters ไม่ถูกต้อง " +
+      "กรุณาเรียงเป็น: " +
+      METER_HEADERS.join(" | ")
+    );
+  }
+
+  return sheet;
 }
-
-// ป้องกัน Google Sheets แปลง 2026-01 เป็น Date
-sheet
-  .getRange("E:E")
-  .setNumberFormat("@");
-
-return sheet;
 
 function getMeterHeaderIndex_(headers) {
   const index = {};
@@ -730,9 +743,9 @@ function meterFromRow_(
     ).trim(),
 
     billingMonth:
-  normalizeBillingMonth_(
-    row[index.billingMonth]
-  ),
+      normalizeBillingMonth_(
+        row[index.billingMonth]
+      ),
 
     waterPrevious: Number(
       row[index.waterPrevious] || 0
@@ -905,5 +918,4 @@ function migrateMeterBillingMonths() {
   }
 
   SpreadsheetApp.flush();
-  }
 }

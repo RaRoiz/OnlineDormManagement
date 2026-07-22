@@ -1,4 +1,5 @@
 import "./bill.css";
+import "../../utils/theme";
 
 import {
   requireLogin,
@@ -322,8 +323,11 @@ function getBillStatus(
     return "PAID";
   }
 
-  const dueDate =
-    new Date(`${bill.dueDate}T23:59:59`);
+  // dueDate อาจมาเป็น "YYYY-MM-DD" หรือ ISO เต็ม
+  // ตัดเหลือเฉพาะวันที่ก่อนต่อเวลาสิ้นวัน
+  const dueDate = new Date(
+    `${bill.dueDate.slice(0, 10)}T23:59:59`
+  );
 
   if (
     !Number.isNaN(dueDate.getTime()) &&
@@ -691,6 +695,9 @@ function renderBills(): void {
           bill.repairAmount +
           bill.damageAmount;
 
+        const safeBillId =
+          escapeHtml(bill.billId);
+
         return `
           <tr>
             <td>
@@ -770,7 +777,7 @@ function renderBills(): void {
                       class="table-button edit-button"
                       type="button"
                       data-action="edit"
-                      data-bill-id="${bill.billId}"
+                      data-bill-id="${safeBillId}"
                     >
                       แก้ไข
                     </button>
@@ -779,7 +786,7 @@ function renderBills(): void {
                       class="table-button paid-button"
                       type="button"
                       data-action="paid"
-                      data-bill-id="${bill.billId}"
+                      data-bill-id="${safeBillId}"
                     >
                       ชำระแล้ว
                     </button>
@@ -788,7 +795,7 @@ function renderBills(): void {
                       class="table-button delete-button"
                       type="button"
                       data-action="delete"
-                      data-bill-id="${bill.billId}"
+                      data-bill-id="${safeBillId}"
                     >
                       ลบ
                     </button>

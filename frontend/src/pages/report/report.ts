@@ -1,7 +1,8 @@
 import "./report.css";
+import "../../utils/theme";
 
 import {
-  requireLogin,
+  requireOwner,
   setupLogoutButton
 } from "../../utils/auth.guard";
 
@@ -398,7 +399,10 @@ function readFilter(): ReportFilter {
         "ROOM") as ReportType,
 
     billingMonth:
-      reportMonthInput?.value ?? "",
+      reportMonthInput &&
+      !reportMonthInput.disabled
+        ? reportMonthInput.value
+        : "",
 
     roomId:
       roomFilterInput?.value ?? "",
@@ -409,6 +413,32 @@ function readFilter(): ReportFilter {
     keyword:
       keywordInput?.value.trim() ?? ""
   };
+}
+
+function statusModifierClass(value: string): string {
+  switch (value.trim()) {
+    case "ว่าง":
+      return "status-vacant";
+    case "ไม่ว่าง":
+      return "status-occupied";
+    case "ACTIVE":
+    case "กำลังพัก":
+      return "status-active";
+    case "INACTIVE":
+    case "ย้ายออกแล้ว":
+      return "status-inactive";
+    case "PAID":
+    case "ชำระแล้ว":
+      return "status-paid";
+    case "UNPAID":
+    case "ยังไม่ชำระ":
+      return "status-unpaid";
+    case "OVERDUE":
+    case "เกินกำหนด":
+      return "status-overdue";
+    default:
+      return "status-neutral";
+  }
 }
 
 function formatCell(
@@ -443,12 +473,16 @@ function formatCell(
     case "month":
       return formatMonth(String(value));
 
-    case "status":
+    case "status": {
+      const raw = String(value);
+      const modifier = statusModifierClass(raw);
+
       return `
-        <span class="status-badge">
-          ${escapeHtml(String(value))}
+        <span class="status-badge ${modifier}">
+          ${escapeHtml(raw)}
         </span>
       `;
+    }
 
     default:
       return escapeHtml(String(value));
@@ -530,14 +564,38 @@ async function loadReport(): Promise<void> {
     `;
   }
 
-  const result =
-    await getReport(readFilter());
+  try {
+    const result =
+      await getReport(readFilter());
 
-  if (!result.success || !result.data) {
-    throw new Error(result.message);
+    if (!result.success || !result.data) {
+      throw new Error(result.message);
+    }
+
+    renderReport(result.data);
+  } catch (error) {
+    // อย่าปล่อยให้ตารางค้างคำว่า "กำลังโหลด..."
+    if (tableBody) {
+      const columnCount = Math.max(
+        1,
+        tableHead?.querySelectorAll("th")
+          .length ?? 1
+      );
+
+      tableBody.innerHTML = `
+        <tr>
+          <td
+            class="empty-cell"
+            colspan="${columnCount}"
+          >
+            ไม่สามารถโหลดรายงานได้
+          </td>
+        </tr>
+      `;
+    }
+
+    throw error;
   }
-
-  renderReport(result.data);
 }
 
 async function loadAll(): Promise<void> {
@@ -650,7 +708,8 @@ clearButton?.addEventListener(
 
 async function initializeReportPage():
   Promise<void> {
-  if (!requireLogin()) {
+  // หน้า Report ดูได้เฉพาะ OWNER
+  if (!requireOwner()) {
     return;
   }
 

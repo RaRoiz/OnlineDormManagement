@@ -11,6 +11,21 @@
     <title>
       ใบแจ้งค่าใช้จ่าย | Dorm Management
     </title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("dorm_theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia(
+              "(prefers-color-scheme: dark)"
+            ).matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body>

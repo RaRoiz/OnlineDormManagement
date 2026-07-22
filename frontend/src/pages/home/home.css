@@ -89,8 +89,8 @@
   min-height: 42px;
   padding: 0 18px;
 
-  color: var(--surface);
-  background: var(--ink);
+  color: var(--solid-fg);
+  background: var(--solid-bg);
 
   border: 0;
   border-radius: var(--r-sm);
@@ -98,11 +98,12 @@
   font-family: var(--font-display);
   font-weight: 500;
 
-  transition: background 0.18s ease, transform 0.18s ease,
-    opacity 0.18s ease;
+  transition: background 0.18s ease, color 0.18s ease,
+    transform 0.18s ease, opacity 0.18s ease;
 }
 
 .auth-button:hover:not(:disabled) {
+  color: #fff;
   background: var(--brand);
   transform: translateY(-1px);
 }

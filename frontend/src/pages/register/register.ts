@@ -1,4 +1,5 @@
 import "./register.css";
+import "../../utils/theme";
 
 import {
   registerUser

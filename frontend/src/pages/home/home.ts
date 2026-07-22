@@ -1,8 +1,10 @@
 import "./home.css";
+import "../../utils/theme";
 
 import {
   getCurrentUser,
   isLoggedIn,
+  isOwner,
   logout
 } from "../../services/auth.service";
 
@@ -69,9 +71,18 @@ function updateHome(): void {
       ".menu-status"
     )
     .forEach(element => {
-      element.textContent = loggedIn
-        ? "→"
-        : "🔒";
+      element.textContent = "→";
+    });
+
+  // เมนูเฉพาะ OWNER (เช่น Dashboard / Report)
+  // ซ่อนเมื่อล็อกอินด้วยบทบาทอื่น
+  document
+    .querySelectorAll<HTMLElement>(
+      "[data-owner-only]"
+    )
+    .forEach(element => {
+      element.hidden =
+        loggedIn && !isOwner();
     });
 }
 

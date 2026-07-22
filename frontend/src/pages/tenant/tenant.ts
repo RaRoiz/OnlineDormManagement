@@ -1,4 +1,5 @@
 import "./tenant.css";
+import "../../utils/theme";
 
 import {
   requireLogin,

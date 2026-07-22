@@ -131,6 +131,7 @@ sheet.appendRow([
   createdRoom.updatedAt
 ]);
 
+bumpDormCache_();
 return {
   success: true,
   message: "เพิ่มห้องพักสำเร็จ",
@@ -275,6 +276,9 @@ function updateRoom(request) {
         updatedRoom.updatedAt
       ]]);
 
+    // ล้าง cache ให้หน้าอื่นเห็นข้อมูลใหม่ทันที
+    bumpDormCache_();
+
     return {
       success: true,
       message: "แก้ไขห้องพักสำเร็จ",
@@ -333,6 +337,9 @@ function deleteRoom(request) {
 
       sheet.deleteRow(i + 1);
 
+      // ล้าง cache ให้หน้าอื่นเห็นข้อมูลใหม่ทันที
+      bumpDormCache_();
+
       return {
         success: true,
         message: "ลบห้องพักสำเร็จ",
@@ -350,8 +357,8 @@ function deleteRoom(request) {
 }
 
 function getRoomsSheet_() {
-  const spreadsheet =
-    SpreadsheetApp.openById(SPREADSHEET_ID);
+  // ใช้ handle กลางจาก Performance.js
+  const spreadsheet = getSpreadsheet_();
 
   let sheet =
     spreadsheet.getSheetByName(ROOMS_SHEET);
@@ -515,8 +522,8 @@ function formatSheetDate_(value) {
 }
 
 function getOccupiedRoomIds_() {
-  const spreadsheet =
-    SpreadsheetApp.openById(SPREADSHEET_ID);
+  // ใช้ handle กลางจาก Performance.js
+  const spreadsheet = getSpreadsheet_();
 
   const tenantSheet =
     spreadsheet.getSheetByName("Tenants");

@@ -1,4 +1,5 @@
 import "./meter.css";
+import "../../utils/theme";
 
 import {
   requireLogin,

@@ -70,6 +70,16 @@ export function getCurrentUser(): User | null {
   }
 }
 
+export function isOwner(): boolean {
+  const user = getCurrentUser();
+
+  return (
+    String(user?.role ?? "")
+      .trim()
+      .toUpperCase() === "OWNER"
+  );
+}
+
 export async function logout(): Promise<void> {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(USER_KEY);

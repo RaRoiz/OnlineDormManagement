@@ -9,6 +9,22 @@
     />
 
     <title>Online Dorm Management</title>
+
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("dorm_theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia(
+              "(prefers-color-scheme: dark)"
+            ).matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body>
@@ -17,7 +33,7 @@
         <span class="brand-logo">DM</span>
 
         <span class="brand-text">
-          <strong>Dorm Management</strong>
+          <strong>Online Dorm Management</strong>
           <small>ระบบจัดการหอพักออนไลน์</small>
         </span>
       </a>
@@ -116,6 +132,7 @@
           class="menu-card"
           href="/src/pages/report/report.html"
           data-protected-link
+          data-owner-only
         >
           <div class="menu-icon">📊</div>
 

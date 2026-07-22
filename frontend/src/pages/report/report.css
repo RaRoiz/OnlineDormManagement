@@ -179,13 +179,6 @@
   margin: 18px 0 22px;
 }
 
-/* Report status badge default (neutral) */
-.report-section .status-badge {
-  color: var(--brand-ink);
-  background: var(--brand-tint);
-  border-color: var(--brand-tint-line);
-}
-
 @media (max-width: 1100px) {
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
