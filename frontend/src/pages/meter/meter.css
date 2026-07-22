@@ -30,7 +30,7 @@
   height: 100%;
 
   content: "";
-  background: var(--brand);
+  background: var(--page-accent, var(--brand));
 }
 
 .meter-section-header {

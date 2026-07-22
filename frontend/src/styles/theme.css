@@ -12,33 +12,51 @@
   --font-display:
     "Kanit", "Anuphan", "Noto Sans Thai", system-ui, sans-serif;
 
-  /* Ink + neutrals (cool, faint violet undertone) */
-  --ink: #1e1b2e;
-  --ink-soft: #48435c;
-  --muted: #837e95;
-  --line: #e6e3ef;
-  --line-soft: #f0eef7;
+  /* Ink + neutrals (neutral charcoal) */
+  --ink: #1c1a1c;
+  --ink-soft: #4c4850;
+  --muted: #8b8590;
+  --line: #e8e5e9;
+  --line-soft: #f1eff2;
 
   /* Surfaces */
-  --bg: #f5f4fa;
+  --bg: #f9f5f6;
   --surface: #ffffff;
-  --surface-2: #f6f5fc;
+  --surface-2: #f8f7f9;
 
-  /* Brand — violet */
-  --brand: #7c3aed;
-  --brand-strong: #6528c9;
-  --brand-tint: #ece5fc;
-  --brand-tint-line: #d8c9f7;
-  --brand-ink: #4c1d95;
+  /* Brand — rose crimson */
+  --brand: #e11d48;
+  --brand-strong: #be123c;
+  --brand-tint: #fde5ea;
+  --brand-tint-line: #f8c3cf;
+  --brand-ink: #8f1239;
+
+  /* แสงเรืองหลายสีที่พื้นหลัง (โหมดสว่าง) */
+  --bg-glow:
+    radial-gradient(
+      62% 52% at 92% -5%,
+      rgba(225, 29, 72, 0.19),
+      transparent 68%
+    ),
+    radial-gradient(
+      52% 48% at -6% 108%,
+      rgba(249, 115, 22, 0.16),
+      transparent 68%
+    ),
+    radial-gradient(
+      44% 40% at -4% -6%,
+      rgba(59, 130, 246, 0.1),
+      transparent 65%
+    );
 
   /* Solid (inverting) surface for dark buttons */
-  --solid-bg: #1e1b2e;
+  --solid-bg: #1c1a1c;
   --solid-fg: #ffffff;
 
   /* Fixed dark banner — stays dark in both themes */
-  --banner-bg: #201d2e;
+  --banner-bg: #1e1418;
   --banner-fg: #ffffff;
-  --banner-accent: #c4b5fd;
+  --banner-accent: #fb7185;
 
   /* Semantic */
   --ok: #2f7d4f;
@@ -60,11 +78,11 @@
   --r-lg: 16px;
   --r-pill: 999px;
 
-  /* Elevation (soft, warm) */
-  --shadow-sm: 0 1px 2px rgba(34, 30, 26, 0.05);
-  --shadow: 0 8px 26px -16px rgba(34, 30, 26, 0.24);
-  --shadow-lg: 0 22px 55px -30px rgba(34, 30, 26, 0.32);
-  --ring: 0 0 0 4px rgba(124, 58, 237, 0.18);
+  /* Elevation (soft, rosy) */
+  --shadow-sm: 0 1px 2px rgba(80, 20, 40, 0.06);
+  --shadow: 0 8px 26px -16px rgba(80, 20, 40, 0.22);
+  --shadow-lg: 0 22px 55px -30px rgba(80, 20, 40, 0.3);
+  --ring: 0 0 0 4px rgba(225, 29, 72, 0.18);
 
   font-family: var(--font-body);
   color: var(--ink);
@@ -86,24 +104,37 @@
 ========================= */
 
 :root[data-theme="dark"] {
-  --ink: #ece9f5;
-  --ink-soft: #bbb5cc;
-  --muted: #837e97;
-  --line: #332e46;
-  --line-soft: #29253a;
+  --ink: #f0edf0;
+  --ink-soft: #bcb7c0;
+  --muted: #837e88;
+  --line: #2b2930;
+  --line-soft: #232127;
 
-  --bg: #161320;
-  --surface: #201c2e;
-  --surface-2: #282338;
+  --bg: #0e0e11;
+  --surface: #161519;
+  --surface-2: #1e1c21;
 
-  --brand: #a586f5;
-  --brand-strong: #8b6ae8;
-  --brand-tint: #2c2442;
-  --brand-tint-line: #463a66;
-  --brand-ink: #cbb8f7;
+  --brand: #fb4d6d;
+  --brand-strong: #f43f5e;
+  --brand-tint: #38141e;
+  --brand-tint-line: #5c2231;
+  --brand-ink: #fda4b5;
 
-  --solid-bg: #ece9f5;
-  --solid-fg: #1e1b2e;
+  /* แสงแดงเรืองที่พื้นหลัง แบบภาพอ้างอิง */
+  --bg-glow:
+    radial-gradient(
+      55% 45% at 90% -5%,
+      rgba(225, 29, 72, 0.2),
+      transparent 60%
+    ),
+    radial-gradient(
+      45% 40% at -5% 105%,
+      rgba(190, 18, 60, 0.16),
+      transparent 60%
+    );
+
+  --solid-bg: #f0edf0;
+  --solid-fg: #1c1a1c;
 
   --ok: #6ec18b;
   --ok-bg: #1e2f24;
@@ -121,7 +152,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.7);
   --shadow-lg: 0 24px 60px -30px rgba(0, 0, 0, 0.75);
-  --ring: 0 0 0 4px rgba(165, 134, 245, 0.28);
+  --ring: 0 0 0 4px rgba(251, 77, 109, 0.28);
 
   color-scheme: dark;
 }
@@ -140,7 +171,13 @@ body {
   margin: 0;
 
   color: var(--ink);
-  background: var(--bg);
+  background-color: var(--bg);
+
+  /* แสงเรืองสีแบรนด์ที่มุมจอ (ตามธีม) */
+  background-image: var(--bg-glow, none);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
 
   font-family: var(--font-body);
   line-height: 1.55;
@@ -322,6 +359,27 @@ h4 {
   width: min(1320px, calc(100% - 48px));
 }
 
+/* สีประจำหน้า — ตรงกับสีการ์ดเมนูหน้า Home */
+.room-page {
+  --page-accent: var(--brand);
+}
+
+.tenant-page {
+  --page-accent: #3b82f6;
+}
+
+.meter-page {
+  --page-accent: #f97316;
+}
+
+.bill-page {
+  --page-accent: #10b981;
+}
+
+.report-page {
+  --page-accent: #ec4899;
+}
+
 .page-title {
   display: flex;
   align-items: flex-end;
@@ -334,7 +392,7 @@ h4 {
 .eyebrow {
   margin: 0 0 10px;
 
-  color: var(--brand);
+  color: var(--page-accent, var(--brand));
   font-family: var(--font-display);
   font-size: 12px;
   font-weight: 600;
@@ -385,15 +443,28 @@ h4 {
 
 .primary-button {
   color: #fff;
-  background: var(--brand);
-  border: 1px solid var(--brand);
+  background: var(--page-accent, var(--brand));
+  border: 1px solid var(--page-accent, var(--brand));
 
-  box-shadow: 0 8px 20px -12px rgba(124, 58, 237, 0.7);
+  box-shadow: 0 8px 20px -12px
+    color-mix(
+      in srgb,
+      var(--page-accent, var(--brand)) 70%,
+      transparent
+    );
 }
 
 .primary-button:hover:not(:disabled) {
-  background: var(--brand-strong);
-  border-color: var(--brand-strong);
+  background: color-mix(
+    in srgb,
+    var(--page-accent, var(--brand)) 85%,
+    #000
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--page-accent, var(--brand)) 85%,
+    #000
+  );
   transform: translateY(-1px);
 }
 
@@ -720,7 +791,11 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background: var(--brand-tint);
+  background: color-mix(
+    in srgb,
+    var(--page-accent, var(--brand)) 9%,
+    transparent
+  );
 }
 
 tbody tr:last-child td {
@@ -1240,12 +1315,12 @@ tbody tr:last-child td {
 }
 
 .table-wrapper::-webkit-scrollbar-thumb {
-  background: #d8cfc2;
+  background: #e11d48;
   border-radius: var(--r-pill);
 }
 
 .table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #c4b9a8;
+  background: #b90028;
 }
 
 /* =========================
@@ -1328,7 +1403,11 @@ tbody tr:last-child td {
   }
 
   tbody tr:hover td:first-child {
-    background: var(--brand-tint);
+    background: color-mix(
+      in srgb,
+      var(--page-accent, var(--brand)) 9%,
+      var(--surface)
+    );
   }
 
   /* ปุ่มในตารางใหญ่พอสำหรับนิ้ว (มาตรฐาน ~40px) */

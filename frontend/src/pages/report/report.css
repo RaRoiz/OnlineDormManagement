@@ -110,11 +110,11 @@
   top: 18px;
   left: 0;
 
-  width: 3px;
-  height: 34px;
+  width: 4px;
+  height: 38px;
 
   content: "";
-  background: var(--muted);
+  background: var(--page-accent, var(--muted));
   border-radius: 0 var(--r-pill) var(--r-pill) 0;
 }
 
@@ -133,6 +133,24 @@
 
 .danger-card::before {
   background: var(--danger);
+}
+
+/* ตัวเลขมีสีตามความหมายของการ์ด */
+.vacant-card strong,
+.success-card strong {
+  color: var(--ok);
+}
+
+.occupied-card strong {
+  color: var(--info);
+}
+
+.warning-card strong {
+  color: var(--warn);
+}
+
+.danger-card strong {
+  color: var(--danger);
 }
 
 /* =========================
