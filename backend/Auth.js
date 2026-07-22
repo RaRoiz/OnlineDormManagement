@@ -4,7 +4,7 @@
 const SPREADSHEET_ID =
   PropertiesService
     .getScriptProperties()
-    .getProperty("SPREADSHEET_ID") || "";
+    .getProperty("SPREADSHEET_ID") || "1EjKqetYjCLDe6D-Xuqz6BJXZat9skeYmhnQ-TAmFWYM";
 const USERS_SHEET = "Users";
 const SESSION_SECONDS = 21600; // 6 ชั่วโมง
 

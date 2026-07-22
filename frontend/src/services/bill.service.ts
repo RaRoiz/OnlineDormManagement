@@ -60,6 +60,16 @@ export function markBillPaid(
   });
 }
 
+export function sendBillLine(
+  billId: string
+): Promise<ApiResponse<null>> {
+  return apiRequest<ApiResponse<null>>({
+    action: "sendBillLine",
+    token: requireToken(),
+    billId
+  });
+}
+
 export function deleteBill(
   billId: string
 ): Promise<ApiResponse<null>> {

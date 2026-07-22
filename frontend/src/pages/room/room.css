@@ -2,9 +2,11 @@
 
 /* Room-specific */
 
-/* บทบาท USER: เพิ่มห้องพักไม่ได้ — ซ่อนปุ่มเพิ่ม
-   (backend บังคับสิทธิ์ createRoom ซ้ำอีกชั้น) */
-.role-user .room-page #open-form-button {
+/* บทบาท USER: ดูข้อมูลห้องพักได้อย่างเดียว
+   ซ่อนปุ่มเพิ่มและแก้ไข (ปุ่มลบถูกซ่อนจาก theme อยู่แล้ว)
+   backend บังคับสิทธิ์ create/update/deleteRoom ซ้ำอีกชั้น */
+.role-user .room-page #open-form-button,
+.role-user .room-page .edit-button {
   display: none;
 }
 
@@ -12,4 +14,15 @@
   max-width: 280px;
   white-space: normal;
   line-height: 1.5;
+}
+
+/* toolbar 3 ช่อง: ค้นหา + ประเภทห้อง + สถานะ */
+.room-page .toolbar {
+  grid-template-columns: minmax(0, 1fr) 190px 190px;
+}
+
+@media (max-width: 720px) {
+  .room-page .toolbar {
+    grid-template-columns: 1fr;
+  }
 }

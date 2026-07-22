@@ -9,6 +9,7 @@ import {
 import {createRoom,deleteRoom,getRooms,updateRoom} from "../../services/room.service";
 
 import { confirmDialog } from "../../utils/dialog";
+import { showToast } from "../../utils/toast";
 
 import type {Room,RoomInput,} from "../../types/room";
 
@@ -33,6 +34,8 @@ const tableBody = document.querySelector<HTMLTableSectionElement>("#room-table-b
 const searchInput = document.querySelector<HTMLInputElement>("#search-input");
 
 const statusFilter = document.querySelector<HTMLSelectElement>("#status-filter");
+
+const typeFilter = document.querySelector<HTMLSelectElement>("#type-filter");
 
 const openFormButton = document.querySelector<HTMLButtonElement>("#open-form-button");
 
@@ -67,6 +70,8 @@ function showPageMessage(
   message: string,
   type: "success" | "error"
 ): void {
+  showToast(message, type);
+
   if (!pageMessage) {
     return;
   }
@@ -144,12 +149,44 @@ function closeForm(): void {
   }
 }
 
+/** เติมตัวเลือกประเภทห้องจากข้อมูลจริง */
+function populateTypeOptions(): void {
+  if (!typeFilter) {
+    return;
+  }
+
+  const previous = typeFilter.value;
+
+  const types = [
+    ...new Set(
+      rooms
+        .map(room => room.roomType.trim())
+        .filter(Boolean)
+    )
+  ].sort((a, b) => a.localeCompare(b, "th"));
+
+  typeFilter.innerHTML =
+    `<option value="">ทุกประเภท</option>` +
+    types
+      .map(type => `
+        <option value="${escapeHtml(type)}">
+          ${escapeHtml(type)}
+        </option>
+      `)
+      .join("");
+
+  typeFilter.value = previous;
+}
+
 function getFilteredRooms(): Room[] {
   const keyword =
     searchInput?.value.trim().toLowerCase() ?? "";
 
   const selectedStatus =
     statusFilter?.value ?? "";
+
+  const selectedType =
+    typeFilter?.value ?? "";
 
   return rooms.filter(room => {
     const searchableText = [
@@ -169,7 +206,15 @@ function getFilteredRooms(): Room[] {
       !selectedStatus ||
       room.status === selectedStatus;
 
-    return matchesKeyword && matchesStatus;
+    const matchesType =
+      !selectedType ||
+      room.roomType.trim() === selectedType;
+
+    return (
+      matchesKeyword &&
+      matchesStatus &&
+      matchesType
+    );
   });
 }
 
@@ -272,6 +317,7 @@ async function loadRooms(): Promise<void> {
     }
 
     rooms = result.data ?? [];
+    populateTypeOptions();
     renderRooms();
   } catch (error) {
     console.error("Load rooms error:", error);
@@ -465,6 +511,7 @@ closeFormButton?.addEventListener("click", closeForm);
 cancelButton?.addEventListener("click", closeForm);
 searchInput?.addEventListener("input", renderRooms);
 statusFilter?.addEventListener("change", renderRooms);
+typeFilter?.addEventListener("change", renderRooms);
 
 async function initializeRoomPage(): Promise<void> {
   if (!requireLogin()) {

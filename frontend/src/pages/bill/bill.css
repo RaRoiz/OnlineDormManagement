@@ -4,6 +4,23 @@
   min-width: 1080px;
 }
 
+/* บทบาท USER: หน้าบิลอนุญาตให้ลบได้ —
+   คืนปุ่มลบที่ theme ซ่อนไว้ (backend เปิด deleteBill ให้แล้ว) */
+.role-user .bill-page .delete-button {
+  display: inline-block;
+}
+
+/* toolbar 3 ช่อง: ค้นหา + ห้องพัก + สถานะ */
+.bill-page .toolbar {
+  grid-template-columns: minmax(0, 1fr) 190px 190px;
+}
+
+@media (max-width: 720px) {
+  .bill-page .toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* =========================
    Bill preview blocks
 ========================= */

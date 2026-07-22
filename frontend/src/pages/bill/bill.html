@@ -278,29 +278,45 @@
       </section>
 
       <section class="toolbar">
-        <input
-          id="search-input"
-          type="search"
-          placeholder="ค้นหาเลขบิล ห้อง หรือชื่อผู้เช่า..."
-        />
+        <div class="filter-group">
+          <label for="search-input">ค้นหา</label>
 
-        <select id="status-filter">
-          <option value="">
-            ทุกสถานะ
-          </option>
+          <input
+            id="search-input"
+            type="search"
+            placeholder="ค้นหาเลขบิล ห้อง หรือชื่อผู้เช่า..."
+          />
+        </div>
 
-          <option value="UNPAID">
-            ยังไม่ชำระ
-          </option>
+        <div class="filter-group">
+          <label for="room-filter">ห้องพัก</label>
 
-          <option value="PAID">
-            ชำระแล้ว
-          </option>
+          <select id="room-filter">
+            <option value="">ทุกห้อง</option>
+          </select>
+        </div>
 
-          <option value="OVERDUE">
-            เกินกำหนด
-          </option>
-        </select>
+        <div class="filter-group">
+          <label for="status-filter">สถานะ</label>
+
+          <select id="status-filter">
+            <option value="">
+              ทุกสถานะ
+            </option>
+
+            <option value="UNPAID">
+              ยังไม่ชำระ
+            </option>
+
+            <option value="PAID">
+              ชำระแล้ว
+            </option>
+
+            <option value="OVERDUE">
+              เกินกำหนด
+            </option>
+          </select>
+        </div>
       </section>
 
       <section class="table-card">

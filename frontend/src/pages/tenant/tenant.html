@@ -255,29 +255,41 @@
         class="toolbar"
         aria-label="ค้นหาและกรองข้อมูลผู้เช่า"
       >
-        <input
-          id="search-input"
-          type="search"
-          placeholder="ค้นหาชื่อ เลขบัตร เบอร์โทร Line E-mail หรือห้อง..."
-          aria-label="ค้นหาข้อมูลผู้เช่า"
-        />
+        <div class="filter-group">
+          <label for="search-input">ค้นหา</label>
 
-        <select
-          id="status-filter"
-          aria-label="กรองสถานะผู้เช่า"
-        >
-          <option value="">
-            ทุกสถานะ
-          </option>
+          <input
+            id="search-input"
+            type="search"
+            placeholder="ค้นหาชื่อ เลขบัตร เบอร์โทร Line E-mail หรือห้อง..."
+          />
+        </div>
 
-          <option value="ACTIVE">
-            กำลังพัก
-          </option>
+        <div class="filter-group">
+          <label for="room-filter">ห้องพัก</label>
 
-          <option value="INACTIVE">
-            ย้ายออกแล้ว
-          </option>
-        </select>
+          <select id="room-filter">
+            <option value="">ทุกห้อง</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="status-filter">สถานะ</label>
+
+          <select id="status-filter">
+            <option value="">
+              ทุกสถานะ
+            </option>
+
+            <option value="ACTIVE">
+              กำลังพัก
+            </option>
+
+            <option value="INACTIVE">
+              ย้ายออกแล้ว
+            </option>
+          </select>
+        </div>
       </section>
 
       <!-- ตารางข้อมูลผู้เช่า -->

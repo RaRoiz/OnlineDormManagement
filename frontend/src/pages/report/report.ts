@@ -6,6 +6,8 @@ import {
   setupLogoutButton
 } from "../../utils/auth.guard";
 
+import { showToast } from "../../utils/toast";
+
 import {
   getDashboardSummary,
   getReport
@@ -182,6 +184,8 @@ function showMessage(
   message: string,
   type: "success" | "error"
 ): void {
+  showToast(message, type);
+
   if (!pageMessage) {
     return;
   }

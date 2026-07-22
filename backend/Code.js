@@ -14,6 +14,16 @@ function doPost(e) {
     console.log("Request:", JSON.stringify(request));
     console.log("Action:", request.action);
 
+    // Webhook จาก LINE (มี events ไม่มี action)
+    if (
+      !request.action &&
+      Array.isArray(request.events)
+    ) {
+      return jsonResponse(
+        handleLineWebhook_(request)
+      );
+    }
+
     switch (request.action) {
 
       /* ========== Auth ========== */
@@ -40,8 +50,9 @@ function doPost(e) {
       case "createRoom":
         return jsonResponse(ownerOnly_(request, createRoom));
 
+      /* ห้องพัก: USER ดูได้อย่างเดียว */
       case "updateRoom":
-        return jsonResponse(updateRoom(request));
+        return jsonResponse(ownerOnly_(request, updateRoom));
 
       case "deleteRoom":
         return jsonResponse(ownerOnly_(request, deleteRoom));
@@ -91,8 +102,12 @@ function doPost(e) {
       case "markBillPaid":
         return jsonResponse(markBillPaid(request));
 
+      case "sendBillLine":
+        return jsonResponse(sendBillLine(request));
+
+      /* บิล: USER ลบได้ */
       case "deleteBill":
-        return jsonResponse(ownerOnly_(request, deleteBill));
+        return jsonResponse(deleteBill(request));
 
       /* ========== Dashboard / Report ========== */
 

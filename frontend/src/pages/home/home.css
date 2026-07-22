@@ -179,6 +179,18 @@
   box-shadow: var(--shadow);
 }
 
+/* เมนูที่ถูกซ่อนตามสิทธิ์ (เช่น Report สำหรับ USER) */
+.menu-card[hidden] {
+  display: none;
+}
+
+/* การ์ดใบสุดท้ายที่เหลือเดี่ยว (Report) ให้อยู่กึ่งกลาง */
+.menu-grid > .menu-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  width: calc(50% - 9px);
+  justify-self: center;
+}
+
 .menu-icon {
   width: 58px;
   height: 58px;
@@ -238,6 +250,11 @@
 
   .menu-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* จอเดียวคอลัมน์ การ์ดเดี่ยวกลับมาเต็มความกว้าง */
+  .menu-grid > .menu-card:last-child:nth-child(odd) {
+    width: 100%;
   }
 
   .home-page {

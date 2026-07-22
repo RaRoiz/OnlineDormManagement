@@ -5,3 +5,14 @@
 .tenant-page table {
   min-width: 1240px;
 }
+
+/* toolbar 3 ช่อง: ค้นหา + ห้องพัก + สถานะ */
+.tenant-page .toolbar {
+  grid-template-columns: minmax(0, 1fr) 190px 190px;
+}
+
+@media (max-width: 720px) {
+  .tenant-page .toolbar {
+    grid-template-columns: 1fr;
+  }
+}

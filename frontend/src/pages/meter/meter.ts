@@ -14,6 +14,7 @@ import {
 } from "../../services/meter.service";
 
 import { confirmDialog } from "../../utils/dialog";
+import { showToast } from "../../utils/toast";
 
 import { getRooms } from "../../services/room.service";
 import { getTenants } from "../../services/tenant.service";
@@ -243,6 +244,8 @@ function showPageMessage(
   message: string,
   type: "success" | "error"
 ): void {
+  showToast(message, type);
+
   if (!pageMessage) {
     return;
   }
@@ -273,7 +276,8 @@ function getActiveTenant(
 }
 
 function populateRoomOptions(
-  currentRoomId = ""
+  currentRoomId = "",
+  currentTenantName = ""
 ): void {
   if (!roomInput) {
     return;
@@ -293,15 +297,21 @@ function populateRoomOptions(
 
     ${selectableRooms
       .map(room => {
-        const tenant =
-          getActiveTenant(room.roomId);
+        // ตอนแก้ไข ให้ใช้ชื่อผู้เช่าตามที่บันทึกไว้
+        // ในเรคคอร์ด (ผู้เช่าห้องอาจเปลี่ยนคนไปแล้ว)
+        const tenantName =
+          room.roomId === currentRoomId &&
+          currentTenantName
+            ? currentTenantName
+            : getActiveTenant(room.roomId)
+                ?.fullName ?? "";
 
         return `
           <option value="${escapeHtml(room.roomId)}">
             ห้อง ${escapeHtml(room.roomNo)}
             ${
-              tenant
-                ? `— ${escapeHtml(tenant.fullName)}`
+              tenantName
+                ? `— ${escapeHtml(tenantName)}`
                 : ""
             }
           </option>
@@ -465,7 +475,10 @@ function openForm(
     formTitle.textContent =
       "แก้ไขข้อมูลมิเตอร์";
 
-    populateRoomOptions(record.roomId);
+    populateRoomOptions(
+      record.roomId,
+      record.tenantName
+    );
 
     if (billingMonthInput) {
       billingMonthInput.value = normalizeBillingMonth(record.billingMonth);

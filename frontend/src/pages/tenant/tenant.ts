@@ -19,6 +19,8 @@ import {
   promptDialog
 } from "../../utils/dialog";
 
+import { showToast } from "../../utils/toast";
+
 import {
   getRooms
 } from "../../services/room.service";
@@ -57,6 +59,8 @@ const tableBody = document.querySelector<HTMLTableSectionElement>("#tenant-table
 const searchInput = document.querySelector<HTMLInputElement>("#search-input");
 
 const statusFilter = document.querySelector<HTMLSelectElement>("#status-filter");
+
+const roomFilter = document.querySelector<HTMLSelectElement>("#room-filter");
 
 const openFormButton = document.querySelector<HTMLButtonElement>("#open-form-button");
 
@@ -120,6 +124,8 @@ function showPageMessage(
   message: string,
   type: "success" | "error"
 ): void {
+  showToast(message, type);
+
   if (!pageMessage) {
     return;
   }
@@ -366,8 +372,40 @@ function getFilteredTenants(): Tenant[] {
       !selectedStatus ||
       tenant.status === selectedStatus;
 
-    return matchesSearch && matchesStatus;
+    const selectedRoomId =
+      roomFilter?.value ?? "";
+
+    const matchesRoom =
+      !selectedRoomId ||
+      tenant.roomId === selectedRoomId;
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesRoom
+    );
   });
+}
+
+/** เติมตัวเลือกห้องพักในฟิลเตอร์ */
+function populateRoomFilterOptions(): void {
+  if (!roomFilter) {
+    return;
+  }
+
+  const previous = roomFilter.value;
+
+  roomFilter.innerHTML =
+    `<option value="">ทุกห้อง</option>` +
+    rooms
+      .map(room => `
+        <option value="${escapeHtml(room.roomId)}">
+          ห้อง ${escapeHtml(room.roomNo)}
+        </option>
+      `)
+      .join("");
+
+  roomFilter.value = previous;
 }
 
 function renderTenants(): void {
@@ -477,6 +515,7 @@ async function loadData(): Promise<void> {
 
     tenants = tenantResult.data ?? [];
     rooms = roomResult.data ?? [];
+    populateRoomFilterOptions();
 
     renderTenants();
   } catch (error) {
@@ -719,6 +758,11 @@ searchInput?.addEventListener(
 );
 
 statusFilter?.addEventListener(
+  "change",
+  renderTenants
+);
+
+roomFilter?.addEventListener(
   "change",
   renderTenants
 );

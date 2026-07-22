@@ -75,6 +75,10 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+
+  /* กันเบราว์เซอร์มือถือขยายตัวอักษรเอง */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* =========================
@@ -154,6 +158,12 @@ textarea {
 button,
 select {
   cursor: pointer;
+}
+
+/* ตัดไฮไลต์สีฟ้าตอนแตะบนมือถือ */
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
 }
 
 a {
@@ -629,6 +639,20 @@ h4 {
   color: var(--muted);
 }
 
+/* ฟิลเตอร์แบบมีป้ายกำกับ (สไตล์เดียวกับหน้า Report) */
+.toolbar .filter-group {
+  min-width: 0;
+}
+
+.toolbar .filter-group label {
+  display: block;
+  margin-bottom: 7px;
+
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .toolbar input:focus,
 .toolbar select:focus {
   border-color: var(--brand);
@@ -827,6 +851,26 @@ tbody tr:last-child td {
   border-color: var(--warn);
 }
 
+.line-button {
+  color: #059669;
+  border-color: #a7dcc8;
+}
+
+.line-button:hover:not(:disabled) {
+  background: #e6f6ef;
+  border-color: #059669;
+}
+
+:root[data-theme="dark"] .line-button {
+  color: #4fc08d;
+  border-color: #2c5c45;
+}
+
+:root[data-theme="dark"] .line-button:hover:not(:disabled) {
+  background: #1c3529;
+  border-color: #4fc08d;
+}
+
 .delete-button {
   color: var(--danger);
   border-color: var(--danger-line);
@@ -890,6 +934,101 @@ tbody tr:last-child td {
 }
 
 /* =========================
+   Toast แจ้งเตือน
+========================= */
+
+#toast-container {
+  position: fixed;
+  top: 82px;
+  right: 22px;
+  z-index: 120;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  max-width: 340px;
+  padding: 12px 16px;
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+
+  box-shadow: var(--shadow-lg);
+
+  font-size: 14px;
+  font-weight: 500;
+
+  opacity: 0;
+  transform: translateX(24px);
+
+  transition: opacity 0.25s ease,
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast-icon {
+  display: grid;
+  place-items: center;
+
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+
+  color: #fff;
+  border-radius: var(--r-pill);
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.toast-success {
+  color: var(--ok);
+  border-color: var(--ok-line);
+}
+
+.toast-success .toast-icon {
+  background: var(--ok);
+}
+
+.toast-error {
+  color: var(--danger);
+  border-color: var(--danger-line);
+}
+
+.toast-error .toast-icon {
+  background: var(--danger);
+}
+
+@media (max-width: 520px) {
+  #toast-container {
+    top: auto;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    right: 16px;
+    left: 16px;
+
+    align-items: stretch;
+  }
+
+  .toast {
+    max-width: none;
+  }
+}
+
+/* =========================
    Theme toggle (floating)
 ========================= */
 
@@ -932,7 +1071,7 @@ tbody tr:last-child td {
 @media (max-width: 520px) {
   .theme-toggle {
     right: 16px;
-    bottom: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
 
     width: 44px;
     height: 44px;
@@ -1158,6 +1297,42 @@ tbody tr:last-child td {
 
   .form-panel {
     padding: 22px 18px;
+  }
+
+  /* ตารางเลื่อนข้าง: ตรึงคอลัมน์แรกไว้
+     จะได้รู้ตลอดว่ากำลังดูแถวของใคร */
+  th:first-child,
+  td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+
+    background: var(--surface);
+
+    box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.2);
+  }
+
+  th:first-child {
+    z-index: 3;
+    background: var(--surface-2);
+  }
+
+  tbody tr:hover td:first-child {
+    background: var(--brand-tint);
+  }
+
+  /* ปุ่มในตารางใหญ่พอสำหรับนิ้ว (มาตรฐาน ~40px) */
+  .table-button {
+    min-height: 40px;
+    margin-left: 8px;
+    padding: 0 14px;
+
+    font-size: 14px;
+  }
+
+  .icon-button {
+    width: 42px;
+    height: 42px;
   }
 }
 

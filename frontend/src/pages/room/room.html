@@ -185,7 +185,9 @@
       </section>
 
       <section class="toolbar">
-        <div class="search-box">
+        <div class="filter-group">
+          <label for="search-input">ค้นหา</label>
+
           <input
             id="search-input"
             type="search"
@@ -193,11 +195,23 @@
           />
         </div>
 
-        <select id="status-filter">
-          <option value="">ทุกสถานะ</option>
-          <option value="ว่าง">ว่าง</option>
-          <option value="ไม่ว่าง">ไม่ว่าง</option>
-        </select>
+        <div class="filter-group">
+          <label for="type-filter">ประเภทห้อง</label>
+
+          <select id="type-filter">
+            <option value="">ทุกประเภท</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="status-filter">สถานะ</label>
+
+          <select id="status-filter">
+            <option value="">ทุกสถานะ</option>
+            <option value="ว่าง">ว่าง</option>
+            <option value="ไม่ว่าง">ไม่ว่าง</option>
+          </select>
+        </div>
       </section>
 
       <section class="table-card">

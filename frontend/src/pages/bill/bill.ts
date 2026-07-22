@@ -11,10 +11,12 @@ import {
   deleteBill,
   getBills,
   markBillPaid,
+  sendBillLine,
   updateBill
 } from "../../services/bill.service";
 
 import { confirmDialog } from "../../utils/dialog";
+import { showToast } from "../../utils/toast";
 
 import {
   getMeters
@@ -102,65 +104,31 @@ const roomRentPreview =
     "#room-rent-preview"
   );
 
-const waterPreview =
-  document.querySelector<HTMLElement>(
-    "#water-preview"
-  );
+const waterPreview = document.querySelector<HTMLElement>("#water-preview");
 
-const electricPreview =
-  document.querySelector<HTMLElement>(
-    "#electric-preview"
-  );
+const electricPreview = document.querySelector<HTMLElement>("#electric-preview");
 
-const totalPreview =
-  document.querySelector<HTMLElement>(
-    "#total-preview"
-  );
+const totalPreview = document.querySelector<HTMLElement>("#total-preview");
 
-const formMessage =
-  document.querySelector<HTMLElement>(
-    "#form-message"
-  );
+const formMessage = document.querySelector<HTMLElement>("#form-message");
 
-const pageMessage =
-  document.querySelector<HTMLElement>(
-    "#page-message"
-  );
+const pageMessage = document.querySelector<HTMLElement>("#page-message");
 
-const tableBody =
-  document.querySelector<HTMLTableSectionElement>(
-    "#bill-table-body"
-  );
+const tableBody = document.querySelector<HTMLTableSectionElement>("#bill-table-body");
 
-const searchInput =
-  document.querySelector<HTMLInputElement>(
-    "#search-input"
-  );
+const searchInput = document.querySelector<HTMLInputElement>("#search-input");
 
-const statusFilter =
-  document.querySelector<HTMLSelectElement>(
-    "#status-filter"
-  );
+const statusFilter = document.querySelector<HTMLSelectElement>("#status-filter");
 
-const openFormButton =
-  document.querySelector<HTMLButtonElement>(
-    "#open-form-button"
-  );
+const roomFilter = document.querySelector<HTMLSelectElement>("#room-filter");
 
-const closeFormButton =
-  document.querySelector<HTMLButtonElement>(
-    "#close-form-button"
-  );
+const openFormButton = document.querySelector<HTMLButtonElement>("#open-form-button");
 
-const cancelButton =
-  document.querySelector<HTMLButtonElement>(
-    "#cancel-button"
-  );
+const closeFormButton = document.querySelector<HTMLButtonElement>("#close-form-button");
 
-const saveButton =
-  document.querySelector<HTMLButtonElement>(
-    "#save-button"
-  );
+const cancelButton = document.querySelector<HTMLButtonElement>("#cancel-button");
+
+const saveButton = document.querySelector<HTMLButtonElement>("#save-button");
 
 let bills: Bill[] = [];
 let meters: MeterRecord[] = [];
@@ -279,6 +247,8 @@ function showPageMessage(
   message: string,
   type: "success" | "error"
 ): void {
+  showToast(message, type);
+
   if (!pageMessage) {
     return;
   }
@@ -640,11 +610,40 @@ function getFilteredBills(): Bill[] {
       !selectedStatus ||
       status === selectedStatus;
 
+    const selectedRoomId =
+      roomFilter?.value ?? "";
+
+    const matchesRoom =
+      !selectedRoomId ||
+      bill.roomId === selectedRoomId;
+
     return (
       matchesSearch &&
-      matchesStatus
+      matchesStatus &&
+      matchesRoom
     );
   });
+}
+
+/** เติมตัวเลือกห้องพักในฟิลเตอร์ */
+function populateRoomFilterOptions(): void {
+  if (!roomFilter) {
+    return;
+  }
+
+  const previous = roomFilter.value;
+
+  roomFilter.innerHTML =
+    `<option value="">ทุกห้อง</option>` +
+    rooms
+      .map(room => `
+        <option value="${escapeHtml(room.roomId)}">
+          ห้อง ${escapeHtml(room.roomNo)}
+        </option>
+      `)
+      .join("");
+
+  roomFilter.value = previous;
 }
 
 function renderBills(): void {
@@ -774,6 +773,15 @@ function renderBills(): void {
                 "UNPAID"
                   ? `
                     <button
+                      class="table-button line-button"
+                      type="button"
+                      data-action="line"
+                      data-bill-id="${safeBillId}"
+                    >
+                      ส่ง LINE
+                    </button>
+
+                    <button
                       class="table-button edit-button"
                       type="button"
                       data-action="edit"
@@ -856,6 +864,7 @@ async function loadData(): Promise<void> {
     rooms =
       roomResult.data ?? [];
 
+    populateRoomFilterOptions();
     renderBills();
   } catch (error) {
     console.error(
@@ -980,6 +989,50 @@ tableBody?.addEventListener(
       return;
     }
 
+    if (action === "line") {
+      const confirmed = await confirmDialog({
+        title: "ส่งใบแจ้งหนี้ทาง LINE",
+        message: `ส่งบิล ${bill.billNo} ให้ ${bill.tenantName} ทาง LINE หรือไม่`,
+        confirmText: "ส่ง LINE"
+      });
+
+      if (!confirmed) {
+        return;
+      }
+
+      target.disabled = true;
+
+      try {
+        const result =
+          await sendBillLine(billId);
+
+        if (!result.success) {
+          showPageMessage(
+            result.message,
+            "error"
+          );
+
+          return;
+        }
+
+        showPageMessage(
+          result.message,
+          "success"
+        );
+      } catch (error) {
+        showPageMessage(
+          error instanceof Error
+            ? error.message
+            : "ส่ง LINE ไม่สำเร็จ",
+          "error"
+        );
+      } finally {
+        target.disabled = false;
+      }
+
+      return;
+    }
+
     if (action === "paid") {
       const confirmed = await confirmDialog({
         title: "ยืนยันการชำระเงิน",
@@ -1067,25 +1120,14 @@ openFormButton?.addEventListener(
   () => openForm()
 );
 
-closeFormButton?.addEventListener(
-  "click",
-  closeForm
-);
+closeFormButton?.addEventListener("click",closeForm);
 
-cancelButton?.addEventListener(
-  "click",
-  closeForm
-);
+cancelButton?.addEventListener("click",closeForm);
 
-searchInput?.addEventListener(
-  "input",
-  renderBills
-);
+searchInput?.addEventListener("input",renderBills);
 
-statusFilter?.addEventListener(
-  "change",
-  renderBills
-);
+statusFilter?.addEventListener("change",renderBills);
+roomFilter?.addEventListener("change", renderBills);
 
 async function initializeBillPage(): Promise<void> {
   if (!requireLogin()) {
