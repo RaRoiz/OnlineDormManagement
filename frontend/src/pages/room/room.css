@@ -16,9 +16,18 @@
   line-height: 1.5;
 }
 
-/* toolbar 3 ช่อง: ค้นหา + ประเภทห้อง + สถานะ */
+/* toolbar 5 ช่อง:
+   ค้นหา + เลขที่ห้อง + ชั้น + ประเภทห้อง + สถานะ */
 .room-page .toolbar {
-  grid-template-columns: minmax(0, 1fr) 190px 190px;
+  grid-template-columns:
+    minmax(0, 1fr) 130px 110px 150px 140px;
+}
+
+@media (max-width: 1024px) {
+  .room-page .toolbar {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {

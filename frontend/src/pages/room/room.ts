@@ -37,6 +37,10 @@ const statusFilter = document.querySelector<HTMLSelectElement>("#status-filter")
 
 const typeFilter = document.querySelector<HTMLSelectElement>("#type-filter");
 
+const roomNoFilter = document.querySelector<HTMLSelectElement>("#room-no-filter");
+
+const floorFilter = document.querySelector<HTMLSelectElement>("#floor-filter");
+
 const openFormButton = document.querySelector<HTMLButtonElement>("#open-form-button");
 
 const closeFormButton = document.querySelector<HTMLButtonElement>("#close-form-button");
@@ -149,33 +153,63 @@ function closeForm(): void {
   }
 }
 
-/** เติมตัวเลือกประเภทห้องจากข้อมูลจริง */
-function populateTypeOptions(): void {
-  if (!typeFilter) {
+/** เติม select จากรายการค่า โดยคงค่าที่เลือกไว้ */
+function fillSelectOptions(
+  select: HTMLSelectElement | null,
+  values: string[],
+  allLabel: string
+): void {
+  if (!select) {
     return;
   }
 
-  const previous = typeFilter.value;
+  const previous = select.value;
 
-  const types = [
-    ...new Set(
-      rooms
-        .map(room => room.roomType.trim())
-        .filter(Boolean)
-    )
-  ].sort((a, b) => a.localeCompare(b, "th"));
-
-  typeFilter.innerHTML =
-    `<option value="">ทุกประเภท</option>` +
-    types
-      .map(type => `
-        <option value="${escapeHtml(type)}">
-          ${escapeHtml(type)}
+  select.innerHTML =
+    `<option value="">${allLabel}</option>` +
+    values
+      .map(value => `
+        <option value="${escapeHtml(value)}">
+          ${escapeHtml(value)}
         </option>
       `)
       .join("");
 
-  typeFilter.value = previous;
+  select.value = previous;
+}
+
+/** เติมตัวเลือกฟิลเตอร์ทั้งหมดจากข้อมูลจริง */
+function populateFilterOptions(): void {
+  const unique = (values: string[]): string[] =>
+    [...new Set(values.filter(Boolean))];
+
+  fillSelectOptions(
+    typeFilter,
+    unique(
+      rooms.map(room => room.roomType.trim())
+    ).sort((a, b) => a.localeCompare(b, "th")),
+    "ทุกประเภท"
+  );
+
+  fillSelectOptions(
+    roomNoFilter,
+    unique(
+      rooms.map(room => room.roomNo.trim())
+    ).sort((a, b) =>
+      a.localeCompare(b, undefined, {
+        numeric: true
+      })
+    ),
+    "ทุกห้อง"
+  );
+
+  fillSelectOptions(
+    floorFilter,
+    unique(
+      rooms.map(room => String(room.floor))
+    ).sort((a, b) => Number(a) - Number(b)),
+    "ทุกชั้น"
+  );
 }
 
 function getFilteredRooms(): Room[] {
@@ -210,10 +244,26 @@ function getFilteredRooms(): Room[] {
       !selectedType ||
       room.roomType.trim() === selectedType;
 
+    const selectedRoomNo =
+      roomNoFilter?.value ?? "";
+
+    const matchesRoomNo =
+      !selectedRoomNo ||
+      room.roomNo.trim() === selectedRoomNo;
+
+    const selectedFloor =
+      floorFilter?.value ?? "";
+
+    const matchesFloor =
+      !selectedFloor ||
+      String(room.floor) === selectedFloor;
+
     return (
       matchesKeyword &&
       matchesStatus &&
-      matchesType
+      matchesType &&
+      matchesRoomNo &&
+      matchesFloor
     );
   });
 }
@@ -317,7 +367,7 @@ async function loadRooms(): Promise<void> {
     }
 
     rooms = result.data ?? [];
-    populateTypeOptions();
+    populateFilterOptions();
     renderRooms();
   } catch (error) {
     console.error("Load rooms error:", error);
@@ -512,6 +562,8 @@ cancelButton?.addEventListener("click", closeForm);
 searchInput?.addEventListener("input", renderRooms);
 statusFilter?.addEventListener("change", renderRooms);
 typeFilter?.addEventListener("change", renderRooms);
+roomNoFilter?.addEventListener("change", renderRooms);
+floorFilter?.addEventListener("change", renderRooms);
 
 async function initializeRoomPage(): Promise<void> {
   if (!requireLogin()) {

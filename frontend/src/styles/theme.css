@@ -851,6 +851,16 @@ tbody tr:last-child td {
   border-color: var(--warn);
 }
 
+.print-button {
+  color: var(--info);
+  border-color: var(--info-line);
+}
+
+.print-button:hover:not(:disabled) {
+  background: var(--info-bg);
+  border-color: var(--info);
+}
+
 .line-button {
   color: #059669;
   border-color: #a7dcc8;

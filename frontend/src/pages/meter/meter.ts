@@ -394,32 +394,41 @@ function findPreviousRecord(
   const selectedMonth =
     normalizeBillingMonth(billingMonth);
 
-  return meterRecords
+  const sortLatestFirst = (
+    a: MeterRecord,
+    b: MeterRecord
+  ): number => {
+    return normalizeBillingMonth(
+      b.billingMonth
+    ).localeCompare(
+      normalizeBillingMonth(a.billingMonth)
+    );
+  };
+
+  const roomRecords = meterRecords.filter(
+    record =>
+      record.roomId === roomId &&
+      record.meterId !== editingMeterId
+  );
+
+  // อันดับแรก: เรคคอร์ดล่าสุดที่อยู่ก่อนเดือนที่เลือก
+  const beforeSelected = roomRecords
     .filter(record => {
-      const recordMonth =
+      return (
         normalizeBillingMonth(
           record.billingMonth
-        );
-
-      return (
-        record.roomId === roomId &&
-        recordMonth < selectedMonth &&
-        record.meterId !== editingMeterId
+        ) < selectedMonth
       );
     })
-    .sort((a, b) => {
-      const monthA =
-        normalizeBillingMonth(
-          a.billingMonth
-        );
+    .sort(sortLatestFirst)[0];
 
-      const monthB =
-        normalizeBillingMonth(
-          b.billingMonth
-        );
+  if (beforeSelected) {
+    return beforeSelected;
+  }
 
-      return monthB.localeCompare(monthA);
-    })[0];
+  // ไม่มีเดือนก่อนหน้า → ใช้เรคคอร์ดล่าสุด
+  // ของห้องนั้นแทน จะได้ไม่ต้องกรอกใหม่จากศูนย์
+  return roomRecords.sort(sortLatestFirst)[0];
 }
 
 function autoFillPreviousReadings(): void {

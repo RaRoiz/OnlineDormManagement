@@ -768,6 +768,15 @@ function renderBills(): void {
             </td>
 
             <td class="action-column">
+              <button
+                class="table-button print-button"
+                type="button"
+                data-action="print"
+                data-bill-id="${safeBillId}"
+              >
+                พิมพ์
+              </button>
+
               ${
                 bill.paymentStatus ===
                 "UNPAID"
@@ -821,6 +830,285 @@ function renderBills(): void {
         `;
       })
       .join("");
+}
+
+/**
+ * เปิดหน้าใบแจ้งหนี้แบบพร้อมพิมพ์
+ * ผู้ใช้กด "พิมพ์" ในหน้าต่างที่เด้งขึ้น
+ * แล้วเลือกเครื่องพิมพ์ หรือ Save as PDF ได้เลย
+ */
+function printBill(bill: Bill): void {
+  const status = getBillStatus(bill);
+
+  const statusText =
+    status === "PAID"
+      ? "ชำระแล้ว"
+      : status === "OVERDUE"
+        ? "เกินกำหนดชำระ"
+        : "รอชำระ";
+
+  const itemRow = (
+    label: string,
+    amount: number
+  ): string => `
+    <tr>
+      <td>${escapeHtml(label)}</td>
+      <td class="num">${formatMoney(amount)}</td>
+    </tr>
+  `;
+
+  let itemsHtml =
+    itemRow("ค่าเช่าห้อง", bill.roomRent) +
+    itemRow("ค่าน้ำ", bill.waterAmount) +
+    itemRow("ค่าไฟ", bill.electricAmount);
+
+  if (bill.depositAmount > 0) {
+    itemsHtml += itemRow(
+      "ค่าประกันเพิ่มเติม",
+      bill.depositAmount
+    );
+  }
+
+  if (bill.repairAmount > 0) {
+    itemsHtml += itemRow(
+      "ค่าซ่อมแซม",
+      bill.repairAmount
+    );
+  }
+
+  if (bill.damageAmount > 0) {
+    itemsHtml += itemRow(
+      "ค่าเสียหาย",
+      bill.damageAmount
+    );
+  }
+
+  const noteHtml = bill.note
+    ? `<p class="note">หมายเหตุ: ${escapeHtml(bill.note)}</p>`
+    : "";
+
+  const paidHtml =
+    bill.paymentStatus === "PAID"
+      ? `<p class="paid">ชำระเงินแล้วเมื่อ ${formatDate(bill.paidAt)}</p>`
+      : "";
+
+  const html = `<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>${escapeHtml(bill.billNo)}</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 28px;
+
+    color: #1c1c1c;
+    font-family: "Anuphan", "Noto Sans Thai",
+      "Leelawadee UI", Tahoma, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+
+    border-bottom: 2px solid #1c1c1c;
+  }
+
+  .head h1 {
+    margin: 0;
+    font-size: 24px;
+  }
+
+  .head p {
+    margin: 4px 0 0;
+    color: #666;
+    font-size: 13px;
+  }
+
+  .bill-no {
+    text-align: right;
+    font-size: 13px;
+    color: #444;
+  }
+
+  .bill-no strong {
+    display: block;
+    font-size: 16px;
+    color: #1c1c1c;
+  }
+
+  .meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 24px;
+
+    margin-bottom: 24px;
+  }
+
+  .meta span {
+    color: #777;
+    font-size: 13px;
+  }
+
+  table {
+    width: 100%;
+    margin-bottom: 8px;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+  }
+
+  th {
+    background: #f3f3f3;
+    font-size: 13px;
+  }
+
+  .num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .total td {
+    border-top: 2px solid #1c1c1c;
+    border-bottom: 0;
+
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .status {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 14px;
+
+    border: 1.5px solid #1c1c1c;
+    border-radius: 999px;
+
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .note { color: #555; font-size: 13px; }
+  .paid { color: #1a7a43; font-weight: 700; }
+
+  .footer {
+    margin-top: 36px;
+    padding-top: 14px;
+
+    border-top: 1px solid #ddd;
+
+    color: #999;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  @media print {
+    body { padding: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div>
+      <h1>ใบแจ้งค่าใช้จ่าย</h1>
+      <p>ระบบจัดการหอพักออนไลน์</p>
+    </div>
+
+    <div class="bill-no">
+      เลขที่
+      <strong>${escapeHtml(bill.billNo)}</strong>
+      ประจำเดือน ${formatMonth(bill.billingMonth)}
+    </div>
+  </div>
+
+  <div class="meta">
+    <div>
+      <span>ผู้เช่า</span><br>
+      <strong>${escapeHtml(bill.tenantName)}</strong>
+    </div>
+
+    <div>
+      <span>ห้องพัก</span><br>
+      <strong>ห้อง ${escapeHtml(bill.roomNo)}</strong>
+    </div>
+
+    <div>
+      <span>วันครบกำหนดชำระ</span><br>
+      <strong>${formatDate(bill.dueDate)}</strong>
+    </div>
+
+    <div>
+      <span>สถานะ</span><br>
+      <span class="status">${statusText}</span>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>รายการ</th>
+        <th class="num">จำนวนเงิน</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      ${itemsHtml}
+
+      <tr class="total">
+        <td>ยอดรวมทั้งหมด</td>
+        <td class="num">
+          ${formatMoney(bill.totalAmount)}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  ${paidHtml}
+  ${noteHtml}
+
+  <div class="footer">
+    ออกเอกสารเมื่อ ${new Date().toLocaleDateString("th-TH")}
+    · Online Dorm Management
+  </div>
+</body>
+</html>`;
+
+  const printWindow = window.open(
+    "",
+    "_blank",
+    "width=800,height=920"
+  );
+
+  if (!printWindow) {
+    showPageMessage(
+      "เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต popup",
+      "error"
+    );
+
+    return;
+  }
+
+  printWindow.document.write(html);
+  printWindow.document.close();
+
+  // รอให้เรนเดอร์เสร็จก่อนเด้ง dialog พิมพ์
+  window.setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 400);
 }
 
 async function loadData(): Promise<void> {
@@ -981,6 +1269,11 @@ tableBody?.addEventListener(
     );
 
     if (!bill) {
+      return;
+    }
+
+    if (action === "print") {
+      printBill(bill);
       return;
     }
 
