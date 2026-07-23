@@ -1,6 +1,8 @@
 import "./tenant.css";
 import "../../utils/theme";
 
+import { renderSidebar } from "../../utils/sidebar";
+
 import {
   requireLogin,
   setupLogoutButton
@@ -773,6 +775,7 @@ async function initializeTenantPage(): Promise<void> {
   }
 
   setupLogoutButton();
+  renderSidebar();
   await loadData();
 }
 

@@ -1,6 +1,8 @@
 import "./room.css";
 import "../../utils/theme";
 
+import { renderSidebar } from "../../utils/sidebar";
+
 import {
   requireLogin,
   setupLogoutButton
@@ -571,6 +573,7 @@ async function initializeRoomPage(): Promise<void> {
   }
 
   setupLogoutButton();
+  renderSidebar();
   await loadRooms();
 }
 

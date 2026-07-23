@@ -1,6 +1,8 @@
 import "./meter.css";
 import "../../utils/theme";
 
+import { renderSidebar } from "../../utils/sidebar";
+
 import {
   requireLogin,
   setupLogoutButton
@@ -1043,6 +1045,7 @@ async function initializeMeterPage(): Promise<void> {
   }
 
   setupLogoutButton();
+  renderSidebar();
   await loadData();
 }
 
