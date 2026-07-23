@@ -1,6 +1,8 @@
 import "./report.css";
 import "../../utils/theme";
 
+import { renderSidebar } from "../../utils/sidebar";
+
 import {
   requireOwner,
   setupLogoutButton
@@ -718,6 +720,7 @@ async function initializeReportPage():
   }
 
   setupLogoutButton();
+  renderSidebar();
 
   const month = currentMonth();
 

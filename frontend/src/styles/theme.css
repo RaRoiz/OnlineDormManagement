@@ -1448,3 +1448,228 @@ tbody tr:last-child td {
     width: 100%;
   }
 }
+
+/* =========================
+   App sidebar (เมนูหลักฝั่งซ้าย)
+   จอเล็กจะกลายเป็นแถบเมนูล่าง
+========================= */
+
+:root {
+  --sidebar-w: 236px;
+}
+
+body.has-sidebar {
+  padding-left: var(--sidebar-w);
+}
+
+.app-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+
+  width: var(--sidebar-w);
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  padding: 20px 14px;
+
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border-right: 1px solid var(--line);
+
+  backdrop-filter: blur(12px);
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  padding: 2px 8px 18px;
+}
+
+.sidebar-brand-logo {
+  flex: none;
+
+  width: 40px;
+  height: 40px;
+
+  display: grid;
+  place-items: center;
+
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--brand),
+    #ec4899
+  );
+  border-radius: var(--r);
+
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.sidebar-brand-text strong {
+  display: block;
+
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.sidebar-brand-text small {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.sidebar-label {
+  padding: 4px 10px 6px;
+
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+.sidebar-link {
+  /* สีประจำเมนู (ค่าเริ่มต้น = สีแบรนด์) */
+  --accent: var(--brand);
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  min-height: 46px;
+  padding: 0 11px;
+
+  color: var(--ink-soft);
+  border-radius: var(--r-sm);
+
+  font-size: 14.5px;
+  font-weight: 500;
+
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link[hidden] {
+  display: none;
+}
+
+.sidebar-icon {
+  flex: none;
+
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  background: color-mix(
+    in srgb,
+    var(--accent) 13%,
+    transparent
+  );
+  border-radius: 9px;
+
+  font-size: 17px;
+  line-height: 1;
+
+  transition: background 0.15s ease;
+}
+
+.sidebar-link:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.sidebar-link.is-active {
+  color: var(--ink);
+  background: color-mix(
+    in srgb,
+    var(--accent) 13%,
+    transparent
+  );
+
+  font-weight: 600;
+}
+
+.sidebar-link.is-active .sidebar-icon {
+  background: color-mix(
+    in srgb,
+    var(--accent) 26%,
+    transparent
+  );
+}
+
+/* จอเล็ก: ย้ายไปเป็นแถบเมนูด้านล่างแบบแอปมือถือ */
+@media (max-width: 900px) {
+  body.has-sidebar {
+    padding-left: 0;
+    padding-bottom: calc(
+      70px + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  .app-sidebar {
+    inset: auto 0 0 0;
+
+    width: 100%;
+
+    flex-direction: row;
+    gap: 2px;
+
+    padding: 6px 8px
+      calc(6px + env(safe-area-inset-bottom, 0px));
+
+    border-right: 0;
+    border-top: 1px solid var(--line);
+
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .sidebar-brand,
+  .sidebar-label {
+    display: none;
+  }
+
+  .sidebar-link {
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+
+    min-width: 60px;
+    min-height: 56px;
+    padding: 6px 4px;
+
+    font-size: 11px;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .sidebar-icon {
+    width: 28px;
+    height: 28px;
+
+    font-size: 15px;
+  }
+
+  /* เลื่อนปุ่มสลับธีมกับ toast ให้พ้นแถบเมนูล่าง */
+  body.has-sidebar .theme-toggle {
+    bottom: calc(
+      86px + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  body.has-sidebar #toast-container {
+    top: auto;
+    bottom: calc(
+      88px + env(safe-area-inset-bottom, 0px)
+    );
+  }
+}

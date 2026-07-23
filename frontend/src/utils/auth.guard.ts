@@ -2,7 +2,8 @@ import {
   getCurrentUser,
   isLoggedIn,
   isOwner,
-  logout
+  logout,
+  roleLabel
 } from "../services/auth.service";
 
 const RETURN_URL_KEY = "dorm_return_url";
@@ -73,7 +74,7 @@ function renderHeaderUserInfo(
     user.fullName || user.username;
 
   const role = document.createElement("small");
-  role.textContent = user.role;
+  role.textContent = roleLabel(user.role);
 
   info.append(name, role);
 

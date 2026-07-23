@@ -59,90 +59,136 @@
     </header>
 
     <main class="home-page">
-      <section class="home-heading">
-        <span>HOME</span>
-        <h1>ระบบจัดการหอพัก</h1>
+      <!-- ยังไม่ล็อกอิน -->
+      <section
+        id="welcome-hero"
+        class="welcome-hero"
+        hidden
+      >
+        <span class="eyebrow-text">WELCOME</span>
+        <h1>ระบบจัดการหอพักออนไลน์</h1>
+
+        <p>
+          จัดการห้องพัก ผู้เช่า มิเตอร์น้ำ-ไฟ
+          ออกใบแจ้งหนี้ และส่งบิลทาง LINE
+          ได้ในที่เดียว
+        </p>
+
+        <button
+          id="hero-login-button"
+          class="primary-button"
+          type="button"
+        >
+          เข้าสู่ระบบเพื่อเริ่มใช้งาน
+        </button>
       </section>
 
+      <!-- ล็อกอินแล้ว: Dashboard -->
       <section
-        class="menu-grid"
-        aria-label="เมนูระบบ"
+        id="dashboard-section"
+        hidden
       >
-        <a
-          class="menu-card"
-          href="/src/pages/room/room.html"
-          data-protected-link
+        <div class="home-heading">
+          <span class="eyebrow-text">DASHBOARD</span>
+          <h1>ภาพรวมหอพัก</h1>
+          <p id="dashboard-subtitle"></p>
+        </div>
+
+        <div
+          class="stat-grid"
+          aria-label="สรุปภาพรวม"
         >
-          <div class="menu-icon">🏠</div>
+          <article class="stat-card stat-rooms">
+            <span class="stat-icon">🚪</span>
 
-          <div>
-            <h2>จัดการห้องพัก</h2>
-            <p>เพิ่ม แก้ไข และตรวจสอบสถานะห้องพัก</p>
-          </div>
+            <div>
+              <span class="stat-label">
+                ห้องทั้งหมด
+              </span>
+              <strong id="stat-total-rooms">
+                –
+              </strong>
+            </div>
+          </article>
 
-          <span class="menu-status"></span>
-        </a>
+          <article class="stat-card stat-vacant">
+            <span class="stat-icon">✅</span>
 
-        <a
-          class="menu-card"
-          href="/src/pages/tenant/tenant.html"
-          data-protected-link
-        >
-          <div class="menu-icon">👤</div>
+            <div>
+              <span class="stat-label">
+                ห้องว่าง
+              </span>
+              <strong id="stat-vacant-rooms">
+                –
+              </strong>
+            </div>
+          </article>
 
-          <div>
-            <h2>รายชื่อผู้เช่า</h2>
-            <p>เพิ่มและจัดการข้อมูลผู้เช่า</p>
-          </div>
+          <article class="stat-card stat-occupied">
+            <span class="stat-icon">👥</span>
 
-          <span class="menu-status"></span>
-        </a>
+            <div>
+              <span class="stat-label">
+                ห้องไม่ว่าง
+              </span>
+              <strong id="stat-occupied-rooms">
+                –
+              </strong>
+            </div>
+          </article>
+        </div>
 
-        <a
-          class="menu-card"
-          href="/src/pages/meter/meter.html"
-          data-protected-link
-        >
-          <div class="menu-icon">⚡</div>
+        <div class="panel-grid">
+          <section class="home-panel">
+            <header class="home-panel-header">
+              <h2>ห้องที่มีคนอยู่</h2>
 
-          <div>
-            <h2>ค่าน้ำ/ค่าไฟ และคำนวณหน่วยไฟ</h2>
-            <p>บันทึกค่าน้ำ/ค่าไฟและคำนวณค่าใช้จ่าย</p>
-          </div>
+              <a
+                class="panel-link"
+                href="/src/pages/tenant/tenant.html"
+              >
+                ดูทั้งหมด →
+              </a>
+            </header>
 
-          <span class="menu-status"></span>
-        </a>
+            <ul
+              id="occupied-room-list"
+              class="mini-list"
+            >
+              <li class="mini-empty">
+                กำลังโหลดข้อมูล...
+              </li>
+            </ul>
+          </section>
 
-        <a
-          class="menu-card"
-          href="/src/pages/bill/bill.html"
-          data-protected-link
-        >
-          <div class="menu-icon">🧾</div>
+          <section class="home-panel">
+            <header class="home-panel-header">
+              <h2>ห้องว่างพร้อมเข้าพัก</h2>
 
-          <div>
-            <h2>Bill</h2>
-            <p>สร้างและตรวจสอบใบแจ้งหนี้</p>
-          </div>
+              <a
+                class="panel-link"
+                href="/src/pages/room/room.html"
+              >
+                ดูทั้งหมด →
+              </a>
+            </header>
 
-          <span class="menu-status"></span>
-        </a>
+            <div
+              id="vacant-room-list"
+              class="chip-list"
+            >
+              <span class="mini-empty">
+                กำลังโหลดข้อมูล...
+              </span>
+            </div>
+          </section>
+        </div>
 
-        <a
-          class="menu-card"
-          href="/src/pages/report/report.html"
-          data-protected-link
-          data-owner-only
-        >
-          <div class="menu-icon">📊</div>
-
-          <div>
-            <h2>Dashboard / Report</h2>
-            <p>ตรวจสอบภาพรวมและรายงานของระบบ</p>
-          </div>
-
-          <span class="menu-status"></span>
-        </a>
+        <div
+          id="dashboard-message"
+          class="page-message"
+          role="alert"
+        ></div>
       </section>
     </main>
 

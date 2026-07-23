@@ -80,6 +80,24 @@ export function isOwner(): boolean {
   );
 }
 
+/**
+ * ชื่อบทบาทที่ใช้แสดงผลบนหน้าจอ
+ * (ค่าในระบบยังเก็บเป็น USER เหมือนเดิม)
+ */
+export function roleLabel(
+  role: string | undefined
+): string {
+  const value = String(role ?? "")
+    .trim()
+    .toUpperCase();
+
+  if (value === "USER") {
+    return "STAFF";
+  }
+
+  return value || "-";
+}
+
 export async function logout(): Promise<void> {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(USER_KEY);

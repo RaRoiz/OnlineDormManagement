@@ -1,6 +1,8 @@
 import "./bill.css";
 import "../../utils/theme";
 
+import { renderSidebar } from "../../utils/sidebar";
+
 import {
   requireLogin,
   setupLogoutButton
@@ -195,11 +197,32 @@ function formatDate(value: string): string {
   const parts =
     dateOnly.split("-");
 
-  if (parts.length !== 3) {
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  // ข้อมูลเก่าบางแถวเก็บมาแบบ "Wed Jul 29"
+  // — แปลงให้เป็น วว/ดด/ปปปป เหมือนกัน
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
     return value;
   }
 
-  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  // ถ้าข้อความไม่มีปี ให้ถือว่าเป็นปีปัจจุบัน
+  const year = /\d{4}/.test(value)
+    ? parsed.getFullYear()
+    : new Date().getFullYear();
+
+  const day = String(
+    parsed.getDate()
+  ).padStart(2, "0");
+
+  const month = String(
+    parsed.getMonth() + 1
+  ).padStart(2, "0");
+
+  return `${day}/${month}/${year}`;
 }
 
 function addDays(
@@ -1428,6 +1451,7 @@ async function initializeBillPage(): Promise<void> {
   }
 
   setupLogoutButton();
+  renderSidebar();
   await loadData();
 }
 

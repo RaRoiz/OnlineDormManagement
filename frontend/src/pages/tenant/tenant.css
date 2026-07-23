@@ -6,6 +6,13 @@
   min-width: 1240px;
 }
 
+/* role USER ไม่เห็นเลขประจำตัวผู้เช่า
+   (คอลัมน์ที่ 2 ของตาราง) */
+.role-user .tenant-page th:nth-child(2),
+.role-user .tenant-page td:nth-child(2) {
+  display: none;
+}
+
 /* toolbar 3 ช่อง: ค้นหา + ห้องพัก + สถานะ */
 .tenant-page .toolbar {
   grid-template-columns: minmax(0, 1fr) 190px 190px;
