@@ -292,8 +292,8 @@
         </div>
       </section>
 
-      <!-- ตารางข้อมูลผู้เช่า -->
-      <section class="table-card">
+      <!-- ตารางข้อมูลผู้เช่า จัดกลุ่มตามชั้น -->
+      <section>
         <div
           id="page-message"
           class="page-message"
@@ -301,38 +301,9 @@
           aria-live="polite"
         ></div>
 
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>ชื่อผู้เช่า</th>
-                <th>เบอร์โทร</th>
-                <th>ห้อง</th>
-                <th>สถานะ</th>
-
-                <th class="action-column">
-                  จัดการ
-                </th>
-              </tr>
-            </thead>
-
-            <tbody id="tenant-table-body">
-              <tr>
-                <td
-                  class="loading-cell"
-                  colspan="5"
-                >
-                  กำลังโหลดข้อมูลผู้เช่า...
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div id="tenant-groups" class="floor-group-list">
+          <p class="loading-cell">กำลังโหลดข้อมูลผู้เช่า...</p>
         </div>
-
-        <div
-          id="tenant-pagination"
-          class="pagination-controls"
-        ></div>
       </section>
     </main>
 

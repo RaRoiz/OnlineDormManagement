@@ -925,25 +925,18 @@ cancelButton?.addEventListener(
 searchInput?.addEventListener(
   "input",
   () => {
-    currentPage = 1;
     renderTenants();
   }
 );
 
 statusFilter?.addEventListener(
   "change",
-  () => {
-    currentPage = 1;
-    renderTenants();
-  }
+  renderTenants
 );
 
 roomFilter?.addEventListener(
   "change",
-  () => {
-    currentPage = 1;
-    renderTenants();
-  }
+  renderTenants
 );
 
 async function initializeTenantPage(): Promise<void> {

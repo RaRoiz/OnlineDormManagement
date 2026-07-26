@@ -747,7 +747,7 @@ function renderRecords(): void {
 
     tableBody.innerHTML = pageRecords
       .map(record => `
-      <tr>
+      <tr tabindex="0" data-meter-id="${record.meterId}">
         <td>
           ${formatBillingDate(record.billingMonth)}
         </td>
@@ -769,15 +769,6 @@ function renderRecords(): void {
         </td>
 
         <td class="action-column">
-          <button
-            class="table-button detail-button"
-            type="button"
-            data-action="detail"
-            data-meter-id="${record.meterId}"
-          >
-            ดูรายละเอียด
-          </button>
-
           <button
             class="table-button edit-button"
             type="button"
@@ -957,137 +948,180 @@ form?.addEventListener(
   }
 );
 
-tableBody?.addEventListener(
-  "click",
-  async event => {
-    const target = event.target;
+function openMeterDetail(record: MeterRecord): void {
+  const monthText = formatBillingDate(
+    record.billingMonth
+  );
 
-    if (!(target instanceof HTMLButtonElement)) {
-      return;
-    }
+  void detailDialog(
+    `รายละเอียดมิเตอร์ ห้อง ${record.roomNo} เดือน ${monthText}`,
+    [
+      { label: "เดือน", value: monthText },
+      { label: "ห้อง", value: record.roomNo },
+      {
+        label: "ผู้เช่า",
+        value: record.tenantName || "-"
+      },
+      {
+        label: "มิเตอร์น้ำก่อนหน้า",
+        value: String(record.waterPrevious)
+      },
+      {
+        label: "มิเตอร์น้ำปัจจุบัน",
+        value: String(record.waterCurrent)
+      },
+      {
+        label: "หน่วยน้ำที่ใช้",
+        value: String(record.waterUnits)
+      },
+      {
+        label: "ราคาต่อหน่วยน้ำ",
+        value: formatMoney(record.waterRate)
+      },
+      {
+        label: "ค่าน้ำ",
+        value: formatMoney(record.waterAmount)
+      },
+      {
+        label: "มิเตอร์ไฟก่อนหน้า",
+        value: String(record.electricPrevious)
+      },
+      {
+        label: "มิเตอร์ไฟปัจจุบัน",
+        value: String(record.electricCurrent)
+      },
+      {
+        label: "หน่วยไฟที่ใช้",
+        value: String(record.electricUnits)
+      },
+      {
+        label: "ราคาต่อหน่วยไฟ",
+        value: formatMoney(record.electricRate)
+      },
+      {
+        label: "ค่าไฟ",
+        value: formatMoney(record.electricAmount)
+      },
+      {
+        label: "ยอดรวม",
+        value: formatMoney(record.totalUtility)
+      }
+    ]
+  );
+}
 
-    const meterId =
-      target.dataset.meterId;
+async function handleMeterAction(
+  button: HTMLButtonElement
+): Promise<void> {
+  const meterId = button.dataset.meterId;
+  const action = button.dataset.action;
 
-    const action =
-      target.dataset.action;
-
-    if (!meterId) {
-      return;
-    }
-
-    const record = meterRecords.find(
-      item => item.meterId === meterId
-    );
-
-    if (!record) {
-      return;
-    }
-
-    if (action === "edit") {
-      openForm(record);
-      return;
-    }
-
-    if (action === "detail") {
-      const monthText = formatBillingDate(
-        record.billingMonth
-      );
-
-      void detailDialog(
-        `รายละเอียดมิเตอร์ ห้อง ${record.roomNo} เดือน ${monthText}`,
-        [
-          { label: "เดือน", value: monthText },
-          { label: "ห้อง", value: record.roomNo },
-          {
-            label: "ผู้เช่า",
-            value: record.tenantName || "-"
-          },
-          {
-            label: "มิเตอร์น้ำก่อนหน้า",
-            value: String(record.waterPrevious)
-          },
-          {
-            label: "มิเตอร์น้ำปัจจุบัน",
-            value: String(record.waterCurrent)
-          },
-          {
-            label: "หน่วยน้ำที่ใช้",
-            value: String(record.waterUnits)
-          },
-          {
-            label: "ราคาต่อหน่วยน้ำ",
-            value: formatMoney(record.waterRate)
-          },
-          {
-            label: "ค่าน้ำ",
-            value: formatMoney(record.waterAmount)
-          },
-          {
-            label: "มิเตอร์ไฟก่อนหน้า",
-            value: String(record.electricPrevious)
-          },
-          {
-            label: "มิเตอร์ไฟปัจจุบัน",
-            value: String(record.electricCurrent)
-          },
-          {
-            label: "หน่วยไฟที่ใช้",
-            value: String(record.electricUnits)
-          },
-          {
-            label: "ราคาต่อหน่วยไฟ",
-            value: formatMoney(record.electricRate)
-          },
-          {
-            label: "ค่าไฟ",
-            value: formatMoney(record.electricAmount)
-          },
-          {
-            label: "ยอดรวม",
-            value: formatMoney(record.totalUtility)
-          }
-        ]
-      );
-
-      return;
-    }
-
-    if (action !== "delete") {
-      return;
-    }
-
-    const confirmed = await confirmDialog({
-      title: "ลบข้อมูลมิเตอร์",
-      message: `ต้องการลบข้อมูลมิเตอร์ห้อง ${record.roomNo} ประจำเดือน ${record.billingMonth} หรือไม่`,
-      confirmText: "ลบข้อมูล",
-      tone: "danger"
-    });
-
-    if (!confirmed) {
-      return;
-    }
-
-    const result =
-      await deleteMeter(meterId);
-
-    if (!result.success) {
-      showPageMessage(
-        result.message,
-        "error"
-      );
-
-      return;
-    }
-
-    showPageMessage(
-      "ลบข้อมูลมิเตอร์สำเร็จ",
-      "success"
-    );
-
-    await loadData();
+  if (!meterId) {
+    return;
   }
-);
+
+  const record = meterRecords.find(
+    item => item.meterId === meterId
+  );
+
+  if (!record) {
+    return;
+  }
+
+  if (action === "edit") {
+    openForm(record);
+    return;
+  }
+
+  if (action !== "delete") {
+    return;
+  }
+
+  const confirmed = await confirmDialog({
+    title: "ลบข้อมูลมิเตอร์",
+    message: `ต้องการลบข้อมูลมิเตอร์ห้อง ${record.roomNo} ประจำเดือน ${record.billingMonth} หรือไม่`,
+    confirmText: "ลบข้อมูล",
+    tone: "danger"
+  });
+
+  if (!confirmed) {
+    return;
+  }
+
+  const result =
+    await deleteMeter(meterId);
+
+  if (!result.success) {
+    showPageMessage(
+      result.message,
+      "error"
+    );
+
+    return;
+  }
+
+  showPageMessage(
+    "ลบข้อมูลมิเตอร์สำเร็จ",
+    "success"
+  );
+
+  await loadData();
+}
+
+tableBody?.addEventListener("click", async event => {
+  const target = event.target;
+
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const button = target.closest("button");
+
+  if (button instanceof HTMLButtonElement) {
+    await handleMeterAction(button);
+    return;
+  }
+
+  const row = target.closest("tr[data-meter-id]");
+
+  if (row instanceof HTMLTableRowElement) {
+    const meterId = row.dataset.meterId;
+    const record = meterRecords.find(item => item.meterId === meterId);
+
+    if (record) {
+      openMeterDetail(record);
+    }
+  }
+});
+
+tableBody?.addEventListener("keydown", event => {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  const target = event.target;
+
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  if (target.closest("button")) {
+    return;
+  }
+
+  const row = target.closest("tr[data-meter-id]");
+
+  if (row instanceof HTMLTableRowElement) {
+    event.preventDefault();
+
+    const meterId = row.dataset.meterId;
+    const record = meterRecords.find(item => item.meterId === meterId);
+
+    if (record) {
+      openMeterDetail(record);
+    }
+  }
+});
 
 [
   waterPreviousInput,

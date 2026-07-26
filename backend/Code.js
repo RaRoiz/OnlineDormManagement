@@ -44,16 +44,17 @@ function doPost(e) {
       case "validateToken":
         return jsonResponse(validateToken(request.token));
 
-      /* โปรไฟล์ตัวเอง — เฉพาะ OWNER */
+      /* โปรไฟล์ตัวเอง — ทุก role แก้ไขได้ (handler เช็ค token เองอยู่แล้ว) */
       case "updateOwnProfile":
-        return jsonResponse(ownerOnly_(request, updateOwnProfile));
+        return jsonResponse(updateOwnProfile(request));
 
       case "changeOwnPassword":
-        return jsonResponse(ownerOnly_(request, changeOwnPassword));
+        return jsonResponse(changeOwnPassword(request));
 
       case "uploadAvatar":
-        return jsonResponse(ownerOnly_(request, uploadAvatar));
+        return jsonResponse(uploadAvatar(request));
 
+      /* ชื่อหอ: แก้ได้เฉพาะ OWNER */
       case "updateOwnDorm":
         return jsonResponse(ownerOnly_(request, updateOwnDorm));
 

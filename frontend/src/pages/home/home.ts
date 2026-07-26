@@ -177,19 +177,17 @@ function setupUserDropdown(): void {
   menu.className = "header-dropdown-menu";
   menu.hidden = true;
 
-  if (isOwner()) {
-    const profileLink =
-      document.createElement("a");
+  const profileLink =
+    document.createElement("a");
 
-    profileLink.className =
-      "header-dropdown-item";
-    profileLink.href =
-      "/src/pages/profile/profile.html";
-    profileLink.textContent =
-      "โปรไฟล์ของฉัน";
+  profileLink.className =
+    "header-dropdown-item";
+  profileLink.href =
+    "/src/pages/profile/profile.html";
+  profileLink.textContent =
+    "โปรไฟล์ของฉัน";
 
-    menu.append(profileLink);
-  }
+  menu.append(profileLink);
 
   authButton.classList.add(
     "header-dropdown-item"

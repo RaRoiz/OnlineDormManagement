@@ -730,7 +730,7 @@ function renderBills(): void {
           escapeHtml(bill.billId);
 
         return `
-          <tr>
+          <tr tabindex="0" data-bill-id="${safeBillId}">
             <td>
               <strong>
                 ${escapeHtml(bill.billNo)}
@@ -768,15 +768,6 @@ function renderBills(): void {
             </td>
 
             <td class="action-column">
-              <button
-                class="table-button detail-button"
-                type="button"
-                data-action="detail"
-                data-bill-id="${safeBillId}"
-              >
-                ดูรายละเอียด
-              </button>
-
               <button
                 class="table-button print-button"
                 type="button"
@@ -1288,20 +1279,61 @@ form?.addEventListener(
   }
 );
 
-tableBody?.addEventListener(
-  "click",
-  async event => {
-    const target = event.target;
+function openBillDetail(bill: Bill): void {
+  void detailDialog(`รายละเอียดบิล ${bill.billNo}`, [
+    { label: "เลขที่บิล", value: bill.billNo },
+    { label: "ห้อง", value: bill.roomNo },
+    { label: "ผู้เช่า", value: bill.tenantName },
+    {
+      label: "เดือน",
+      value: formatMonth(bill.billingMonth)
+    },
+    {
+      label: "ค่าเช่า",
+      value: formatMoney(bill.roomRent)
+    },
+    {
+      label: "ค่าน้ำ",
+      value: formatMoney(bill.waterAmount)
+    },
+    {
+      label: "ค่าไฟ",
+      value: formatMoney(bill.electricAmount)
+    },
+    {
+      label: "ค่ามัดจำ",
+      value: formatMoney(bill.depositAmount)
+    },
+    {
+      label: "ค่าซ่อม",
+      value: formatMoney(bill.repairAmount)
+    },
+    {
+      label: "ค่าเสียหาย",
+      value: formatMoney(bill.damageAmount)
+    },
+    {
+      label: "ยอดรวม",
+      value: formatMoney(bill.totalAmount)
+    },
+    {
+      label: "ครบกำหนด",
+      value: formatDate(bill.dueDate)
+    },
+    { label: "สถานะ", value: bill.paymentStatus },
+    {
+      label: "วันที่ชำระ",
+      value: bill.paidAt
+        ? formatDate(bill.paidAt)
+        : "-"
+    },
+    { label: "หมายเหตุ", value: bill.note || "-" }
+  ]);
+}
 
-    if (
-      !(
-        target instanceof
-        HTMLButtonElement
-      )
-    ) {
-      return;
-    }
-
+async function handleBillAction(
+  target: HTMLButtonElement
+): Promise<void> {
     const billId =
       target.dataset.billId;
 
@@ -1327,60 +1359,6 @@ tableBody?.addEventListener(
 
     if (action === "edit") {
       openForm(bill);
-      return;
-    }
-
-    if (action === "detail") {
-      void detailDialog(`รายละเอียดบิล ${bill.billNo}`, [
-        { label: "เลขที่บิล", value: bill.billNo },
-        { label: "ห้อง", value: bill.roomNo },
-        { label: "ผู้เช่า", value: bill.tenantName },
-        {
-          label: "เดือน",
-          value: formatMonth(bill.billingMonth)
-        },
-        {
-          label: "ค่าเช่า",
-          value: formatMoney(bill.roomRent)
-        },
-        {
-          label: "ค่าน้ำ",
-          value: formatMoney(bill.waterAmount)
-        },
-        {
-          label: "ค่าไฟ",
-          value: formatMoney(bill.electricAmount)
-        },
-        {
-          label: "ค่ามัดจำ",
-          value: formatMoney(bill.depositAmount)
-        },
-        {
-          label: "ค่าซ่อม",
-          value: formatMoney(bill.repairAmount)
-        },
-        {
-          label: "ค่าเสียหาย",
-          value: formatMoney(bill.damageAmount)
-        },
-        {
-          label: "ยอดรวม",
-          value: formatMoney(bill.totalAmount)
-        },
-        {
-          label: "ครบกำหนด",
-          value: formatDate(bill.dueDate)
-        },
-        { label: "สถานะ", value: bill.paymentStatus },
-        {
-          label: "วันที่ชำระ",
-          value: bill.paidAt
-            ? formatDate(bill.paidAt)
-            : "-"
-        },
-        { label: "หมายเหตุ", value: bill.note || "-" }
-      ]);
-
       return;
     }
 
@@ -1491,8 +1469,62 @@ tableBody?.addEventListener(
 
       await loadData();
     }
+}
+
+tableBody?.addEventListener("click", async event => {
+  const target = event.target;
+
+  if (!(target instanceof HTMLElement)) {
+    return;
   }
-);
+
+  const button = target.closest("button");
+
+  if (button instanceof HTMLButtonElement) {
+    await handleBillAction(button);
+    return;
+  }
+
+  const row = target.closest("tr[data-bill-id]");
+
+  if (row instanceof HTMLTableRowElement) {
+    const billId = row.dataset.billId;
+    const bill = bills.find(item => item.billId === billId);
+
+    if (bill) {
+      openBillDetail(bill);
+    }
+  }
+});
+
+tableBody?.addEventListener("keydown", event => {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  const target = event.target;
+
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  if (target.closest("button")) {
+    return;
+  }
+
+  const row = target.closest("tr[data-bill-id]");
+
+  if (row instanceof HTMLTableRowElement) {
+    event.preventDefault();
+
+    const billId = row.dataset.billId;
+    const bill = bills.find(item => item.billId === billId);
+
+    if (bill) {
+      openBillDetail(bill);
+    }
+  }
+});
 
 meterInput?.addEventListener(
   "change",

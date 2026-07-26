@@ -115,18 +115,16 @@ function renderHeaderUserInfo(
   menu.className = "header-dropdown-menu";
   menu.hidden = true;
 
-  // OWNER ไปหน้าโปรไฟล์ได้ — คนอื่นเห็นแค่ "ออกจากระบบ"
-  if (isOwner()) {
-    const profileLink =
-      document.createElement("a");
+  // ทุก role แก้ไขโปรไฟล์ของตัวเองได้
+  const profileLink =
+    document.createElement("a");
 
-    profileLink.className = "header-dropdown-item";
-    profileLink.href =
-      "/src/pages/profile/profile.html";
-    profileLink.textContent = "โปรไฟล์ของฉัน";
+  profileLink.className = "header-dropdown-item";
+  profileLink.href =
+    "/src/pages/profile/profile.html";
+  profileLink.textContent = "โปรไฟล์ของฉัน";
 
-    menu.append(profileLink);
-  }
+  menu.append(profileLink);
 
   logoutButton.classList.add(
     "header-dropdown-item"

@@ -973,6 +973,101 @@ tbody tr:last-child td {
   border-bottom: 0;
 }
 
+tbody tr[data-room-id],
+tbody tr[data-tenant-id],
+tbody tr[data-meter-id],
+tbody tr[data-bill-id] {
+  cursor: pointer;
+}
+
+tbody tr[data-room-id]:focus-visible,
+tbody tr[data-tenant-id]:focus-visible,
+tbody tr[data-meter-id]:focus-visible,
+tbody tr[data-bill-id]:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+/* =========================
+   Floor groups (Room/Tenant — จัดกลุ่มตามชั้น)
+========================= */
+
+.floor-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.floor-group-list > .loading-cell,
+.floor-group-list > .empty-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+}
+
+.floor-group {
+  overflow: hidden;
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+
+  box-shadow: var(--shadow);
+}
+
+.floor-group-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 16px 20px;
+
+  cursor: pointer;
+  list-style: none;
+
+  font-family: var(--font-display);
+  font-weight: 600;
+
+  user-select: none;
+}
+
+.floor-group-summary::-webkit-details-marker {
+  display: none;
+}
+
+.floor-group-summary:hover {
+  background: var(--surface-2);
+}
+
+.floor-group-arrow {
+  display: inline-block;
+  margin-right: 8px;
+
+  color: var(--muted);
+
+  transition: transform 0.15s ease;
+}
+
+.floor-group[open] .floor-group-arrow {
+  transform: rotate(90deg);
+}
+
+.floor-group-count {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.floor-group > .table-wrapper {
+  border-top: 1px solid var(--line-soft);
+}
+
 /* =========================
    Status badges
 ========================= */

@@ -4,7 +4,7 @@ import "../../utils/theme";
 import { renderSidebar } from "../../utils/sidebar";
 
 import {
-  requireOwner,
+  requireLogin,
   setupLogoutButton
 } from "../../utils/auth.guard";
 
@@ -14,6 +14,7 @@ import { renderAvatar } from "../../utils/avatar";
 import {
   changeOwnPassword,
   getCurrentUser,
+  isOwner,
   roleLabel,
   updateOwnDorm,
   updateOwnProfile,
@@ -102,6 +103,11 @@ const passwordSaveButton =
     "#password-save-button"
   );
 
+const dormSection =
+  document.querySelector<HTMLElement>(
+    "#dorm-section"
+  );
+
 const dormForm =
   document.querySelector<HTMLFormElement>(
     "#dorm-form"
@@ -152,6 +158,12 @@ function loadUserIntoForm(): void {
 
   if (!user) {
     return;
+  }
+
+  // ชื่อหอ + ลิงก์เชิญพนักงาน เป็นเรื่องจัดการหอ
+  // ไม่ใช่ข้อมูลส่วนตัว — เห็นได้เฉพาะ OWNER
+  if (dormSection && !isOwner()) {
+    dormSection.hidden = true;
   }
 
   if (avatarPreview) {
@@ -542,7 +554,7 @@ copyInviteLinkButton?.addEventListener(
 );
 
 function initializeProfilePage(): void {
-  if (!requireOwner()) {
+  if (!requireLogin()) {
     return;
   }
 
