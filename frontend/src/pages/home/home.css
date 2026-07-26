@@ -28,6 +28,8 @@
   display: flex;
   align-items: center;
   gap: 14px;
+
+  min-width: 0;
 }
 
 .brand-logo {
@@ -54,12 +56,19 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+
+  min-width: 0;
 }
 
 .brand-text strong {
+  display: block;
+  overflow: hidden;
+
   font-family: var(--font-display);
   font-size: 19px;
   font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .brand-text small {
@@ -98,6 +107,8 @@
 }
 
 .auth-button {
+  flex: none;
+
   min-height: 42px;
   padding: 0 18px;
 
@@ -109,6 +120,7 @@
 
   font-family: var(--font-display);
   font-weight: 500;
+  white-space: nowrap;
 
   transition: background 0.18s ease, color 0.18s ease,
     transform 0.18s ease, opacity 0.18s ease;
@@ -170,37 +182,99 @@
 ========================= */
 
 .welcome-hero {
-  max-width: 620px;
-  margin: 8vh auto 0;
+  position: relative;
+  overflow: hidden;
 
-  padding: 46px 42px;
+  max-width: 660px;
+  margin: 7vh auto 0;
+
+  padding: 52px 42px 46px;
 
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
 
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lg);
   text-align: center;
+}
+
+.welcome-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+
+  height: 6px;
+
+  background: linear-gradient(
+    90deg,
+    var(--brand),
+    #ec4899
+  );
 }
 
 .welcome-hero[hidden] {
   display: none;
 }
 
-.welcome-hero h1 {
-  margin: 12px 0 0;
+.welcome-hero .eyebrow-text {
+  font-size: 13px;
+}
 
-  font-size: clamp(26px, 4vw, 36px);
+.welcome-hero h1 {
+  margin: 14px 0 0;
+
+  font-size: clamp(30px, 5.5vw, 42px);
   line-height: 1.2;
 }
 
 .welcome-hero p {
-  max-width: 42ch;
-  margin: 14px auto 26px;
+  max-width: 46ch;
+  margin: 16px auto 30px;
 
   color: var(--ink-soft);
-  font-size: 15.5px;
-  line-height: 1.7;
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+.welcome-hero .primary-button {
+  min-height: 52px;
+  padding: 0 30px;
+
+  font-size: 16.5px;
+}
+
+.welcome-features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+
+  margin: 30px 0 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.welcome-feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 9px 16px;
+
+  color: var(--ink-soft);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.welcome-feature-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 /* =========================
@@ -517,7 +591,21 @@
 
   .welcome-hero {
     margin-top: 4vh;
-    padding: 34px 22px;
+    padding: 40px 22px 32px;
+  }
+
+  .welcome-hero .primary-button {
+    width: 100%;
+  }
+
+  .welcome-features {
+    gap: 8px;
+    margin-top: 26px;
+  }
+
+  .welcome-feature {
+    padding: 8px 14px;
+    font-size: 13.5px;
   }
 }
 
@@ -525,6 +613,14 @@
   .brand-text small,
   .user-info {
     display: none;
+  }
+
+  .welcome-hero {
+    padding: 34px 18px 28px;
+  }
+
+  .welcome-hero p {
+    font-size: 15.5px;
   }
 
   .stat-grid {
