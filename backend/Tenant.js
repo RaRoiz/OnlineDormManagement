@@ -45,6 +45,9 @@ function getTenants(request) {
         row[index.tenantId] || ""
       ).trim();
     })
+    .filter(function (row) {
+      return rowInDormScope_(row, index, auth);
+    })
     .map(function (row) {
       return tenantFromRow_(
         row,
@@ -66,6 +69,10 @@ function createTenant(request) {
   if (!auth.success) {
     return auth;
   }
+
+  const dormId = String(
+    (auth.user && auth.user.dormId) || ""
+  );
 
   const input = validateTenantInput_(
     request.tenant
@@ -157,7 +164,8 @@ sheet.appendRow([
   createdTenant.checkOutDate,
   createdTenant.status,
   createdTenant.createdAt,
-  createdTenant.updatedAt
+  createdTenant.updatedAt,
+  dormId
 ]);
 
 bumpDormCache_();
@@ -217,6 +225,13 @@ function updateTenant(request) {
     }
 
     if (targetRow === -1) {
+      return {
+        success: false,
+        message: "ไม่พบข้อมูลผู้เช่า"
+      };
+    }
+
+    if (!rowInDormScope_(values[targetRow - 1], index, auth)) {
       return {
         success: false,
         message: "ไม่พบข้อมูลผู้เช่า"
@@ -417,6 +432,13 @@ function checkoutTenant(request) {
         continue;
       }
 
+      if (!rowInDormScope_(row, index, auth)) {
+        return {
+          success: false,
+          message: "ไม่พบข้อมูลผู้เช่า"
+        };
+      }
+
       const currentStatus = String(
         row[index.status] || ""
       )
@@ -599,6 +621,13 @@ function deleteTenant(request) {
 
       if (currentTenantId !== tenantId) {
         continue;
+      }
+
+      if (!rowInDormScope_(row, index, auth)) {
+        return {
+          success: false,
+          message: "ไม่พบข้อมูลผู้เช่า"
+        };
       }
 
       const status = String(

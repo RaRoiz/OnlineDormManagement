@@ -5,6 +5,10 @@ export interface User {
   username: string;
   fullName: string;
   role: string;
+  dormId?: string;
+  dormName?: string;
+  phone?: string;
+  avatarUrl?: string;
 }
 
 export interface LoginResponse {
@@ -70,6 +74,13 @@ export function getCurrentUser(): User | null {
   }
 }
 
+export function setCurrentUser(user: User): void {
+  sessionStorage.setItem(
+    USER_KEY,
+    JSON.stringify(user)
+  );
+}
+
 export function isOwner(): boolean {
   const user = getCurrentUser();
 
@@ -77,6 +88,16 @@ export function isOwner(): boolean {
     String(user?.role ?? "")
       .trim()
       .toUpperCase() === "OWNER"
+  );
+}
+
+export function isSuperAdmin(): boolean {
+  const user = getCurrentUser();
+
+  return (
+    String(user?.role ?? "")
+      .trim()
+      .toUpperCase() === "SUPER_ADMIN"
   );
 }
 
@@ -95,6 +116,10 @@ export function roleLabel(
     return "STAFF";
   }
 
+  if (value === "SUPER_ADMIN") {
+    return "ผู้ดูแลระบบ";
+  }
+
   return value || "-";
 }
 
@@ -105,4 +130,84 @@ export async function logout(): Promise<void> {
 
 export function getToken(): string | null {
   return sessionStorage.getItem(TOKEN_KEY);
+}
+
+export interface ProfileResponse {
+  success: boolean;
+  message: string;
+  user?: User;
+}
+
+export async function updateOwnProfile(
+  fullName: string,
+  phone: string
+): Promise<ProfileResponse> {
+  const result =
+    await apiRequest<ProfileResponse>({
+      action: "updateOwnProfile",
+      token: getToken(),
+      fullName,
+      phone
+    });
+
+  if (result.success && result.user) {
+    setCurrentUser(result.user);
+  }
+
+  return result;
+}
+
+export interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+export async function changeOwnPassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<ChangePasswordResponse> {
+  return apiRequest<ChangePasswordResponse>({
+    action: "changeOwnPassword",
+    token: getToken(),
+    currentPassword,
+    newPassword
+  });
+}
+
+export async function uploadAvatar(
+  fileName: string,
+  mimeType: string,
+  base64Data: string
+): Promise<ProfileResponse> {
+  const result =
+    await apiRequest<ProfileResponse>({
+      action: "uploadAvatar",
+      token: getToken(),
+      fileName,
+      mimeType,
+      base64Data
+    });
+
+  if (result.success && result.user) {
+    setCurrentUser(result.user);
+  }
+
+  return result;
+}
+
+export async function updateOwnDorm(
+  dormName: string
+): Promise<ProfileResponse> {
+  const result =
+    await apiRequest<ProfileResponse>({
+      action: "updateOwnDorm",
+      token: getToken(),
+      dormName
+    });
+
+  if (result.success && result.user) {
+    setCurrentUser(result.user);
+  }
+
+  return result;
 }

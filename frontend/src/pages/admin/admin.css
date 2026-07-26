@@ -1,0 +1,185 @@
+@import "../../styles/theme.css";
+
+.admin-page table {
+  min-width: 900px;
+}
+
+.search-group {
+  max-width: 360px;
+  margin-bottom: 18px;
+}
+
+/* =========================
+   Summary / KPI cards
+========================= */
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+
+  margin-bottom: 34px;
+}
+
+.summary-card {
+  position: relative;
+
+  min-height: 138px;
+  padding: 22px;
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+
+  box-shadow: var(--shadow-sm);
+
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.summary-card span {
+  display: block;
+  margin-bottom: 12px;
+
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.summary-card strong {
+  display: block;
+  margin-bottom: 8px;
+
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.summary-card small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.summary-card::before {
+  position: absolute;
+  top: 18px;
+  left: 0;
+
+  width: 4px;
+  height: 38px;
+
+  content: "";
+  background: var(--page-accent, var(--muted));
+  border-radius: 0 var(--r-pill) var(--r-pill) 0;
+}
+
+.vacant-card::before {
+  background: var(--ok);
+}
+
+.occupied-card::before {
+  background: var(--info);
+}
+
+.warning-card::before {
+  background: var(--warn);
+}
+
+.vacant-card strong {
+  color: var(--ok);
+}
+
+.occupied-card strong {
+  color: var(--info);
+}
+
+.warning-card strong {
+  color: var(--warn);
+}
+
+/* =========================
+   Section card (create form / table)
+========================= */
+
+.report-section {
+  padding: 26px;
+  margin-bottom: 24px;
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+
+  box-shadow: var(--shadow);
+}
+
+.report-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-heading {
+  margin-bottom: 22px;
+}
+
+.section-heading h3 {
+  margin: 4px 0 0;
+
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+
+  margin-top: 18px;
+}
+
+/* =========================
+   Create-dorm form
+========================= */
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+}
+
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1200px) {
+  .summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .report-section {
+    padding: 20px 16px;
+  }
+
+  .filter-actions {
+    flex-direction: column-reverse;
+  }
+
+  .filter-actions button {
+    width: 100%;
+  }
+}

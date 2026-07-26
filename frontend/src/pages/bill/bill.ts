@@ -17,7 +17,7 @@ import {
   updateBill
 } from "../../services/bill.service";
 
-import { confirmDialog } from "../../utils/dialog";
+import { confirmDialog, detailDialog } from "../../utils/dialog";
 import { showToast } from "../../utils/toast";
 
 import {
@@ -27,6 +27,12 @@ import {
 import {
   getRooms
 } from "../../services/room.service";
+
+import {
+  paginate,
+  getTotalPages,
+  renderPaginationControls
+} from "../../utils/pagination";
 
 import type {
   Bill,
@@ -40,6 +46,8 @@ import type {
 import type {
   Room
 } from "../../types/room";
+
+const PAGE_SIZE = 10;
 
 const formPanel =
   document.querySelector<HTMLElement>(
@@ -118,6 +126,8 @@ const pageMessage = document.querySelector<HTMLElement>("#page-message");
 
 const tableBody = document.querySelector<HTMLTableSectionElement>("#bill-table-body");
 
+const paginationContainer = document.querySelector<HTMLElement>("#bill-pagination");
+
 const searchInput = document.querySelector<HTMLInputElement>("#search-input");
 
 const statusFilter = document.querySelector<HTMLSelectElement>("#status-filter");
@@ -137,6 +147,7 @@ let meters: MeterRecord[] = [];
 let rooms: Room[] = [];
 
 let editingBillId: string | null = null;
+let currentPage = 1;
 
 function escapeHtml(value: string): string {
   const element =
@@ -682,18 +693,21 @@ function renderBills(): void {
       <tr>
         <td
           class="empty-cell"
-          colspan="12"
+          colspan="6"
         >
           ไม่พบข้อมูลใบแจ้งหนี้
         </td>
       </tr>
     `;
+  } else {
+    const pageBills = paginate(
+      filteredBills,
+      currentPage,
+      PAGE_SIZE
+    );
 
-    return;
-  }
-
-  tableBody.innerHTML =
-    filteredBills
+    tableBody.innerHTML =
+      pageBills
       .map(bill => {
         const status =
           getBillStatus(bill);
@@ -712,11 +726,6 @@ function renderBills(): void {
               ? "status-overdue"
               : "status-unpaid";
 
-        const extraAmount =
-          bill.depositAmount +
-          bill.repairAmount +
-          bill.damageAmount;
-
         const safeBillId =
           escapeHtml(bill.billId);
 
@@ -729,42 +738,16 @@ function renderBills(): void {
             </td>
 
             <td>
+              ${escapeHtml(bill.roomNo)}
+              <br />
+              <small style="color: var(--muted);">
+                ${escapeHtml(bill.tenantName)}
+              </small>
+            </td>
+
+            <td>
               ${formatMonth(
                 bill.billingMonth
-              )}
-            </td>
-
-            <td>
-              ${escapeHtml(bill.roomNo)}
-            </td>
-
-            <td>
-              ${escapeHtml(
-                bill.tenantName
-              )}
-            </td>
-
-            <td>
-              ${formatMoney(
-                bill.roomRent
-              )}
-            </td>
-
-            <td>
-              ${formatMoney(
-                bill.waterAmount
-              )}
-            </td>
-
-            <td>
-              ${formatMoney(
-                bill.electricAmount
-              )}
-            </td>
-
-            <td>
-              ${formatMoney(
-                extraAmount
               )}
             </td>
 
@@ -777,12 +760,6 @@ function renderBills(): void {
             </td>
 
             <td>
-              ${formatDate(
-                bill.dueDate
-              )}
-            </td>
-
-            <td>
               <span
                 class="status-badge ${statusClass}"
               >
@@ -791,6 +768,15 @@ function renderBills(): void {
             </td>
 
             <td class="action-column">
+              <button
+                class="table-button detail-button"
+                type="button"
+                data-action="detail"
+                data-bill-id="${safeBillId}"
+              >
+                ดูรายละเอียด
+              </button>
+
               <button
                 class="table-button print-button"
                 type="button"
@@ -853,6 +839,19 @@ function renderBills(): void {
         `;
       })
       .join("");
+  }
+
+  if (paginationContainer) {
+    renderPaginationControls(
+      paginationContainer,
+      currentPage,
+      getTotalPages(filteredBills.length, PAGE_SIZE),
+      page => {
+        currentPage = page;
+        renderBills();
+      }
+    );
+  }
 }
 
 /**
@@ -1135,6 +1134,8 @@ function printBill(bill: Bill): void {
 }
 
 async function loadData(): Promise<void> {
+  currentPage = 1;
+
   try {
     clearPageMessage();
 
@@ -1212,6 +1213,30 @@ form?.addEventListener(
 
     const isEditing =
       Boolean(editingBillId);
+
+    const selectedMeter = getSelectedMeter();
+
+    const billLabel = selectedMeter
+      ? `ห้อง ${selectedMeter.roomNo} เดือน ${formatMonth(
+          selectedMeter.billingMonth
+        )}`
+      : "ใบแจ้งหนี้นี้";
+
+    const confirmed = await confirmDialog({
+      title: isEditing
+        ? "ยืนยันการแก้ไข"
+        : "ยืนยันการสร้าง",
+      message: `ต้องการ${
+        isEditing ? "บันทึกการแก้ไข" : "สร้าง"
+      }ใบแจ้งหนี้ ${billLabel} หรือไม่`,
+      confirmText: isEditing
+        ? "บันทึกการแก้ไข"
+        : "สร้างใบแจ้งหนี้"
+    });
+
+    if (!confirmed) {
+      return;
+    }
 
     if (saveButton) {
       saveButton.disabled = true;
@@ -1302,6 +1327,60 @@ tableBody?.addEventListener(
 
     if (action === "edit") {
       openForm(bill);
+      return;
+    }
+
+    if (action === "detail") {
+      void detailDialog(`รายละเอียดบิล ${bill.billNo}`, [
+        { label: "เลขที่บิล", value: bill.billNo },
+        { label: "ห้อง", value: bill.roomNo },
+        { label: "ผู้เช่า", value: bill.tenantName },
+        {
+          label: "เดือน",
+          value: formatMonth(bill.billingMonth)
+        },
+        {
+          label: "ค่าเช่า",
+          value: formatMoney(bill.roomRent)
+        },
+        {
+          label: "ค่าน้ำ",
+          value: formatMoney(bill.waterAmount)
+        },
+        {
+          label: "ค่าไฟ",
+          value: formatMoney(bill.electricAmount)
+        },
+        {
+          label: "ค่ามัดจำ",
+          value: formatMoney(bill.depositAmount)
+        },
+        {
+          label: "ค่าซ่อม",
+          value: formatMoney(bill.repairAmount)
+        },
+        {
+          label: "ค่าเสียหาย",
+          value: formatMoney(bill.damageAmount)
+        },
+        {
+          label: "ยอดรวม",
+          value: formatMoney(bill.totalAmount)
+        },
+        {
+          label: "ครบกำหนด",
+          value: formatDate(bill.dueDate)
+        },
+        { label: "สถานะ", value: bill.paymentStatus },
+        {
+          label: "วันที่ชำระ",
+          value: bill.paidAt
+            ? formatDate(bill.paidAt)
+            : "-"
+        },
+        { label: "หมายเหตุ", value: bill.note || "-" }
+      ]);
+
       return;
     }
 
@@ -1440,10 +1519,20 @@ closeFormButton?.addEventListener("click",closeForm);
 
 cancelButton?.addEventListener("click",closeForm);
 
-searchInput?.addEventListener("input",renderBills);
+searchInput?.addEventListener("input", () => {
+  currentPage = 1;
+  renderBills();
+});
 
-statusFilter?.addEventListener("change",renderBills);
-roomFilter?.addEventListener("change", renderBills);
+statusFilter?.addEventListener("change", () => {
+  currentPage = 1;
+  renderBills();
+});
+
+roomFilter?.addEventListener("change", () => {
+  currentPage = 1;
+  renderBills();
+});
 
 async function initializeBillPage(): Promise<void> {
   if (!requireLogin()) {

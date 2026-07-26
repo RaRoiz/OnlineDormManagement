@@ -301,3 +301,113 @@ export function promptDialog(
     });
   });
 }
+
+export interface DetailField {
+  label: string;
+  value: string;
+}
+
+/**
+ * Popup แสดงรายละเอียดแบบอ่านอย่างเดียว (label/value ทุกฟิลด์
+ * ของเรคคอร์ด) ใช้กับปุ่ม "ดูรายละเอียด" ในตารางที่คอลัมน์เยอะ
+ */
+export function detailDialog(
+  title: string,
+  fields: DetailField[]
+): Promise<void> {
+  activeOverlay?.remove();
+
+  return new Promise<void>(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+
+    const heading = document.createElement("h3");
+    heading.className = "modal-title";
+    heading.textContent = title;
+
+    const list = document.createElement("dl");
+    list.className = "modal-detail-list";
+
+    fields.forEach(field => {
+      const dt = document.createElement("dt");
+      dt.textContent = field.label;
+
+      const dd = document.createElement("dd");
+      dd.textContent = field.value || "-";
+
+      list.append(dt, dd);
+    });
+
+    const actions = document.createElement("div");
+    actions.className = "modal-actions";
+
+    const closeButton =
+      document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className =
+      "secondary-button modal-cancel";
+    closeButton.textContent = "ปิด";
+
+    actions.append(closeButton);
+    modal.append(heading, list, actions);
+    overlay.append(modal);
+    document.body.append(overlay);
+    activeOverlay = overlay;
+
+    const previousFocus =
+      document.activeElement as HTMLElement | null;
+
+    function close(): void {
+      document.removeEventListener(
+        "keydown",
+        onKeydown
+      );
+
+      overlay.classList.add("is-closing");
+
+      overlay.addEventListener(
+        "animationend",
+        () => {
+          overlay.remove();
+
+          if (activeOverlay === overlay) {
+            activeOverlay = null;
+          }
+
+          previousFocus?.focus?.();
+          resolve();
+        },
+        { once: true }
+      );
+    }
+
+    function onKeydown(event: KeyboardEvent): void {
+      if (
+        event.key === "Escape" ||
+        event.key === "Enter"
+      ) {
+        close();
+      }
+    }
+
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) {
+        close();
+      }
+    });
+
+    closeButton.addEventListener("click", close);
+
+    document.addEventListener("keydown", onKeydown);
+
+    requestAnimationFrame(() => {
+      overlay.classList.add("is-open");
+      closeButton.focus();
+    });
+  });
+}

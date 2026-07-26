@@ -2,9 +2,13 @@ import {
   getCurrentUser,
   isLoggedIn,
   isOwner,
+  isSuperAdmin,
   logout,
   roleLabel
 } from "../services/auth.service";
+
+import { renderAvatar } from "./avatar";
+import { attachDropdown } from "./dropdown";
 
 const RETURN_URL_KEY = "dorm_return_url";
 
@@ -50,6 +54,23 @@ export function requireOwner(): boolean {
 }
 
 /**
+ * สำหรับหน้าที่ใช้ได้เฉพาะผู้ดูแลระบบ (SUPER_ADMIN)
+ * เช่น หน้า Admin — เห็นทุกหอในระบบ
+ */
+export function requireSuperAdmin(): boolean {
+  if (!requireLogin()) {
+    return false;
+  }
+
+  if (!isSuperAdmin()) {
+    window.location.replace("/index.html");
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * แสดงชื่อผู้ใช้และบทบาทข้างปุ่มออกจากระบบ
  * เพื่อให้รู้ว่ากำลังล็อกอินเป็นบัญชีไหนอยู่ (ทุกหน้า)
  */
@@ -66,6 +87,11 @@ function renderHeaderUserInfo(
   const area = document.createElement("div");
   area.className = "header-user-area";
 
+  parent.insertBefore(area, logoutButton);
+
+  const avatar = document.createElement("div");
+  renderAvatar(avatar, user);
+
   const info = document.createElement("div");
   info.className = "header-user-info";
 
@@ -78,8 +104,38 @@ function renderHeaderUserInfo(
 
   info.append(name, role);
 
-  parent.insertBefore(area, logoutButton);
-  area.append(info, logoutButton);
+  const trigger =
+    document.createElement("button");
+
+  trigger.type = "button";
+  trigger.className = "header-profile-trigger";
+  trigger.append(avatar, info);
+
+  const menu = document.createElement("div");
+  menu.className = "header-dropdown-menu";
+  menu.hidden = true;
+
+  // OWNER ไปหน้าโปรไฟล์ได้ — คนอื่นเห็นแค่ "ออกจากระบบ"
+  if (isOwner()) {
+    const profileLink =
+      document.createElement("a");
+
+    profileLink.className = "header-dropdown-item";
+    profileLink.href =
+      "/src/pages/profile/profile.html";
+    profileLink.textContent = "โปรไฟล์ของฉัน";
+
+    menu.append(profileLink);
+  }
+
+  logoutButton.classList.add(
+    "header-dropdown-item"
+  );
+
+  menu.append(logoutButton);
+
+  area.append(trigger, menu);
+  attachDropdown(trigger, menu);
 }
 
 export function setupLogoutButton(): void {

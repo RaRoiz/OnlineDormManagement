@@ -15,11 +15,17 @@ import {
   updateMeter
 } from "../../services/meter.service";
 
-import { confirmDialog } from "../../utils/dialog";
+import { confirmDialog, detailDialog } from "../../utils/dialog";
 import { showToast } from "../../utils/toast";
 
 import { getRooms } from "../../services/room.service";
 import { getTenants } from "../../services/tenant.service";
+
+import {
+  paginate,
+  getTotalPages,
+  renderPaginationControls
+} from "../../utils/pagination";
 
 import type {
   MeterInput,
@@ -28,6 +34,8 @@ import type {
 
 import type { Room } from "../../types/room";
 import type { Tenant } from "../../types/tenant";
+
+const PAGE_SIZE = 10;
 
 const formPanel =
   document.querySelector<HTMLElement>(
@@ -124,6 +132,11 @@ const tableBody =
     "#meter-table-body"
   );
 
+const paginationContainer =
+  document.querySelector<HTMLElement>(
+    "#meter-pagination"
+  );
+
 const searchInput =
   document.querySelector<HTMLInputElement>(
     "#search-input"
@@ -164,6 +177,7 @@ let rooms: Room[] = [];
 let tenants: Tenant[] = [];
 
 let editingMeterId: string | null = null;
+let currentPage = 1;
 
 function escapeHtml(value: string): string {
   const element = document.createElement("div");
@@ -718,18 +732,21 @@ function renderRecords(): void {
       <tr>
         <td
           class="empty-cell"
-          colspan="9"
+          colspan="5"
         >
           ไม่พบข้อมูลมิเตอร์
         </td>
       </tr>
     `;
+  } else {
+    const pageRecords = paginate(
+      records,
+      currentPage,
+      PAGE_SIZE
+    );
 
-    return;
-  }
-
-  tableBody.innerHTML = records
-    .map(record => `
+    tableBody.innerHTML = pageRecords
+      .map(record => `
       <tr>
         <td>
           ${formatBillingDate(record.billingMonth)}
@@ -746,28 +763,21 @@ function renderRecords(): void {
         </td>
 
         <td>
-          ${record.waterUnits.toLocaleString("th-TH")}
-        </td>
-
-        <td>
-          ${formatMoney(record.waterAmount)}
-        </td>
-
-        <td>
-          ${record.electricUnits.toLocaleString("th-TH")}
-        </td>
-
-        <td>
-          ${formatMoney(record.electricAmount)}
-        </td>
-
-        <td>
           <strong>
             ${formatMoney(record.totalUtility)}
           </strong>
         </td>
 
         <td class="action-column">
+          <button
+            class="table-button detail-button"
+            type="button"
+            data-action="detail"
+            data-meter-id="${record.meterId}"
+          >
+            ดูรายละเอียด
+          </button>
+
           <button
             class="table-button edit-button"
             type="button"
@@ -788,10 +798,25 @@ function renderRecords(): void {
         </td>
       </tr>
     `)
-    .join("");
+      .join("");
+  }
+
+  if (paginationContainer) {
+    renderPaginationControls(
+      paginationContainer,
+      currentPage,
+      getTotalPages(records.length, PAGE_SIZE),
+      page => {
+        currentPage = page;
+        renderRecords();
+      }
+    );
+  }
 }
 
 async function loadData(): Promise<void> {
+  currentPage = 1;
+
   try {
     clearPageMessage();
 
@@ -867,6 +892,27 @@ form?.addEventListener(
     const isEditing =
       Boolean(editingMeterId);
 
+    const roomNo =
+      rooms.find(
+        room => room.roomId === meterInput.roomId
+      )?.roomNo ?? "";
+
+    const confirmed = await confirmDialog({
+      title: isEditing
+        ? "ยืนยันการแก้ไข"
+        : "ยืนยันการเพิ่ม",
+      message: `ต้องการ${
+        isEditing ? "บันทึกการแก้ไข" : "เพิ่ม"
+      }ข้อมูลมิเตอร์ห้อง ${roomNo} หรือไม่`,
+      confirmText: isEditing
+        ? "บันทึกการแก้ไข"
+        : "เพิ่มข้อมูลมิเตอร์"
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     if (saveButton) {
       saveButton.disabled = true;
       saveButton.textContent =
@@ -940,6 +986,70 @@ tableBody?.addEventListener(
 
     if (action === "edit") {
       openForm(record);
+      return;
+    }
+
+    if (action === "detail") {
+      const monthText = formatBillingDate(
+        record.billingMonth
+      );
+
+      void detailDialog(
+        `รายละเอียดมิเตอร์ ห้อง ${record.roomNo} เดือน ${monthText}`,
+        [
+          { label: "เดือน", value: monthText },
+          { label: "ห้อง", value: record.roomNo },
+          {
+            label: "ผู้เช่า",
+            value: record.tenantName || "-"
+          },
+          {
+            label: "มิเตอร์น้ำก่อนหน้า",
+            value: String(record.waterPrevious)
+          },
+          {
+            label: "มิเตอร์น้ำปัจจุบัน",
+            value: String(record.waterCurrent)
+          },
+          {
+            label: "หน่วยน้ำที่ใช้",
+            value: String(record.waterUnits)
+          },
+          {
+            label: "ราคาต่อหน่วยน้ำ",
+            value: formatMoney(record.waterRate)
+          },
+          {
+            label: "ค่าน้ำ",
+            value: formatMoney(record.waterAmount)
+          },
+          {
+            label: "มิเตอร์ไฟก่อนหน้า",
+            value: String(record.electricPrevious)
+          },
+          {
+            label: "มิเตอร์ไฟปัจจุบัน",
+            value: String(record.electricCurrent)
+          },
+          {
+            label: "หน่วยไฟที่ใช้",
+            value: String(record.electricUnits)
+          },
+          {
+            label: "ราคาต่อหน่วยไฟ",
+            value: formatMoney(record.electricRate)
+          },
+          {
+            label: "ค่าไฟ",
+            value: formatMoney(record.electricAmount)
+          },
+          {
+            label: "ยอดรวม",
+            value: formatMoney(record.totalUtility)
+          }
+        ]
+      );
+
       return;
     }
 
@@ -1020,12 +1130,18 @@ cancelButton?.addEventListener(
 
 searchInput?.addEventListener(
   "input",
-  renderRecords
+  () => {
+    currentPage = 1;
+    renderRecords();
+  }
 );
 
 monthFilter?.addEventListener(
   "change",
-  renderRecords
+  () => {
+    currentPage = 1;
+    renderRecords();
+  }
 );
 
 clearMonthFilterButton?.addEventListener(
@@ -1035,6 +1151,7 @@ clearMonthFilterButton?.addEventListener(
       monthFilter.value = "";
     }
 
+    currentPage = 1;
     renderRecords();
   }
 );

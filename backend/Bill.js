@@ -58,6 +58,9 @@ function getBills(request) {
         row[index.billId] || ""
       ).trim();
     })
+    .filter(function (row) {
+      return rowInDormScope_(row, index, auth);
+    })
     .map(function (row) {
       return billFromRow_(
         row,
@@ -86,6 +89,10 @@ function createBill(request) {
   if (!auth.success) {
     return auth;
   }
+
+  const dormId = String(
+    (auth.user && auth.user.dormId) || ""
+  );
 
   const input =
     validateBillInput_(
@@ -242,7 +249,8 @@ function createBill(request) {
       createdBill.paidAt,
       createdBill.note,
       createdBill.createdAt,
-      createdBill.updatedAt
+      createdBill.updatedAt,
+      dormId
     ]);
 
 bumpDormCache_();
@@ -322,6 +330,14 @@ function updateBill(request) {
     }
 
     if (targetRow === -1) {
+      return {
+        success: false,
+        message:
+          "ไม่พบข้อมูลใบแจ้งหนี้"
+      };
+    }
+
+    if (!rowInDormScope_(values[targetRow - 1], index, auth)) {
       return {
         success: false,
         message:
@@ -570,6 +586,14 @@ function markBillPaid(request) {
         continue;
       }
 
+      if (!rowInDormScope_(row, index, auth)) {
+        return {
+          success: false,
+          message:
+            "ไม่พบข้อมูลใบแจ้งหนี้"
+        };
+      }
+
       const currentStatus =
         String(
           row[
@@ -697,6 +721,14 @@ function deleteBill(request) {
         ).trim() !== billId
       ) {
         continue;
+      }
+
+      if (!rowInDormScope_(row, index, auth)) {
+        return {
+          success: false,
+          message:
+            "ไม่พบข้อมูลใบแจ้งหนี้"
+        };
       }
 
       const paymentStatus =

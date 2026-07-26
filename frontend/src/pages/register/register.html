@@ -60,6 +60,61 @@
           id="register-form"
           novalidate
         >
+          <div class="form-group form-group-full">
+            <label>สมัครเป็น</label>
+
+            <div class="role-tabs">
+              <button
+                id="role-owner-tab"
+                class="role-tab"
+                type="button"
+                data-role="OWNER"
+              >
+                เจ้าของหอ (สร้างหอใหม่)
+              </button>
+
+              <button
+                id="role-staff-tab"
+                class="role-tab"
+                type="button"
+                data-role="USER"
+              >
+                พนักงาน (เข้าร่วมหอ)
+              </button>
+            </div>
+          </div>
+
+          <div
+            id="dorm-name-group"
+            class="form-group"
+          >
+            <label for="dorm-name">
+              ชื่อหอของคุณ
+            </label>
+
+            <input
+              id="dorm-name"
+              name="dormName"
+              type="text"
+              placeholder="เช่น หอพักสบายดี"
+            />
+          </div>
+
+          <div
+            id="dorm-invite-group"
+            class="form-group"
+            hidden
+          >
+            <label>สมัครเป็นพนักงานของหอ</label>
+
+            <div
+              id="dorm-invite-name"
+              class="dorm-invite-name"
+            >
+              กำลังตรวจสอบลิงก์...
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="full-name">
               ชื่อ-นามสกุล

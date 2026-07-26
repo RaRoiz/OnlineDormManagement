@@ -18,7 +18,8 @@ import {
 
 import {
   confirmDialog,
-  promptDialog
+  promptDialog,
+  detailDialog
 } from "../../utils/dialog";
 
 import { showToast } from "../../utils/toast";
@@ -56,7 +57,7 @@ const formMessage = document.querySelector<HTMLElement>("#form-message");
 
 const pageMessage = document.querySelector<HTMLElement>("#page-message");
 
-const tableBody = document.querySelector<HTMLTableSectionElement>("#tenant-table-body");
+const groupsContainer = document.querySelector<HTMLElement>("#tenant-groups");
 
 const searchInput = document.querySelector<HTMLInputElement>("#search-input");
 
@@ -80,6 +81,7 @@ let tenants: Tenant[] = [];
 let rooms: Room[] = [];
 
 let editingTenantId: string | null = null;
+const expandedFloors = new Set<number | string>();
 
 function escapeHtml(value: string): string {
   const element = document.createElement("div");
@@ -410,48 +412,61 @@ function populateRoomFilterOptions(): void {
   roomFilter.value = previous;
 }
 
-function renderTenants(): void {
-  if (!tableBody) {
-    return;
-  }
+function hasActiveFilter(): boolean {
+  return Boolean(
+    (searchInput?.value.trim() ?? "") ||
+    (statusFilter?.value ?? "") ||
+    (roomFilter?.value ?? "")
+  );
+}
 
-  const filteredTenants =
-    getFilteredTenants();
+/** ชั้นของห้องที่ผู้เช่าอาศัยอยู่ — ใช้จัดกลุ่มตามชั้น */
+function getTenantFloor(tenant: Tenant): number | "other" {
+  const room = rooms.find(
+    item => item.roomId === tenant.roomId
+  );
 
-  if (filteredTenants.length === 0) {
-    tableBody.innerHTML = `
-      <tr>
-        <td class="empty-cell" colspan="10">
-          ไม่พบข้อมูลผู้เช่า
-        </td>
-      </tr>
-    `;
-    return;
-  }
+  return room ? room.floor : "other";
+}
 
-  tableBody.innerHTML = filteredTenants
-    .map(tenant => {
-      const active =
-        tenant.status === "ACTIVE";
+function openTenantDetail(tenant: Tenant): void {
+  void detailDialog(`รายละเอียดผู้เช่า ${tenant.fullName}`, [
+    { label: "ชื่อผู้เช่า", value: tenant.fullName },
+    { label: "เลขประจำตัว", value: tenant.citizenId },
+    { label: "เบอร์โทร", value: tenant.phone },
+    { label: "Line ID", value: tenant.lineId || "-" },
+    { label: "E-mail", value: tenant.email || "-" },
+    { label: "ห้อง", value: tenant.roomNo },
+    {
+      label: "วันที่เข้าพัก",
+      value: formatDateTime(tenant.checkInDate)
+    },
+    {
+      label: "วันที่ย้ายออก",
+      value: tenant.checkOutDate
+        ? formatDateTime(tenant.checkOutDate)
+        : "-"
+    },
+    { label: "สถานะ", value: tenant.status }
+  ]);
+}
 
-      const statusText = active
-        ? "กำลังพัก"
-        : "ย้ายออกแล้ว";
+function renderTenantRow(tenant: Tenant): string {
+  const active = tenant.status === "ACTIVE";
 
-      const statusClass = active
-        ? "status-active"
-        : "status-inactive";
+  const statusText = active
+    ? "กำลังพัก"
+    : "ย้ายออกแล้ว";
 
-      return `
-        <tr>
+  const statusClass = active
+    ? "status-active"
+    : "status-inactive";
+
+  return `
+        <tr tabindex="0" data-tenant-id="${tenant.tenantId}">
           <td><strong>${escapeHtml(tenant.fullName)}</strong></td>
-          <td>${escapeHtml(tenant.citizenId)}</td>
           <td>${escapeHtml(tenant.phone || "-")}</td>
-          <td>${escapeHtml(tenant.lineId || "-")}</td>
-          <td>${escapeHtml(tenant.email || "-")}</td>
           <td>${escapeHtml(tenant.roomNo || "-")}</td>
-          <td>${formatDateTime(tenant.checkInDate)}</td>
-          <td>${formatDateTime(tenant.checkOutDate)}</td>
           <td>
             <span class="status-badge ${statusClass}">
               ${statusText}
@@ -493,6 +508,73 @@ function renderTenants(): void {
           </td>
         </tr>
       `;
+}
+
+function renderTenants(): void {
+  if (!groupsContainer) {
+    return;
+  }
+
+  const filteredTenants = getFilteredTenants();
+
+  if (filteredTenants.length === 0) {
+    groupsContainer.innerHTML = `
+      <p class="empty-cell">ไม่พบข้อมูลผู้เช่า</p>
+    `;
+    return;
+  }
+
+  const activeFilter = hasActiveFilter();
+
+  const floors = [
+    ...new Set(filteredTenants.map(getTenantFloor))
+  ].sort((a, b) => {
+    if (a === "other") return 1;
+    if (b === "other") return -1;
+    return (a as number) - (b as number);
+  });
+
+  groupsContainer.innerHTML = floors
+    .map(floor => {
+      const floorTenants = filteredTenants.filter(
+        tenant => getTenantFloor(tenant) === floor
+      );
+
+      const isOpen =
+        activeFilter || expandedFloors.has(floor);
+
+      const floorLabel =
+        floor === "other" ? "ไม่ทราบชั้น" : `ชั้น ${floor}`;
+
+      return `
+    <details class="floor-group" data-floor="${floor}" ${isOpen ? "open" : ""}>
+      <summary class="floor-group-summary">
+        <span class="floor-group-title">
+          <span class="floor-group-arrow" aria-hidden="true">▸</span>
+          ${floorLabel}
+        </span>
+        <span class="floor-group-count">${floorTenants.length} คน</span>
+      </summary>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ชื่อผู้เช่า</th>
+              <th>เบอร์โทร</th>
+              <th>ห้อง</th>
+              <th>สถานะ</th>
+              <th class="action-column">จัดการ</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${floorTenants.map(renderTenantRow).join("")}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  `;
     })
     .join("");
 }
@@ -552,6 +634,22 @@ form?.addEventListener(
     const isEditing =
       Boolean(editingTenantId);
 
+    const confirmed = await confirmDialog({
+      title: isEditing
+        ? "ยืนยันการแก้ไข"
+        : "ยืนยันการเพิ่ม",
+      message: `ต้องการ${
+        isEditing ? "บันทึกการแก้ไข" : "เพิ่ม"
+      }ผู้เช่า ${tenantInput.fullName} หรือไม่`,
+      confirmText: isEditing
+        ? "บันทึกการแก้ไข"
+        : "เพิ่มผู้เช่า"
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     if (saveButton) {
       saveButton.disabled = true;
       saveButton.textContent =
@@ -598,20 +696,14 @@ form?.addEventListener(
   }
 );
 
-tableBody?.addEventListener(
-  "click",
-  async event => {
-    const target = event.target;
-
-    if (!(target instanceof HTMLButtonElement)) {
-      return;
-    }
-
+async function handleTenantAction(
+  button: HTMLButtonElement
+): Promise<void> {
     const tenantId =
-      target.dataset.tenantId;
+      button.dataset.tenantId;
 
     const action =
-      target.dataset.action;
+      button.dataset.action;
 
     if (!tenantId) {
       return;
@@ -624,6 +716,7 @@ tableBody?.addEventListener(
     if (!tenant) {
       return;
     }
+    const target = button;
 
     if (action === "edit") {
       openForm(tenant);
@@ -736,7 +829,82 @@ tableBody?.addEventListener(
         target.disabled = false;
       }
     }
+}
+
+groupsContainer?.addEventListener("click", async event => {
+  const target = event.target;
+
+  if (!(target instanceof HTMLElement)) {
+    return;
   }
+
+  const button = target.closest("button");
+
+  if (button instanceof HTMLButtonElement) {
+    await handleTenantAction(button);
+    return;
+  }
+
+  const row = target.closest("tr[data-tenant-id]");
+
+  if (row instanceof HTMLTableRowElement) {
+    const tenantId = row.dataset.tenantId;
+    const tenant = tenants.find(item => item.tenantId === tenantId);
+
+    if (tenant) {
+      openTenantDetail(tenant);
+    }
+  }
+});
+
+groupsContainer?.addEventListener("keydown", event => {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  const target = event.target;
+
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  if (target.closest("button")) {
+    return;
+  }
+
+  const row = target.closest("tr[data-tenant-id]");
+
+  if (row instanceof HTMLTableRowElement) {
+    event.preventDefault();
+
+    const tenantId = row.dataset.tenantId;
+    const tenant = tenants.find(item => item.tenantId === tenantId);
+
+    if (tenant) {
+      openTenantDetail(tenant);
+    }
+  }
+});
+
+groupsContainer?.addEventListener(
+  "toggle",
+  event => {
+    const details = event.target;
+
+    if (!(details instanceof HTMLDetailsElement)) {
+      return;
+    }
+
+    const floor = details.dataset.floor;
+    const key = floor === "other" ? "other" : Number(floor);
+
+    if (details.open) {
+      expandedFloors.add(key);
+    } else {
+      expandedFloors.delete(key);
+    }
+  },
+  true
 );
 
 openFormButton?.addEventListener(
@@ -756,17 +924,26 @@ cancelButton?.addEventListener(
 
 searchInput?.addEventListener(
   "input",
-  renderTenants
+  () => {
+    currentPage = 1;
+    renderTenants();
+  }
 );
 
 statusFilter?.addEventListener(
   "change",
-  renderTenants
+  () => {
+    currentPage = 1;
+    renderTenants();
+  }
 );
 
 roomFilter?.addEventListener(
   "change",
-  renderTenants
+  () => {
+    currentPage = 1;
+    renderTenants();
+  }
 );
 
 async function initializeTenantPage(): Promise<void> {

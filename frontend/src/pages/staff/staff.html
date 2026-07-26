@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+      พนักงาน | Dorm Management
+    </title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("dorm_theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia(
+              "(prefers-color-scheme: dark)"
+            ).matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+
+  <body>
+    <header class="page-header">
+      <a
+        class="back-link"
+        href="/index.html"
+      >
+        ← กลับหน้า Home
+      </a>
+
+      <h1>พนักงาน</h1>
+
+      <button
+        id="logout-button"
+        class="logout-button"
+        type="button"
+      >
+        ออกจากระบบ
+      </button>
+    </header>
+
+    <main class="staff-page">
+      <section class="page-title">
+        <div>
+          <p class="eyebrow">STAFF</p>
+
+          <h2>รายชื่อพนักงาน</h2>
+
+          <p>
+            พนักงานทั้งหมด
+            <strong id="total-staff">0</strong>
+            คน
+          </p>
+        </div>
+      </section>
+
+      <div
+        id="page-message"
+        class="page-message"
+        role="alert"
+      ></div>
+
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">STAFF LIST</p>
+            <h3>รายชื่อพนักงานในหอของคุณ</h3>
+          </div>
+        </div>
+
+        <div class="form-group search-group">
+          <label for="search-input">ค้นหา</label>
+
+          <input
+            id="search-input"
+            type="search"
+            placeholder="ค้นหาชื่อ, ชื่อผู้ใช้, เบอร์โทร..."
+          />
+        </div>
+
+        <div class="table-card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ชื่อ-นามสกุล</th>
+                  <th>ชื่อผู้ใช้</th>
+                  <th>เบอร์โทร</th>
+                  <th>สถานะ</th>
+                </tr>
+              </thead>
+
+              <tbody id="staff-table-body">
+                <tr>
+                  <td class="loading-cell">
+                    กำลังโหลดข้อมูล...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div
+          id="staff-pagination"
+          class="pagination-controls"
+        ></div>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/src/pages/staff/staff.ts"
+    ></script>
+  </body>
+</html>

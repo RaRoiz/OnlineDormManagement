@@ -34,11 +34,32 @@ function doPost(e) {
       case "registerUser":
         return jsonResponse(registerUser(request));
 
+      /* ดูชื่อหอก่อนสมัคร — สาธารณะ ไม่ต้อง login */
+      case "getDormPublicInfo":
+        return jsonResponse(getDormPublicInfo(request));
+
       case "logout":
         return jsonResponse(logout(request.token));
 
       case "validateToken":
         return jsonResponse(validateToken(request.token));
+
+      /* โปรไฟล์ตัวเอง — เฉพาะ OWNER */
+      case "updateOwnProfile":
+        return jsonResponse(ownerOnly_(request, updateOwnProfile));
+
+      case "changeOwnPassword":
+        return jsonResponse(ownerOnly_(request, changeOwnPassword));
+
+      case "uploadAvatar":
+        return jsonResponse(ownerOnly_(request, uploadAvatar));
+
+      case "updateOwnDorm":
+        return jsonResponse(ownerOnly_(request, updateOwnDorm));
+
+      /* รายชื่อพนักงานของหอตัวเอง — เฉพาะ OWNER */
+      case "getStaff":
+        return jsonResponse(ownerOnly_(request, getStaff));
 
       /* ========== Rooms ========== */
 
@@ -143,6 +164,20 @@ function doPost(e) {
 
       case "getReportPageData":
         return jsonResponse(ownerOnly_(request, getReportPageData));
+
+      /* ========== Dorms (SUPER_ADMIN) ========== */
+
+      case "getDorms":
+        return jsonResponse(superAdminOnly_(request, getDorms));
+
+      case "createDorm":
+        return jsonResponse(superAdminOnly_(request, createDorm));
+
+      case "getPlatformSummary":
+        return jsonResponse(superAdminOnly_(request, getPlatformSummary));
+
+      case "getDormDetail":
+        return jsonResponse(superAdminOnly_(request, getDormDetail));
 
       /* default ต้องอยู่ท้ายสุดเสมอ */
 

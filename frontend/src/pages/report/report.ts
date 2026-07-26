@@ -19,6 +19,12 @@ import {
   getRooms
 } from "../../services/room.service";
 
+import {
+  paginate,
+  getTotalPages,
+  renderPaginationControls
+} from "../../utils/pagination";
+
 import type {
   DashboardSummary,
   ReportCellValue,
@@ -31,6 +37,8 @@ import type {
 import type {
   Room
 } from "../../types/room";
+
+const PAGE_SIZE = 10;
 
 const dashboardMonthInput =
   document.querySelector<HTMLInputElement>(
@@ -87,7 +95,13 @@ const pageMessage =
     "#page-message"
   );
 
+const paginationContainer =
+  document.querySelector<HTMLElement>(
+    "#report-pagination"
+  );
+
 let rooms: Room[] = [];
+let currentPage = 1;
 
 function currentMonth(): string {
   const date = new Date();
@@ -528,13 +542,16 @@ function renderReport(
         </td>
       </tr>
     `;
+  } else {
+    const pageRows = paginate(
+      data.rows,
+      currentPage,
+      PAGE_SIZE
+    );
 
-    return;
-  }
-
-  tableBody.innerHTML =
-    data.rows
-      .map(row => `
+    tableBody.innerHTML =
+      pageRows
+        .map(row => `
         <tr>
           ${data.columns
             .map(column => `
@@ -548,10 +565,25 @@ function renderReport(
             .join("")}
         </tr>
       `)
-      .join("");
+        .join("");
+  }
+
+  if (paginationContainer) {
+    renderPaginationControls(
+      paginationContainer,
+      currentPage,
+      getTotalPages(data.rows.length, PAGE_SIZE),
+      page => {
+        currentPage = page;
+        renderReport(data);
+      }
+    );
+  }
 }
 
 async function loadReport(): Promise<void> {
+  currentPage = 1;
+
   if (tableBody) {
     const columnCount = Math.max(
       1,
@@ -631,6 +663,7 @@ reportTypeInput?.addEventListener(
   "change",
   async () => {
     updateStatusOptions();
+    currentPage = 1;
 
     try {
       await loadReport();
@@ -664,6 +697,8 @@ dashboardMonthInput?.addEventListener(
 searchButton?.addEventListener(
   "click",
   async () => {
+    currentPage = 1;
+
     try {
       clearMessage();
       await loadReport();
@@ -697,6 +732,8 @@ clearButton?.addEventListener(
     if (keywordInput) {
       keywordInput.value = "";
     }
+
+    currentPage = 1;
 
     try {
       clearMessage();

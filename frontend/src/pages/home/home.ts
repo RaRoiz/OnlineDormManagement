@@ -7,9 +7,14 @@ import {
   getCurrentUser,
   isLoggedIn,
   isOwner,
+  isSuperAdmin,
   logout,
   roleLabel
 } from "../../services/auth.service";
+
+import { renderAvatar } from "../../utils/avatar";
+import { attachDropdown } from "../../utils/dropdown";
+import { detailDialog } from "../../utils/dialog";
 
 import { getRooms } from "../../services/room.service";
 import { getTenants } from "../../services/tenant.service";
@@ -40,6 +45,11 @@ const currentUserElement =
 const currentRoleElement =
   document.querySelector<HTMLElement>(
     "#current-role"
+  );
+
+const userAvatarElement =
+  document.querySelector<HTMLElement>(
+    "#user-avatar"
   );
 
 const welcomeHero =
@@ -93,9 +103,123 @@ function sortByRoomNo(
   );
 }
 
+function formatMoney(value: number): string {
+  return new Intl.NumberFormat("th-TH", {
+    style: "currency",
+    currency: "THB",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
+function openRoomDetail(
+  room: Room,
+  tenantName: string
+): void {
+  void detailDialog(`รายละเอียดห้อง ${room.roomNo}`, [
+    { label: "เลขห้อง", value: room.roomNo },
+    { label: "ประเภทห้อง", value: room.roomType || "-" },
+    { label: "ลักษณะห้อง", value: room.roomDetail || "-" },
+    { label: "ชั้น", value: String(room.floor) },
+    { label: "ค่าเช่า", value: formatMoney(room.price) },
+    { label: "สถานะ", value: room.status },
+    {
+      label: "ผู้เช่าปัจจุบัน",
+      value: tenantName || "ไม่มีผู้เช่า"
+    }
+  ]);
+}
+
+function makeClickable(
+  element: HTMLElement,
+  onOpen: () => void
+): void {
+  element.setAttribute("role", "button");
+  element.setAttribute("tabindex", "0");
+
+  element.addEventListener("click", onOpen);
+
+  element.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpen();
+    }
+  });
+}
+
 /* =========================
    Auth state → layout
 ========================= */
+
+let userDropdownReady = false;
+
+/**
+ * ครั้งแรกที่ login แล้ว — ผูก userInfo เป็นปุ่มเปิดเมนู
+ * dropdown แล้วย้ายปุ่ม authButton (ออกจากระบบ) เข้าไปในเมนู
+ * พร้อมลิงก์โปรไฟล์ถ้าเป็น OWNER
+ */
+function setupUserDropdown(): void {
+  if (
+    userDropdownReady ||
+    !userInfo ||
+    !authButton
+  ) {
+    return;
+  }
+
+  const parent = userInfo.parentElement;
+
+  if (!parent) {
+    return;
+  }
+
+  const menu = document.createElement("div");
+  menu.className = "header-dropdown-menu";
+  menu.hidden = true;
+
+  if (isOwner()) {
+    const profileLink =
+      document.createElement("a");
+
+    profileLink.className =
+      "header-dropdown-item";
+    profileLink.href =
+      "/src/pages/profile/profile.html";
+    profileLink.textContent =
+      "โปรไฟล์ของฉัน";
+
+    menu.append(profileLink);
+  }
+
+  authButton.classList.add(
+    "header-dropdown-item"
+  );
+  menu.append(authButton);
+
+  userInfo.classList.add(
+    "header-profile-trigger"
+  );
+  userInfo.setAttribute("role", "button");
+  userInfo.setAttribute("tabindex", "0");
+
+  userInfo.addEventListener("keydown", event => {
+    if (
+      event.key === "Enter" ||
+      event.key === " "
+    ) {
+      event.preventDefault();
+      userInfo.click();
+    }
+  });
+
+  parent.insertBefore(
+    menu,
+    userInfo.nextSibling
+  );
+
+  attachDropdown(userInfo, menu);
+  userDropdownReady = true;
+}
 
 function updateHome(): void {
   const loggedIn = isLoggedIn();
@@ -110,6 +234,13 @@ function updateHome(): void {
   }
 
   if (loggedIn && user) {
+    setText(
+      "#dashboard-heading",
+      user.dormName
+        ? `ภาพรวมหอพัก ${user.dormName}`
+        : "ภาพรวมหอพัก"
+    );
+
     if (userInfo) {
       userInfo.hidden = false;
     }
@@ -124,10 +255,16 @@ function updateHome(): void {
         roleLabel(user.role);
     }
 
+    if (userAvatarElement) {
+      renderAvatar(userAvatarElement, user);
+    }
+
     if (authButton) {
       authButton.textContent = "ออกจากระบบ";
       authButton.dataset.action = "logout";
     }
+
+    setupUserDropdown();
   } else {
     if (userInfo) {
       userInfo.hidden = true;
@@ -236,15 +373,22 @@ function renderOccupiedRooms(
     const info = document.createElement("div");
     info.className = "mini-info";
 
-    const name =
-      document.createElement("strong");
-    name.textContent =
+    const tenantName =
       tenantByRoomId.get(room.roomId) ||
       "ไม่พบชื่อผู้เช่า";
+
+    const name =
+      document.createElement("strong");
+    name.textContent = tenantName;
 
     info.append(name);
 
     item.append(roomNo, info);
+
+    makeClickable(item, () =>
+      openRoomDetail(room, tenantName)
+    );
+
     list.append(item);
   });
 }
@@ -293,6 +437,10 @@ function renderVacantRooms(
       type.textContent = room.roomType;
       chip.append(type);
     }
+
+    makeClickable(chip, () =>
+      openRoomDetail(room, "")
+    );
 
     list.append(chip);
   });
@@ -375,9 +523,17 @@ heroLoginButton?.addEventListener(
   }
 );
 
-renderSidebar();
-updateHome();
+// SUPER_ADMIN ไม่มีหอของตัวเอง — หน้านี้ไม่มีประโยชน์
+// สำหรับ SUPER_ADMIN เลย ให้เด้งไปหน้า Admin แทนเสมอ
+if (isLoggedIn() && isSuperAdmin()) {
+  window.location.replace(
+    "/src/pages/admin/admin.html"
+  );
+} else {
+  renderSidebar();
+  updateHome();
 
-if (isLoggedIn()) {
-  void loadDashboard();
+  if (isLoggedIn()) {
+    void loadDashboard();
+  }
 }

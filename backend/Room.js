@@ -39,6 +39,9 @@ function getRooms(request) {
         row[index.roomId] || ""
       ).trim() !== "";
     })
+    .filter(function (row) {
+      return rowInDormScope_(row, index, auth);
+    })
     .map(function (row) {
       return roomFromRow_(
         row,
@@ -71,6 +74,10 @@ function createRoom(request) {
   if (!auth.success) {
     return auth;
   }
+
+  const dormId = String(
+    (auth.user && auth.user.dormId) || ""
+  );
 
   // ต้องใช้ request.room ไม่ใช่ room
   const input = validateRoomInput_(request.room);
@@ -128,7 +135,8 @@ sheet.appendRow([
   createdRoom.price,
   createdRoom.floor,
   createdRoom.createdAt,
-  createdRoom.updatedAt
+  createdRoom.updatedAt,
+  dormId
 ]);
 
 bumpDormCache_();
@@ -193,6 +201,13 @@ function updateRoom(request) {
     }
 
     if (targetRow === -1) {
+      return {
+        success: false,
+        message: "ไม่พบข้อมูลห้องพัก"
+      };
+    }
+
+    if (!rowInDormScope_(values[targetRow - 1], index, auth)) {
       return {
         success: false,
         message: "ไม่พบข้อมูลห้องพัก"
@@ -333,6 +348,13 @@ function deleteRoom(request) {
 
       if (currentRoomId !== roomId) {
         continue;
+      }
+
+      if (!rowInDormScope_(values[i], index, auth)) {
+        return {
+          success: false,
+          message: "ไม่พบข้อมูลห้องพัก"
+        };
       }
 
       sheet.deleteRow(i + 1);

@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+      Admin | Dorm Management
+    </title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("dorm_theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia(
+              "(prefers-color-scheme: dark)"
+            ).matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+
+  <body>
+    <header class="page-header">
+      <a
+        class="back-link"
+        href="/index.html"
+      >
+        ← กลับหน้า Home
+      </a>
+
+      <h1>Admin — ทุกหอในระบบ</h1>
+
+      <button
+        id="logout-button"
+        class="logout-button"
+        type="button"
+      >
+        ออกจากระบบ
+      </button>
+    </header>
+
+    <main class="admin-page">
+      <section class="page-title">
+        <div>
+          <p class="eyebrow">
+            SUPER ADMIN
+          </p>
+
+          <h2>ภาพรวมทุกหอที่ใช้บริการ</h2>
+
+          <p>
+            ดูว่าใครมาใช้บริการระบบเราบ้าง
+            หอไหนใช้งานอยู่ และเพิ่มหอใหม่ได้ที่นี่
+          </p>
+        </div>
+
+        <button
+          id="toggle-create-dorm"
+          class="primary-button"
+          type="button"
+        >
+          + เพิ่มหอใหม่
+        </button>
+      </section>
+
+      <div
+        id="page-message"
+        class="page-message"
+        role="alert"
+      ></div>
+
+      <!-- Platform summary cards -->
+      <section class="summary-grid">
+        <article class="summary-card">
+          <span>หอทั้งหมด</span>
+          <strong id="total-dorms">0</strong>
+          <small>หอ</small>
+        </article>
+
+        <article class="summary-card vacant-card">
+          <span>หอที่ใช้งานอยู่</span>
+          <strong id="active-dorms">0</strong>
+          <small>หอ</small>
+        </article>
+
+        <article class="summary-card occupied-card">
+          <span>ห้องรวมทุกหอ</span>
+          <strong id="total-rooms">0</strong>
+          <small>ห้อง</small>
+        </article>
+
+        <article class="summary-card">
+          <span>ผู้เช่ารวมทุกหอ</span>
+          <strong id="total-tenants">0</strong>
+          <small>ราย</small>
+        </article>
+
+        <article class="summary-card warning-card">
+          <span>หอใหม่เดือนนี้</span>
+          <strong id="new-dorms">0</strong>
+          <small>หอ</small>
+        </article>
+      </section>
+
+      <!-- Create dorm form -->
+      <section
+        id="create-dorm-section"
+        class="report-section"
+        hidden
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">DORM ใหม่</p>
+            <h3>เพิ่มหอใหม่ + บัญชีเจ้าของหอ</h3>
+          </div>
+        </div>
+
+        <form id="create-dorm-form" novalidate>
+          <div class="admin-form-grid">
+            <div class="form-group">
+              <label for="dorm-name">ชื่อหอ</label>
+
+              <input
+                id="dorm-name"
+                name="dormName"
+                type="text"
+                placeholder="เช่น หอพักสบายดี"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="dorm-phone">เบอร์โทร</label>
+
+              <input
+                id="dorm-phone"
+                name="phone"
+                type="text"
+                placeholder="เบอร์ติดต่อหอ"
+              />
+            </div>
+
+            <div class="form-group form-group-full">
+              <label for="dorm-address">ที่อยู่</label>
+
+              <input
+                id="dorm-address"
+                name="address"
+                type="text"
+                placeholder="ที่อยู่ของหอ"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="owner-name">ชื่อเจ้าของหอ</label>
+
+              <input
+                id="owner-name"
+                name="ownerName"
+                type="text"
+                placeholder="ชื่อ-นามสกุลเจ้าของหอ"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="owner-username">
+                ชื่อผู้ใช้สำหรับเข้าสู่ระบบ
+              </label>
+
+              <input
+                id="owner-username"
+                name="ownerUsername"
+                type="text"
+                autocomplete="off"
+                minlength="4"
+                placeholder="อย่างน้อย 4 ตัวอักษร"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="owner-password">รหัสผ่าน</label>
+
+              <input
+                id="owner-password"
+                name="ownerPassword"
+                type="password"
+                autocomplete="new-password"
+                minlength="8"
+                placeholder="อย่างน้อย 8 ตัวอักษร"
+                required
+              />
+            </div>
+          </div>
+
+          <div
+            id="create-dorm-message"
+            class="page-message"
+            role="alert"
+          ></div>
+
+          <div class="filter-actions">
+            <button
+              id="cancel-create-dorm"
+              class="secondary-button"
+              type="button"
+            >
+              ยกเลิก
+            </button>
+
+            <button
+              id="submit-create-dorm"
+              class="primary-button"
+              type="submit"
+            >
+              บันทึกหอใหม่
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Dorm list -->
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">DORMS</p>
+            <h3>รายชื่อหอทั้งหมด</h3>
+          </div>
+        </div>
+
+        <div class="form-group search-group">
+          <label for="search-input">ค้นหา</label>
+
+          <input
+            id="search-input"
+            type="search"
+            placeholder="ค้นหาชื่อหอ, เจ้าของ..."
+          />
+        </div>
+
+        <div class="table-card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ชื่อหอ</th>
+                  <th>เจ้าของ</th>
+                  <th>จำนวนห้อง</th>
+                  <th>อัตราเข้าพัก</th>
+                  <th>ผู้เช่าปัจจุบัน</th>
+                  <th>ยอดค้างชำระ</th>
+                  <th>สถานะ</th>
+                  <th>วันที่สมัคร</th>
+                  <th></th>
+                </tr>
+              </thead>
+
+              <tbody id="dorm-table-body">
+                <tr>
+                  <td class="loading-cell">
+                    กำลังโหลดข้อมูล...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div
+          id="dorm-pagination"
+          class="pagination-controls"
+        ></div>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/src/pages/admin/admin.ts"
+    ></script>
+  </body>
+</html>

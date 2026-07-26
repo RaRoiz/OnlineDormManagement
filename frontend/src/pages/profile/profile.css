@@ -1,0 +1,150 @@
+@import "../../styles/theme.css";
+
+/* =========================
+   Section card (reuse admin/report pattern)
+========================= */
+
+.report-section {
+  padding: 26px;
+  margin-bottom: 24px;
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+
+  box-shadow: var(--shadow);
+}
+
+.report-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-heading {
+  margin-bottom: 22px;
+}
+
+.section-heading h3 {
+  margin: 4px 0 0;
+
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+
+  margin-top: 18px;
+}
+
+/* =========================
+   Avatar
+========================= */
+
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.avatar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.avatar-actions small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* =========================
+   Forms
+========================= */
+
+.profile-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+}
+
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.form-group input:disabled {
+  color: var(--muted);
+  background: var(--surface-2);
+  cursor: not-allowed;
+}
+
+/* =========================
+   Invite link
+========================= */
+
+.invite-link-block {
+  margin-top: 22px;
+  padding-top: 22px;
+
+  border-top: 1px dashed var(--line);
+}
+
+.invite-link-block label {
+  display: block;
+  margin-bottom: 6px;
+
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.invite-link-hint {
+  margin: 0 0 12px;
+
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.invite-link-row {
+  display: flex;
+  gap: 10px;
+}
+
+.invite-link-row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 13px;
+
+  color: var(--ink-soft);
+  background: var(--surface-2);
+
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+
+@media (max-width: 720px) {
+  .profile-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .report-section {
+    padding: 20px 16px;
+  }
+
+  .avatar-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-actions {
+    flex-direction: column-reverse;
+  }
+
+  .filter-actions button {
+    width: 100%;
+  }
+}

@@ -24,18 +24,18 @@
   --surface: #ffffff;
   --surface-2: #f8f7f9;
 
-  /* Brand — rose crimson */
-  --brand: #e11d48;
-  --brand-strong: #be123c;
-  --brand-tint: #fde5ea;
-  --brand-tint-line: #f8c3cf;
-  --brand-ink: #8f1239;
+  /* Brand — ฟ้า-เขียวน้ำเงิน (cyan/teal) */
+  --brand: #0891b2;
+  --brand-strong: #0e7490;
+  --brand-tint: #cffafe;
+  --brand-tint-line: #67e8f9;
+  --brand-ink: #164e63;
 
   /* แสงเรืองหลายสีที่พื้นหลัง (โหมดสว่าง) */
   --bg-glow:
     radial-gradient(
       62% 52% at 92% -5%,
-      rgba(225, 29, 72, 0.19),
+      rgba(8, 145, 178, 0.19),
       transparent 68%
     ),
     radial-gradient(
@@ -56,7 +56,7 @@
   /* Fixed dark banner — stays dark in both themes */
   --banner-bg: #1e1418;
   --banner-fg: #ffffff;
-  --banner-accent: #fb7185;
+  --banner-accent: #22d3ee;
 
   /* Semantic */
   --ok: #2f7d4f;
@@ -78,11 +78,11 @@
   --r-lg: 16px;
   --r-pill: 999px;
 
-  /* Elevation (soft, rosy) */
-  --shadow-sm: 0 1px 2px rgba(80, 20, 40, 0.06);
-  --shadow: 0 8px 26px -16px rgba(80, 20, 40, 0.22);
-  --shadow-lg: 0 22px 55px -30px rgba(80, 20, 40, 0.3);
-  --ring: 0 0 0 4px rgba(225, 29, 72, 0.18);
+  /* Elevation (soft, cool teal) */
+  --shadow-sm: 0 1px 2px rgba(10, 40, 50, 0.06);
+  --shadow: 0 8px 26px -16px rgba(10, 40, 50, 0.22);
+  --shadow-lg: 0 22px 55px -30px rgba(10, 40, 50, 0.3);
+  --ring: 0 0 0 4px rgba(8, 145, 178, 0.18);
 
   font-family: var(--font-body);
   color: var(--ink);
@@ -114,22 +114,22 @@
   --surface: #161519;
   --surface-2: #1e1c21;
 
-  --brand: #fb4d6d;
-  --brand-strong: #f43f5e;
-  --brand-tint: #38141e;
-  --brand-tint-line: #5c2231;
-  --brand-ink: #fda4b5;
+  --brand: #22d3ee;
+  --brand-strong: #67e8f9;
+  --brand-tint: #083344;
+  --brand-tint-line: #155e75;
+  --brand-ink: #a5f3fc;
 
-  /* แสงแดงเรืองที่พื้นหลัง แบบภาพอ้างอิง */
+  /* แสงฟ้าเรืองที่พื้นหลัง แบบภาพอ้างอิง */
   --bg-glow:
     radial-gradient(
       55% 45% at 90% -5%,
-      rgba(225, 29, 72, 0.2),
+      rgba(34, 211, 238, 0.2),
       transparent 60%
     ),
     radial-gradient(
       45% 40% at -5% 105%,
-      rgba(190, 18, 60, 0.16),
+      rgba(14, 116, 144, 0.16),
       transparent 60%
     );
 
@@ -152,7 +152,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.7);
   --shadow-lg: 0 24px 60px -30px rgba(0, 0, 0, 0.75);
-  --ring: 0 0 0 4px rgba(251, 77, 109, 0.28);
+  --ring: 0 0 0 4px rgba(34, 211, 238, 0.28);
 
   color-scheme: dark;
 }
@@ -183,6 +183,36 @@ body {
   line-height: 1.55;
 
   transition: background-color 0.3s ease, color 0.3s ease;
+
+  /* ลูกเล่นเข้าหน้า — เล่นเองด้วย CSS ล้วน ไม่พึ่ง JS
+     (ถ้าสคริปต์พังหน้าเว็บก็ยังไม่ค้างจอดำ) */
+  animation: page-fade-in 0.24s ease;
+}
+
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ลูกเล่นออกจากหน้า — sidebar.ts เพิ่ม class นี้
+   ก่อน navigate ออกไปหน้าอื่น */
+body.page-fade-out {
+  animation: page-fade-out 0.16s
+    cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes page-fade-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
 }
 
 button,
@@ -280,6 +310,7 @@ h4 {
 }
 
 .header-user-area {
+  position: relative;
   justify-self: end;
 
   display: flex;
@@ -308,6 +339,130 @@ h4 {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* ปุ่มกด avatar/ชื่อ/role เพื่อเปิดเมนู dropdown */
+.header-profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 4px 10px;
+  margin: -4px -10px;
+
+  background: none;
+  border: 0;
+  border-radius: var(--r-sm);
+
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.header-profile-trigger:hover,
+.header-profile-trigger:focus-visible {
+  background: color-mix(
+    in srgb,
+    var(--brand) 12%,
+    transparent
+  );
+  outline: none;
+}
+
+/* เมนู dropdown — โปรไฟล์ + ออกจากระบบ */
+.header-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+
+  min-width: 190px;
+  padding: 6px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+
+  box-shadow: var(--shadow-lg);
+}
+
+.header-dropdown-menu[hidden] {
+  display: none;
+}
+
+.header-dropdown-item {
+  width: 100%;
+  padding: 10px 12px;
+
+  display: block;
+
+  color: var(--ink);
+  background: none;
+
+  border: 0;
+  border-radius: var(--r-sm);
+
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.header-dropdown-item:hover {
+  background: var(--surface-2);
+}
+
+/* logout-button เดิมมีสไตล์เป็นปุ่มทึบ — พอย้ายเข้าเมนูแล้ว
+   ให้กลับไปหน้าตาเหมือนเมนูไอเทมทั่วไปแทน */
+.header-dropdown-item.logout-button {
+  color: var(--danger);
+  background: none;
+  transform: none;
+}
+
+.header-dropdown-item.logout-button:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-bg);
+  transform: none;
+}
+
+/* วงกลม avatar — รูปโปรไฟล์ถ้ามี ไม่งั้น fallback ไอคอนคน */
+.avatar-circle {
+  flex: none;
+
+  width: 36px;
+  height: 36px;
+
+  display: grid;
+  place-items: center;
+
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--brand),
+    #2563eb
+  );
+  background-size: cover;
+  background-position: center;
+
+  border-radius: 50%;
+
+  font-size: 18px;
+  line-height: 1;
+
+  overflow: hidden;
+}
+
+.avatar-circle.avatar-lg {
+  width: 96px;
+  height: 96px;
+  font-size: 44px;
 }
 
 .logout-button {
@@ -349,13 +504,17 @@ h4 {
 .tenant-page,
 .meter-page,
 .bill-page,
-.report-page {
+.report-page,
+.admin-page,
+.profile-page,
+.staff-page {
   width: min(1200px, calc(100% - 48px));
   margin: 0 auto;
   padding: 52px 0 90px;
 }
 
-.report-page {
+.report-page,
+.admin-page {
   width: min(1320px, calc(100% - 48px));
 }
 
@@ -378,6 +537,18 @@ h4 {
 
 .report-page {
   --page-accent: #ec4899;
+}
+
+.admin-page {
+  --page-accent: #8b5cf6;
+}
+
+.profile-page {
+  --page-accent: var(--brand);
+}
+
+.staff-page {
+  --page-accent: #14b8a6;
 }
 
 .page-title {
@@ -1235,6 +1406,32 @@ tbody tr:last-child td {
   margin: 0 0 22px;
 }
 
+.modal-detail-list {
+  margin: 0 0 22px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.modal-detail-list dt {
+  margin: 0 0 4px;
+
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.modal-detail-list dd {
+  margin: 0 0 16px;
+
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.modal-detail-list dd:last-child {
+  margin-bottom: 0;
+}
+
 .modal-field span {
   display: block;
   margin-bottom: 8px;
@@ -1315,12 +1512,31 @@ tbody tr:last-child td {
 }
 
 .table-wrapper::-webkit-scrollbar-thumb {
-  background: #e11d48;
+  background: var(--brand);
   border-radius: var(--r-pill);
 }
 
 .table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #b90028;
+  background: var(--brand-strong);
+}
+
+/* =========================
+   Pagination
+========================= */
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+
+  margin-top: 18px;
+}
+
+.pagination-info {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  font-weight: 500;
 }
 
 /* =========================
@@ -1503,7 +1719,7 @@ body.has-sidebar {
   background: linear-gradient(
     135deg,
     var(--brand),
-    #ec4899
+    #2563eb
   );
   border-radius: var(--r);
 

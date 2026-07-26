@@ -98,6 +98,9 @@ function putDormCache_(name, result) {
 /**
  * ห่อฟังก์ชันอ่านเดิมด้วย cache
  * ตรวจ token ก่อนเสมอ (session อยู่ใน cache อยู่แล้ว เร็ว)
+ *
+ * cache key ผูกกับ dormId ของผู้เรียกเสมอ — มิฉะนั้นหอ A
+ * จะได้ผลลัพธ์ที่ cache ไว้ให้หอ B (ข้อมูลรั่วข้ามหอ)
  */
 function cachedList_(name, request, loader) {
   const auth = validateToken(request.token);
@@ -106,7 +109,8 @@ function cachedList_(name, request, loader) {
     return auth;
   }
 
-  const cached = getDormCache_(name);
+  const scopedName = dormScopedCacheName_(name, auth);
+  const cached = getDormCache_(scopedName);
 
   if (cached) {
     return cached;
@@ -115,10 +119,61 @@ function cachedList_(name, request, loader) {
   const result = loader(request);
 
   if (result && result.success) {
-    putDormCache_(name, result);
+    putDormCache_(scopedName, result);
   }
 
   return result;
+}
+
+/* =========================================
+   สิทธิ์/ขอบเขตข้อมูลตามหอ (dormId)
+   -----------------------------------------
+   SUPER_ADMIN เห็นได้ทุกหอ (ไม่กรอง)
+   ถ้าชีตยังไม่ผ่าน migration เพิ่มคอลัมน์ dormId
+   (index.dormId === undefined) ก็ไม่กรอง เพื่อไม่ให้
+   ของเดิมพังก่อน migrateAddDormId_() ถูกรัน
+========================================= */
+
+function dormScopedCacheName_(name, auth) {
+  const role = String(
+    (auth.user && auth.user.role) || ""
+  )
+    .trim()
+    .toUpperCase();
+
+  if (role === "SUPER_ADMIN") {
+    return name + ":ALL";
+  }
+
+  const dormId = String(
+    (auth.user && auth.user.dormId) || ""
+  );
+
+  return dormId + ":" + name;
+}
+
+function rowInDormScope_(row, index, auth) {
+  const role = String(
+    (auth.user && auth.user.role) || ""
+  )
+    .trim()
+    .toUpperCase();
+
+  if (role === "SUPER_ADMIN") {
+    return true;
+  }
+
+  if (index.dormId === undefined) {
+    return true;
+  }
+
+  const dormId = String(
+    (auth.user && auth.user.dormId) || ""
+  );
+
+  return (
+    String(row[index.dormId] || "") === dormId
+  );
 }
 
 /* =========================================
@@ -147,6 +202,32 @@ function ownerOnly_(request, handler) {
       success: false,
       message:
         "สิทธิ์ไม่เพียงพอ ฟีเจอร์นี้ใช้ได้เฉพาะเจ้าของระบบ (OWNER)"
+    };
+  }
+
+  return handler(request);
+}
+
+/* SUPER_ADMIN: เห็น/จัดการได้ทุกหอ ใช้กับ action ใน Dorm.js */
+
+function superAdminOnly_(request, handler) {
+  const auth = validateToken(request.token);
+
+  if (!auth.success) {
+    return auth;
+  }
+
+  const role = String(
+    (auth.user && auth.user.role) || ""
+  )
+    .trim()
+    .toUpperCase();
+
+  if (role !== "SUPER_ADMIN") {
+    return {
+      success: false,
+      message:
+        "สิทธิ์ไม่เพียงพอ ฟีเจอร์นี้ใช้ได้เฉพาะผู้ดูแลระบบ (SUPER_ADMIN)"
     };
   }
 
@@ -190,7 +271,8 @@ function getBillPageData(request) {
     return auth;
   }
 
-  const cached = getDormCache_("page:bill");
+  const cacheName = dormScopedCacheName_("page:bill", auth);
+  const cached = getDormCache_(cacheName);
 
   if (cached) {
     return cached;
@@ -224,7 +306,7 @@ function getBillPageData(request) {
     }
   };
 
-  putDormCache_("page:bill", result);
+  putDormCache_(cacheName, result);
 
   return result;
 }
@@ -236,7 +318,8 @@ function getMeterPageData(request) {
     return auth;
   }
 
-  const cached = getDormCache_("page:meter");
+  const cacheName = dormScopedCacheName_("page:meter", auth);
+  const cached = getDormCache_(cacheName);
 
   if (cached) {
     return cached;
@@ -263,7 +346,7 @@ function getMeterPageData(request) {
     }
   };
 
-  putDormCache_("page:meter", result);
+  putDormCache_(cacheName, result);
 
   return result;
 }
@@ -275,7 +358,8 @@ function getTenantPageData(request) {
     return auth;
   }
 
-  const cached = getDormCache_("page:tenant");
+  const cacheName = dormScopedCacheName_("page:tenant", auth);
+  const cached = getDormCache_(cacheName);
 
   if (cached) {
     return cached;
@@ -302,7 +386,7 @@ function getTenantPageData(request) {
     }
   };
 
-  putDormCache_("page:tenant", result);
+  putDormCache_(cacheName, result);
 
   return result;
 }

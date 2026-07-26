@@ -1,7 +1,16 @@
+export type RegisterRole = "OWNER" | "USER";
+
 export interface RegisterInput {
   username: string;
   fullName: string;
   password: string;
+  role: RegisterRole;
+  dormName?: string;
+  dormId?: string;
+}
+
+export interface DormPublicInfo {
+  dormName: string;
 }
 
 export interface RegisteredUser {

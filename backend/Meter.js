@@ -51,6 +51,9 @@ function getMeters(request) {
         row[index.meterId] || ""
       ).trim();
     })
+    .filter(function (row) {
+      return rowInDormScope_(row, index, auth);
+    })
     .map(function (row) {
       return meterFromRow_(
         row,
@@ -88,6 +91,10 @@ function createMeter(request) {
   if (!auth.success) {
     return auth;
   }
+
+  const dormId = String(
+    (auth.user && auth.user.dormId) || ""
+  );
 
   const input =
     validateMeterInput_(request.meter);
@@ -216,7 +223,8 @@ function createMeter(request) {
       createdMeter.electricAmount,
       createdMeter.totalUtility,
       createdMeter.recordedAt,
-      createdMeter.updatedAt
+      createdMeter.updatedAt,
+      dormId
     ]);
 
     // ล้าง cache ให้หน้าอื่นเห็นข้อมูลใหม่ทันที
@@ -282,6 +290,14 @@ function updateMeter(request) {
     }
 
     if (targetRow === -1) {
+      return {
+        success: false,
+        message:
+          "ไม่พบข้อมูลมิเตอร์"
+      };
+    }
+
+    if (!rowInDormScope_(values[targetRow - 1], index, auth)) {
       return {
         success: false,
         message:
@@ -467,6 +483,13 @@ function deleteMeter(request) {
 
       if (currentMeterId !== meterId) {
         continue;
+      }
+
+      if (!rowInDormScope_(values[i], index, auth)) {
+        return {
+          success: false,
+          message: "ไม่พบข้อมูลมิเตอร์"
+        };
       }
 
       sheet.deleteRow(i + 1);

@@ -2,16 +2,48 @@ import "./register.css";
 import "../../utils/theme";
 
 import {
+  getDormPublicInfo,
   registerUser
 } from "../../services/register.service";
 
 import type {
-  RegisterInput
+  RegisterInput,
+  RegisterRole
 } from "../../types/register";
 
 const form =
   document.querySelector<HTMLFormElement>(
     "#register-form"
+  );
+
+const ownerTab =
+  document.querySelector<HTMLButtonElement>(
+    "#role-owner-tab"
+  );
+
+const staffTab =
+  document.querySelector<HTMLButtonElement>(
+    "#role-staff-tab"
+  );
+
+const dormNameGroup =
+  document.querySelector<HTMLElement>(
+    "#dorm-name-group"
+  );
+
+const dormNameInput =
+  document.querySelector<HTMLInputElement>(
+    "#dorm-name"
+  );
+
+const dormInviteGroup =
+  document.querySelector<HTMLElement>(
+    "#dorm-invite-group"
+  );
+
+const dormInviteNameElement =
+  document.querySelector<HTMLElement>(
+    "#dorm-invite-name"
   );
 
 const fullNameInput =
@@ -44,6 +76,9 @@ const registerButton =
     "#register-button"
   );
 
+let currentRole: RegisterRole = "OWNER";
+let inviteDormId: string | null = null;
+
 function showMessage(
   text: string,
   type: "success" | "error"
@@ -66,6 +101,103 @@ function clearMessage(): void {
   message.className =
     "register-message";
 }
+
+function setInviteStatus(
+  text: string,
+  isError: boolean
+): void {
+  if (!dormInviteNameElement) {
+    return;
+  }
+
+  dormInviteNameElement.textContent = text;
+
+  dormInviteNameElement.classList.toggle(
+    "is-error",
+    isError
+  );
+}
+
+function applyRoleView(): void {
+  ownerTab?.classList.toggle(
+    "is-active",
+    currentRole === "OWNER"
+  );
+
+  staffTab?.classList.toggle(
+    "is-active",
+    currentRole === "USER"
+  );
+
+  if (dormNameGroup) {
+    dormNameGroup.hidden =
+      currentRole !== "OWNER";
+  }
+
+  if (dormInviteGroup) {
+    dormInviteGroup.hidden =
+      currentRole !== "USER";
+  }
+
+  if (currentRole === "USER" && !inviteDormId) {
+    setInviteStatus(
+      "ต้องใช้ลิงก์เชิญจากเจ้าของหอ กรุณาขอลิงก์จากเจ้าของหอของคุณ",
+      true
+    );
+
+    if (registerButton) {
+      registerButton.disabled = true;
+    }
+  } else if (registerButton) {
+    registerButton.disabled = false;
+  }
+}
+
+async function resolveInviteDorm(
+  dormId: string
+): Promise<void> {
+  setInviteStatus("กำลังตรวจสอบลิงก์...", false);
+
+  try {
+    const result = await getDormPublicInfo(dormId);
+
+    if (!result.success || !result.data) {
+      inviteDormId = null;
+      setInviteStatus(
+        result.message || "ไม่พบหอที่ระบุ",
+        true
+      );
+
+      applyRoleView();
+      return;
+    }
+
+    inviteDormId = dormId;
+    setInviteStatus(result.data.dormName, false);
+    applyRoleView();
+  } catch (error) {
+    inviteDormId = null;
+
+    setInviteStatus(
+      error instanceof Error
+        ? error.message
+        : "ไม่สามารถตรวจสอบลิงก์ได้",
+      true
+    );
+
+    applyRoleView();
+  }
+}
+
+ownerTab?.addEventListener("click", () => {
+  currentRole = "OWNER";
+  applyRoleView();
+});
+
+staffTab?.addEventListener("click", () => {
+  currentRole = "USER";
+  applyRoleView();
+});
 
 function readForm(): RegisterInput | null {
   const fullName =
@@ -132,10 +264,44 @@ function readForm(): RegisterInput | null {
     return null;
   }
 
+  if (currentRole === "OWNER") {
+    const dormName =
+      dormNameInput?.value.trim() ?? "";
+
+    if (!dormName) {
+      showMessage(
+        "กรุณากรอกชื่อหอ",
+        "error"
+      );
+
+      dormNameInput?.focus();
+      return null;
+    }
+
+    return {
+      fullName,
+      username,
+      password,
+      role: "OWNER",
+      dormName
+    };
+  }
+
+  if (!inviteDormId) {
+    showMessage(
+      "ต้องใช้ลิงก์เชิญจากเจ้าของหอ กรุณาขอลิงก์จากเจ้าของหอของคุณ",
+      "error"
+    );
+
+    return null;
+  }
+
   return {
     fullName,
     username,
-    password
+    password,
+    role: "USER",
+    dormId: inviteDormId
   };
 }
 
@@ -197,3 +363,23 @@ form?.addEventListener(
     }
   }
 );
+
+function initializeRegisterPage(): void {
+  const params = new URLSearchParams(
+    window.location.search
+  );
+
+  const dormParam = params.get("dorm");
+
+  if (dormParam) {
+    currentRole = "USER";
+    applyRoleView();
+    void resolveInviteDorm(dormParam);
+    return;
+  }
+
+  currentRole = "OWNER";
+  applyRoleView();
+}
+
+initializeRegisterPage();

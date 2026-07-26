@@ -9,11 +9,13 @@ import {
 } from "../../utils/auth.guard";
 
 import {createRoom,deleteRoom,getRooms,updateRoom} from "../../services/room.service";
+import { getTenants } from "../../services/tenant.service";
 
-import { confirmDialog } from "../../utils/dialog";
+import { confirmDialog, detailDialog } from "../../utils/dialog";
 import { showToast } from "../../utils/toast";
 
 import type {Room,RoomInput,} from "../../types/room";
+import type { Tenant } from "../../types/tenant";
 
 const formPanel = document.querySelector<HTMLElement>("#room-form-panel");
 
@@ -31,7 +33,7 @@ const formMessage = document.querySelector<HTMLElement>("#form-message");
 
 const pageMessage = document.querySelector<HTMLElement>("#page-message");
 
-const tableBody = document.querySelector<HTMLTableSectionElement>("#room-table-body");
+const groupsContainer = document.querySelector<HTMLElement>("#room-groups");
 
 const searchInput = document.querySelector<HTMLInputElement>("#search-input");
 
@@ -56,7 +58,27 @@ const roomTypeInput = document.querySelector<HTMLInputElement>("#room-type");
 const roomDetailInput = document.querySelector<HTMLTextAreaElement>("#room-detail");
 
 let rooms: Room[] = [];
+let tenants: Tenant[] = [];
 let editingRoomId: string | null = null;
+const expandedFloors = new Set<number>();
+
+function getActiveTenantName(
+  roomId: string
+): string {
+  const tenant = tenants.find(
+    item =>
+      item.roomId === roomId &&
+      item.status === "ACTIVE"
+  );
+
+  return tenant?.fullName ?? "";
+}
+
+function sortByRoomNo(a: Room, b: Room): number {
+  return a.roomNo.localeCompare(b.roomNo, "th", {
+    numeric: true
+  });
+}
 
 function formatMoney(value: number): string {
   return new Intl.NumberFormat("th-TH", {
@@ -270,47 +292,44 @@ function getFilteredRooms(): Room[] {
   });
 }
 
-function renderRooms(): void {
-  if (!tableBody) {
-    return;
-  }
+function hasActiveFilter(): boolean {
+  return Boolean(
+    (searchInput?.value.trim() ?? "") ||
+    (statusFilter?.value ?? "") ||
+    (typeFilter?.value ?? "") ||
+    (roomNoFilter?.value ?? "") ||
+    (floorFilter?.value ?? "")
+  );
+}
 
-  const filteredRooms = getFilteredRooms();
+function openRoomDetail(room: Room): void {
+  void detailDialog(`รายละเอียดห้อง ${room.roomNo}`, [
+    { label: "เลขห้อง", value: room.roomNo },
+    { label: "ประเภทห้อง", value: room.roomType || "-" },
+    { label: "ลักษณะห้อง", value: room.roomDetail || "-" },
+    { label: "ชั้น", value: String(room.floor) },
+    { label: "ค่าเช่า", value: formatMoney(room.price) },
+    { label: "สถานะ", value: room.status },
+    {
+      label: "ผู้เช่าปัจจุบัน",
+      value:
+        getActiveTenantName(room.roomId) ||
+        "ไม่มีผู้เช่า"
+    }
+  ]);
+}
 
-  if (filteredRooms.length === 0) {
-    tableBody.innerHTML = `
-      <tr>
-        <td class="empty-cell" colspan="7">
-          ไม่พบข้อมูลห้องพัก
-        </td>
-      </tr>
-    `;
+function renderRoomRow(room: Room): string {
+  const statusClass =
+    room.status === "ว่าง"
+      ? "status-vacant"
+      : "status-occupied";
 
-    return;
-  }
-
-  tableBody.innerHTML = filteredRooms
-    .map(room => {
-      const statusClass =
-        room.status === "ว่าง"
-          ? "status-vacant"
-          : "status-occupied";
-
-      return `
-  <tr>
+  return `
+  <tr tabindex="0" data-room-id="${room.roomId}">
     <td>
       <strong>${escapeHtml(room.roomNo)}</strong>
     </td>
-
-    <td>
-      ${escapeHtml(room.roomType || "-")}
-    </td>
-
-    <td class="room-detail-cell">
-      ${escapeHtml(room.roomDetail || "-")}
-    </td>
-
-    <td>${room.floor}</td>
 
     <td>${formatMoney(room.price)}</td>
 
@@ -341,25 +360,84 @@ function renderRooms(): void {
     </td>
   </tr>
 `;
+}
+
+function renderRooms(): void {
+  if (!groupsContainer) {
+    return;
+  }
+
+  const filteredRooms = getFilteredRooms();
+
+  if (filteredRooms.length === 0) {
+    groupsContainer.innerHTML = `
+      <p class="empty-cell">ไม่พบข้อมูลห้องพัก</p>
+    `;
+    return;
+  }
+
+  const activeFilter = hasActiveFilter();
+
+  const floors = [
+    ...new Set(filteredRooms.map(room => room.floor))
+  ].sort((a, b) => a - b);
+
+  groupsContainer.innerHTML = floors
+    .map(floor => {
+      const floorRooms = filteredRooms
+        .filter(room => room.floor === floor)
+        .sort(sortByRoomNo);
+
+      const isOpen =
+        activeFilter || expandedFloors.has(floor);
+
+      return `
+    <details class="floor-group" data-floor="${floor}" ${isOpen ? "open" : ""}>
+      <summary class="floor-group-summary">
+        <span class="floor-group-title">
+          <span class="floor-group-arrow" aria-hidden="true">▸</span>
+          ชั้น ${floor}
+        </span>
+        <span class="floor-group-count">${floorRooms.length} ห้อง</span>
+      </summary>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>เลขห้อง</th>
+              <th>ค่าเช่า</th>
+              <th>สถานะ</th>
+              <th class="action-column">จัดการ</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${floorRooms.map(renderRoomRow).join("")}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  `;
     })
     .join("");
 }
 
 async function loadRooms(): Promise<void> {
-  if (tableBody) {
-    tableBody.innerHTML = `
-      <tr>
-        <td class="loading-cell" colspan="7">
-          กำลังโหลดข้อมูล...
-        </td>
-      </tr>
+  if (groupsContainer) {
+    groupsContainer.innerHTML = `
+      <p class="loading-cell">กำลังโหลดข้อมูล...</p>
     `;
   }
 
   try {
     clearPageMessage();
 
-    const result = await getRooms();
+    const [result, tenantsResult] =
+      await Promise.all([
+        getRooms(),
+        getTenants()
+      ]);
 
     if (!result.success) {
       showPageMessage(result.message, "error");
@@ -369,6 +447,10 @@ async function loadRooms(): Promise<void> {
     }
 
     rooms = result.data ?? [];
+    tenants = tenantsResult.success
+      ? tenantsResult.data ?? []
+      : [];
+
     populateFilterOptions();
     renderRooms();
   } catch (error) {
@@ -440,14 +522,26 @@ form?.addEventListener("submit", async event => {
     return;
   }
 
+  const isEditing = Boolean(editingRoomId);
+
+  const confirmed = await confirmDialog({
+    title: isEditing ? "ยืนยันการแก้ไข" : "ยืนยันการเพิ่ม",
+    message: `ต้องการ${
+      isEditing ? "บันทึกการแก้ไข" : "เพิ่ม"
+    }ห้อง ${roomInput.roomNo} หรือไม่`,
+    confirmText: isEditing ? "บันทึกการแก้ไข" : "เพิ่มห้อง"
+  });
+
+  if (!confirmed) {
+    return;
+  }
+
   if (saveButton) {
     saveButton.disabled = true;
     saveButton.textContent = "กำลังบันทึก...";
   }
 
   try {
-    const isEditing = Boolean(editingRoomId);
-
     const result = editingRoomId
       ? await updateRoom(editingRoomId, roomInput)
       : await createRoom(roomInput);
@@ -483,15 +577,11 @@ form?.addEventListener("submit", async event => {
   }
 });
 
-tableBody?.addEventListener("click", async event => {
-  const target = event.target;
-
-  if (!(target instanceof HTMLButtonElement)) {
-    return;
-  }
-
-  const roomId = target.dataset.roomId;
-  const action = target.dataset.action;
+async function handleRoomAction(
+  button: HTMLButtonElement
+): Promise<void> {
+  const roomId = button.dataset.roomId;
+  const action = button.dataset.action;
 
   if (!roomId) {
     return;
@@ -525,7 +615,7 @@ tableBody?.addEventListener("click", async event => {
     return;
   }
 
-  target.disabled = true;
+  button.disabled = true;
 
   try {
     const result = await deleteRoom(roomId);
@@ -551,9 +641,84 @@ tableBody?.addEventListener("click", async event => {
       "error"
     );
   } finally {
-    target.disabled = false;
+    button.disabled = false;
+  }
+}
+
+groupsContainer?.addEventListener("click", async event => {
+  const target = event.target;
+
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const button = target.closest("button");
+
+  if (button instanceof HTMLButtonElement) {
+    await handleRoomAction(button);
+    return;
+  }
+
+  const row = target.closest("tr[data-room-id]");
+
+  if (row instanceof HTMLTableRowElement) {
+    const roomId = row.dataset.roomId;
+    const room = rooms.find(item => item.roomId === roomId);
+
+    if (room) {
+      openRoomDetail(room);
+    }
   }
 });
+
+groupsContainer?.addEventListener("keydown", event => {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  const target = event.target;
+
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  if (target.closest("button")) {
+    return;
+  }
+
+  const row = target.closest("tr[data-room-id]");
+
+  if (row instanceof HTMLTableRowElement) {
+    event.preventDefault();
+
+    const roomId = row.dataset.roomId;
+    const room = rooms.find(item => item.roomId === roomId);
+
+    if (room) {
+      openRoomDetail(room);
+    }
+  }
+});
+
+groupsContainer?.addEventListener(
+  "toggle",
+  event => {
+    const details = event.target;
+
+    if (!(details instanceof HTMLDetailsElement)) {
+      return;
+    }
+
+    const floor = Number(details.dataset.floor);
+
+    if (details.open) {
+      expandedFloors.add(floor);
+    } else {
+      expandedFloors.delete(floor);
+    }
+  },
+  true
+);
 
 openFormButton?.addEventListener("click", () => {
   openForm();

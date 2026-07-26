@@ -2,6 +2,7 @@ import "./login.css";
 import "../../utils/theme";
 
 import {
+  getCurrentUser,
   isLoggedIn,
   login
 } from "../../services/auth.service";
@@ -60,8 +61,10 @@ const togglePasswordButton =
 
 /**
  * คืน URL ที่ผู้ใช้ต้องการเข้า หลัง Login สำเร็จ
+ * ถ้าไม่มี redirect ระบุมา และเป็น SUPER_ADMIN
+ * ให้ไปหน้า Admin แทนหน้า Home
  */
-function getRedirectUrl(): string {
+function getRedirectUrl(role?: string): string {
   const searchParams =
     new URLSearchParams(window.location.search);
 
@@ -71,22 +74,97 @@ function getRedirectUrl(): string {
   const storedRedirect =
     sessionStorage.getItem(RETURN_URL_KEY);
 
-  const redirectUrl =
-    queryRedirect ??
-    storedRedirect ??
-    "/index.html";
-
   sessionStorage.removeItem(RETURN_URL_KEY);
+
+  const explicitRedirect =
+    queryRedirect ?? storedRedirect;
+
+  const defaultUrl =
+    String(role ?? "").trim().toUpperCase() ===
+    "SUPER_ADMIN"
+      ? "/src/pages/admin/admin.html"
+      : "/index.html";
+
+  const redirectUrl =
+    explicitRedirect ?? defaultUrl;
 
   // อนุญาตเฉพาะ URL ภายในเว็บไซต์
   if (
     !redirectUrl.startsWith("/") ||
     redirectUrl.startsWith("//")
   ) {
-    return "/index.html";
+    return defaultUrl;
   }
 
   return redirectUrl;
+}
+
+const CONFETTI_COLORS = [
+  "var(--brand)",
+  "#3b82f6",
+  "#10b981",
+  "#f97316",
+  "#ec4899",
+  "#8b5cf6"
+];
+
+/**
+ * เจ็คมาร์ก + confetti สั้นๆ ตอน login สำเร็จ
+ * ก่อนค่อย redirect (คืน Promise ที่ resolve
+ * เมื่อเล่นจบแล้ว)
+ */
+function playLoginSuccessAnimation(): Promise<void> {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "login-success-overlay";
+
+    const check = document.createElement("div");
+    check.className = "login-success-check";
+    check.textContent = "✓";
+    overlay.append(check);
+
+    const dotCount = 10;
+
+    for (let i = 0; i < dotCount; i++) {
+      const dot = document.createElement("span");
+      dot.className = "confetti-dot";
+
+      const angle =
+        (Math.PI * 2 * i) / dotCount +
+        Math.random() * 0.4;
+
+      const distance = 70 + Math.random() * 60;
+
+      dot.style.setProperty(
+        "--dx",
+        `${Math.cos(angle) * distance}px`
+      );
+
+      dot.style.setProperty(
+        "--dy",
+        `${Math.sin(angle) * distance}px`
+      );
+
+      dot.style.setProperty(
+        "--dot-color",
+        CONFETTI_COLORS[i % CONFETTI_COLORS.length]
+      );
+
+      dot.style.setProperty(
+        "--delay",
+        `${0.1 + Math.random() * 0.15}s`
+      );
+
+      overlay.append(dot);
+    }
+
+    document.body.append(overlay);
+
+    window.setTimeout(() => {
+      overlay.remove();
+      resolve();
+    }, 800);
+  });
 }
 
 function setFieldError(
@@ -262,11 +340,12 @@ form?.addEventListener(
         "success"
       );
 
-      const redirectUrl = getRedirectUrl();
+      const redirectUrl = getRedirectUrl(
+        result.user?.role
+      );
 
-      window.setTimeout(() => {
-        window.location.replace(redirectUrl);
-      }, 500);
+      await playLoginSuccessAnimation();
+      window.location.replace(redirectUrl);
     } catch (error) {
       console.error("Login error:", error);
 
@@ -288,7 +367,7 @@ form?.addEventListener(
 function initializeLoginPage(): void {
   if (isLoggedIn()) {
     window.location.replace(
-      getRedirectUrl()
+      getRedirectUrl(getCurrentUser()?.role)
     );
 
     return;

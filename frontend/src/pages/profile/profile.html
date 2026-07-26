@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+      โปรไฟล์ของฉัน | Dorm Management
+    </title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("dorm_theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia(
+              "(prefers-color-scheme: dark)"
+            ).matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+
+  <body>
+    <header class="page-header">
+      <a
+        class="back-link"
+        href="/index.html"
+      >
+        ← กลับหน้า Home
+      </a>
+
+      <h1>โปรไฟล์ของฉัน</h1>
+
+      <button
+        id="logout-button"
+        class="logout-button"
+        type="button"
+      >
+        ออกจากระบบ
+      </button>
+    </header>
+
+    <main class="profile-page">
+      <section class="page-title">
+        <div>
+          <p class="eyebrow">PROFILE</p>
+          <h2>ข้อมูลส่วนตัว</h2>
+          <p>
+            แก้ไขชื่อ เบอร์โทร รูปโปรไฟล์
+            และรหัสผ่านของคุณ
+          </p>
+        </div>
+      </section>
+
+      <div
+        id="page-message"
+        class="page-message"
+        role="alert"
+      ></div>
+
+      <!-- Avatar -->
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">รูปโปรไฟล์</p>
+            <h3>รูปที่แสดงในระบบ</h3>
+          </div>
+        </div>
+
+        <div class="avatar-row">
+          <div
+            id="avatar-preview"
+            class="avatar-circle avatar-lg"
+          ></div>
+
+          <div class="avatar-actions">
+            <button
+              id="change-avatar-button"
+              class="secondary-button"
+              type="button"
+            >
+              เปลี่ยนรูป
+            </button>
+
+            <small>ไฟล์ภาพ ขนาดไม่เกิน 2MB</small>
+
+            <input
+              id="avatar-file-input"
+              type="file"
+              accept="image/*"
+              hidden
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- ชื่อหอ + ลิงก์เชิญพนักงาน -->
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">หอของฉัน</p>
+            <h3>ชื่อหอ</h3>
+          </div>
+        </div>
+
+        <form id="dorm-form" novalidate>
+          <div class="profile-form-grid">
+            <div class="form-group form-group-full">
+              <label for="dorm-name-input">
+                ชื่อหอ
+              </label>
+
+              <input
+                id="dorm-name-input"
+                name="dormName"
+                type="text"
+                placeholder="เช่น หอพักสบายดี"
+                required
+              />
+            </div>
+          </div>
+
+          <div
+            id="dorm-message"
+            class="page-message"
+            role="alert"
+          ></div>
+
+          <div class="filter-actions">
+            <button
+              id="dorm-save-button"
+              class="primary-button"
+              type="submit"
+            >
+              บันทึกชื่อหอ
+            </button>
+          </div>
+        </form>
+
+        <div class="invite-link-block">
+          <label for="invite-link-input">
+            ลิงก์เชิญพนักงาน
+          </label>
+
+          <p class="invite-link-hint">
+            ส่งลิงก์นี้ให้พนักงานเพื่อสมัครเข้าร่วมหอนี้
+          </p>
+
+          <div class="invite-link-row">
+            <input
+              id="invite-link-input"
+              type="text"
+              readonly
+            />
+
+            <button
+              id="copy-invite-link-button"
+              class="secondary-button"
+              type="button"
+            >
+              คัดลอกลิงก์
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ข้อมูลทั่วไป -->
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ข้อมูลทั่วไป</p>
+            <h3>ชื่อและข้อมูลติดต่อ</h3>
+          </div>
+        </div>
+
+        <form id="profile-form" novalidate>
+          <div class="profile-form-grid">
+            <div class="form-group">
+              <label for="profile-username">
+                ชื่อผู้ใช้
+              </label>
+
+              <input
+                id="profile-username"
+                type="text"
+                disabled
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="profile-role">บทบาท</label>
+
+              <input
+                id="profile-role"
+                type="text"
+                disabled
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="profile-fullname">
+                ชื่อ-นามสกุล
+              </label>
+
+              <input
+                id="profile-fullname"
+                name="fullName"
+                type="text"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="profile-phone">เบอร์โทร</label>
+
+              <input
+                id="profile-phone"
+                name="phone"
+                type="tel"
+                placeholder="เบอร์ติดต่อ"
+              />
+            </div>
+          </div>
+
+          <div
+            id="profile-message"
+            class="page-message"
+            role="alert"
+          ></div>
+
+          <div class="filter-actions">
+            <button
+              id="profile-save-button"
+              class="primary-button"
+              type="submit"
+            >
+              บันทึกข้อมูล
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- เปลี่ยนรหัสผ่าน -->
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ความปลอดภัย</p>
+            <h3>เปลี่ยนรหัสผ่าน</h3>
+          </div>
+        </div>
+
+        <form id="password-form" novalidate>
+          <div class="profile-form-grid">
+            <div class="form-group form-group-full">
+              <label for="current-password">
+                รหัสผ่านปัจจุบัน
+              </label>
+
+              <input
+                id="current-password"
+                name="currentPassword"
+                type="password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="new-password">
+                รหัสผ่านใหม่
+              </label>
+
+              <input
+                id="new-password"
+                name="newPassword"
+                type="password"
+                autocomplete="new-password"
+                minlength="8"
+                placeholder="อย่างน้อย 8 ตัวอักษร"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="confirm-new-password">
+                ยืนยันรหัสผ่านใหม่
+              </label>
+
+              <input
+                id="confirm-new-password"
+                name="confirmNewPassword"
+                type="password"
+                autocomplete="new-password"
+                minlength="8"
+                required
+              />
+            </div>
+          </div>
+
+          <div
+            id="password-message"
+            class="page-message"
+            role="alert"
+          ></div>
+
+          <div class="filter-actions">
+            <button
+              id="password-save-button"
+              class="primary-button"
+              type="submit"
+            >
+              เปลี่ยนรหัสผ่าน
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/src/pages/profile/profile.ts"
+    ></script>
+  </body>
+</html>

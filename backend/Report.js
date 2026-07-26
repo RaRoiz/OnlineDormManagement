@@ -25,27 +25,31 @@ function getDashboardSummary(request) {
 
   const rooms =
     getValidReportRows_(
-      roomsData,
-      "roomId"
-    );
+    roomsData,
+    "roomId",
+    auth
+  );
 
   const tenants =
     getValidReportRows_(
-      tenantsData,
-      "tenantId"
-    );
+    tenantsData,
+    "tenantId",
+    auth
+  );
 
   const meters =
     getValidReportRows_(
-      metersData,
-      "meterId"
-    );
+    metersData,
+    "meterId",
+    auth
+  );
 
   const bills =
     getValidReportRows_(
-      billsData,
-      "billId"
-    );
+    billsData,
+    "billId",
+    auth
+  );
 
   const occupiedRoomIds =
     new Set();
@@ -356,7 +360,8 @@ function getRoomReport(request) {
 
   getValidReportRows_(
     tenantsData,
-    "tenantId"
+    "tenantId",
+    auth
   ).forEach(function (row) {
     const status =
       reportText_(
@@ -390,9 +395,10 @@ function getRoomReport(request) {
 
   let rows =
     getValidReportRows_(
-      roomsData,
-      "roomId"
-    ).map(function (row) {
+    roomsData,
+    "roomId",
+    auth
+  ).map(function (row) {
       const roomId =
         reportText_(
           row,
@@ -560,7 +566,8 @@ function getTenantReport(request) {
 
   getValidReportRows_(
     roomsData,
-    "roomId"
+    "roomId",
+    auth
   ).forEach(function (row) {
     roomMap.set(
       reportText_(
@@ -578,9 +585,10 @@ function getTenantReport(request) {
 
   let rows =
     getValidReportRows_(
-      tenantsData,
-      "tenantId"
-    ).map(function (row) {
+    tenantsData,
+    "tenantId",
+    auth
+  ).map(function (row) {
       const roomId =
         reportText_(
           row,
@@ -770,7 +778,8 @@ function getUtilityReport(request) {
 
   getValidReportRows_(
     roomsData,
-    "roomId"
+    "roomId",
+    auth
   ).forEach(function (row) {
     roomMap.set(
       reportText_(
@@ -788,9 +797,10 @@ function getUtilityReport(request) {
 
   let rows =
     getValidReportRows_(
-      metersData,
-      "meterId"
-    ).map(function (row) {
+    metersData,
+    "meterId",
+    auth
+  ).map(function (row) {
       const roomId =
         reportText_(
           row,
@@ -972,9 +982,10 @@ function getBillReport(request) {
 
   let rows =
     getValidReportRows_(
-      billsData,
-      "billId"
-    ).map(function (row) {
+    billsData,
+    "billId",
+    auth
+  ).map(function (row) {
       const paymentStatus =
         reportText_(
           row,
@@ -1273,16 +1284,27 @@ function readReportSheet_(sheetName) {
 
 function getValidReportRows_(
   data,
-  idField
+  idField,
+  auth
 ) {
   return data.rows.filter(
     function (row) {
-      return Boolean(
-        reportText_(
-          row,
-          data.index,
-          idField
+      if (
+        !Boolean(
+          reportText_(
+            row,
+            data.index,
+            idField
+          )
         )
+      ) {
+        return false;
+      }
+
+      return rowInDormScope_(
+        row,
+        data.index,
+        auth
       );
     }
   );

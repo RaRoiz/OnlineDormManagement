@@ -1,6 +1,7 @@
 import {
   isLoggedIn,
-  isOwner
+  isOwner,
+  isSuperAdmin
 } from "../services/auth.service";
 
 /**
@@ -15,28 +16,29 @@ interface SidebarItem {
   label: string;
   accent?: string;
   ownerOnly?: boolean;
+  superAdminOnly?: boolean;
 }
 
 const MENU_ITEMS: SidebarItem[] = [
   {
     href: "/index.html",
-    icon: "🏠",
+    icon: "🏡",
     label: "หน้าหลัก"
   },
   {
     href: "/src/pages/room/room.html",
-    icon: "🚪",
+    icon: "🛏️",
     label: "ห้องพัก"
   },
   {
     href: "/src/pages/tenant/tenant.html",
-    icon: "👤",
+    icon: "👥",
     label: "ผู้เช่า",
     accent: "#3b82f6"
   },
   {
     href: "/src/pages/meter/meter.html",
-    icon: "⚡",
+    icon: "🔌",
     label: "มิเตอร์น้ำ-ไฟ",
     accent: "#f97316"
   },
@@ -47,13 +49,43 @@ const MENU_ITEMS: SidebarItem[] = [
     accent: "#10b981"
   },
   {
+    href: "/src/pages/staff/staff.html",
+    icon: "🧑‍💼",
+    label: "พนักงาน",
+    accent: "#14b8a6",
+    ownerOnly: true
+  },
+
+  {
     href: "/src/pages/report/report.html",
     icon: "📊",
     label: "Dashboard / Report",
     accent: "#ec4899",
     ownerOnly: true
+  },
+
+  {
+    href: "/src/pages/admin/admin.html",
+    icon: "🏢",
+    label: "Admin (ทุกหอ)",
+    accent: "#8b5cf6",
+    superAdminOnly: true
   }
 ];
+
+const PAGE_FADE_OUT_MS = 160;
+
+/**
+ * เล่น fade ออกก่อนค่อย navigate จริง (ตาม
+ * keyframe page-fade-out ใน theme.css)
+ */
+function fadeNavigate(href: string): void {
+  document.body.classList.add("page-fade-out");
+
+  window.setTimeout(() => {
+    window.location.href = href;
+  }, PAGE_FADE_OUT_MS);
+}
 
 function isActivePath(href: string): boolean {
   const path = window.location.pathname;
@@ -94,16 +126,22 @@ function createLink(
 
   link.append(icon, label);
 
-  // ยังไม่ล็อกอิน — พาไปหน้า login
-  // แล้วเด้งกลับมาหน้าที่ตั้งใจจะเข้า
   link.addEventListener("click", event => {
     if (
       item.href === "/index.html" ||
       isLoggedIn()
     ) {
+      // ล็อกอินแล้ว — เล่น fade ก่อนค่อยเปลี่ยนหน้า
+      if (!isActivePath(item.href)) {
+        event.preventDefault();
+        fadeNavigate(item.href);
+      }
+
       return;
     }
 
+    // ยังไม่ล็อกอิน — พาไปหน้า login
+    // แล้วเด้งกลับมาหน้าที่ตั้งใจจะเข้า
     event.preventDefault();
 
     sessionStorage.setItem(
@@ -161,8 +199,23 @@ export function renderSidebar(): void {
   const hideOwnerMenu =
     isLoggedIn() && !isOwner();
 
+  // SUPER_ADMIN ไม่ผูกกับหอไหนเป็นพิเศษ —
+  // เห็นเฉพาะเมนู Admin ไม่เห็นเมนูจัดการห้อง/ผู้เช่าของหอทั่วไป
+  const superAdminUser =
+    isLoggedIn() && isSuperAdmin();
+
   MENU_ITEMS.forEach(item => {
     if (item.ownerOnly && hideOwnerMenu) {
+      return;
+    }
+
+    if (item.superAdminOnly && !superAdminUser) {
+      return;
+    }
+
+    // SUPER_ADMIN เห็นเฉพาะเมนูที่ทำเครื่องหมาย
+    // superAdminOnly ไว้ — ไม่เห็น "หน้าหลัก" ด้วย
+    if (superAdminUser && !item.superAdminOnly) {
       return;
     }
 
