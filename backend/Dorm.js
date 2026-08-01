@@ -7,7 +7,8 @@ const DORM_HEADERS = [
   "phone",
   "address",
   "status",
-  "createdAt"
+  "createdAt",
+  "promptPayId"
 ];
 
 /* หอเริ่มต้นที่ migrateAddDormId_() สร้างให้ข้อมูลเดิมก่อนมีระบบหลายหอ */
@@ -98,6 +99,130 @@ function findDormName_(dormId) {
 }
 
 /**
+ * หาเลขพร้อมเพย์ (เบอร์โทร/เลขบัตรประชาชน) ของหอจาก dormId
+ * คืนสตริงว่างถ้าไม่พบ/ยังไม่ได้ตั้งค่า — ใช้ตอน login()
+ * เพื่อฝังไว้ใน session ให้หน้าบิลสร้าง QR ได้โดยไม่ต้องยิง
+ * request แยก
+ */
+function findDormPromptPayId_(dormId) {
+  if (!dormId) {
+    return "";
+  }
+
+  const sheet = getDormsSheet_();
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length <= 1) {
+    return "";
+  }
+
+  const index = getDormHeaderIndex_(values[0]);
+
+  const row = values.slice(1).find(function (r) {
+    return (
+      String(r[index.dormId] || "").trim() === dormId
+    );
+  });
+
+  return row
+    ? String(row[index.promptPayId] || "").trim()
+    : "";
+}
+
+/* =========================
+   LINE Official Account ต่อหอ (คอลัมน์ 9-10 บนชีต Dorms)
+   — เขียน/อ่านด้วยตำแหน่งคอลัมน์ตรงๆ ไม่ผ่าน DORM_HEADERS
+   เพื่อไม่ให้ getDormsSheet_() (ที่เช็คหัวตารางเข้มงวด และถูก
+   เรียกแทบทุก request) พังกับสเปรดชีตเก่าที่ยังไม่มี 2 คอลัมน์นี้
+========================= */
+
+const DORM_LINE_TOKEN_COLUMN = 9;
+const DORM_LINE_BOT_USER_ID_COLUMN = 10;
+
+/** คืน { token, botUserId } — สตริงว่างถ้ายังไม่ได้ตั้งค่า */
+function getDormLineCredentials_(dormId) {
+  if (!dormId) {
+    return { token: "", botUserId: "" };
+  }
+
+  const sheet = getDormsSheet_();
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length <= 1) {
+    return { token: "", botUserId: "" };
+  }
+
+  const index = getDormHeaderIndex_(values[0]);
+
+  const row = values.slice(1).find(function (r) {
+    return (
+      String(r[index.dormId] || "").trim() === dormId
+    );
+  });
+
+  if (!row) {
+    return { token: "", botUserId: "" };
+  }
+
+  return {
+    token: String(
+      row[DORM_LINE_TOKEN_COLUMN - 1] || ""
+    ).trim(),
+
+    botUserId: String(
+      row[DORM_LINE_BOT_USER_ID_COLUMN - 1] || ""
+    ).trim()
+  };
+}
+
+/** ย้อนจาก lineBotUserId (payload.destination ของ webhook)
+ * กลับไปหา dormId — ใช้ตอน handleLineWebhook_() แยกว่า
+ * ข้อความนี้เป็นของ LINE OA ของหอไหน */
+function findDormIdByLineBotUserId_(botUserId) {
+  if (!botUserId) {
+    return "";
+  }
+
+  const sheet = getDormsSheet_();
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length <= 1) {
+    return "";
+  }
+
+  const index = getDormHeaderIndex_(values[0]);
+
+  const row = values.slice(1).find(function (r) {
+    return (
+      String(
+        r[DORM_LINE_BOT_USER_ID_COLUMN - 1] || ""
+      ).trim() === botUserId
+    );
+  });
+
+  return row
+    ? String(row[index.dormId] || "").trim()
+    : "";
+}
+
+function setDormLineCredentials_(targetRow, token, botUserId) {
+  const sheet = getDormsSheet_();
+
+  sheet
+    .getRange(targetRow, DORM_LINE_TOKEN_COLUMN, 1, 1)
+    .setValue(token);
+
+  sheet
+    .getRange(
+      targetRow,
+      DORM_LINE_BOT_USER_ID_COLUMN,
+      1,
+      1
+    )
+    .setValue(botUserId);
+}
+
+/**
  * ดูชื่อหอจาก dormId แบบสาธารณะ — ไม่ต้อง login
  * (เรียกจากหน้า register ก่อนสมัคร เพื่อโชว์ว่ากำลัง
  * สมัครเป็นพนักงานของหอไหน) คืนแค่ชื่อ ไม่มีข้อมูลอื่น
@@ -151,6 +276,72 @@ function updateOwnDorm(request) {
     };
   }
 
+  const promptPayDigits = String(
+    request.promptPayId || ""
+  ).replace(/\D/g, "");
+
+  if (
+    promptPayDigits &&
+    promptPayDigits.length !== 10 &&
+    promptPayDigits.length !== 13
+  ) {
+    return {
+      success: false,
+      message:
+        "เบอร์พร้อมเพย์ต้องเป็นเบอร์โทร 10 หลัก หรือเลขบัตรประชาชน 13 หลัก"
+    };
+  }
+
+  // ไม่ส่ง token ดิบกลับไปให้ frontend เก็บไว้เลย (แสดงแค่สถานะ
+  // เชื่อมต่อ) ดังนั้นถ้าช่องนี้ว่าง แปลว่า "ไม่ได้ตั้งใจแก้"
+  // ไม่ใช่ "อยากล้างค่าเดิม" — คงค่า token/botUserId เดิมไว้
+  const existingLineCredentials =
+    getDormLineCredentials_(
+      String(auth.user.dormId || "").trim()
+    );
+
+  const lineChannelAccessToken = String(
+    request.lineChannelAccessToken || ""
+  ).trim();
+
+  let lineTokenToSave = existingLineCredentials.token;
+  let lineBotUserId = existingLineCredentials.botUserId;
+
+  if (
+    lineChannelAccessToken &&
+    lineChannelAccessToken !== existingLineCredentials.token
+  ) {
+    const botInfoResponse = UrlFetchApp.fetch(
+      "https://api.line.me/v2/bot/info",
+      {
+        headers: {
+          Authorization:
+            "Bearer " + lineChannelAccessToken
+        },
+        muteHttpExceptions: true
+      }
+    );
+
+    if (botInfoResponse.getResponseCode() >= 300) {
+      return {
+        success: false,
+        message:
+          "LINE Channel Access Token ไม่ถูกต้อง " +
+          "กรุณาตรวจสอบอีกครั้ง"
+      };
+    }
+
+    const botInfo = JSON.parse(
+      botInfoResponse.getContentText()
+    );
+
+    lineBotUserId = String(
+      botInfo.userId || ""
+    ).trim();
+
+    lineTokenToSave = lineChannelAccessToken;
+  }
+
   const dormId = String(
     auth.user.dormId || ""
   ).trim();
@@ -194,10 +385,24 @@ function updateOwnDorm(request) {
       .getRange(targetRow, index.dormName + 1, 1, 1)
       .setValue(dormName);
 
+    sheet
+      .getRange(targetRow, index.promptPayId + 1, 1, 1)
+      .setValue(promptPayDigits);
+
+    setDormLineCredentials_(
+      targetRow,
+      lineTokenToSave,
+      lineBotUserId
+    );
+
     const updatedUser = Object.assign(
       {},
       auth.user,
-      { dormName: dormName }
+      {
+        dormName: dormName,
+        promptPayId: promptPayDigits,
+        lineBotUserId: lineBotUserId
+      }
     );
 
     CacheService.getScriptCache().put(
@@ -1034,15 +1239,45 @@ function migrateAddProfileFields_() {
 }
 
 /**
+ * รันครั้งเดียวจาก Apps Script editor (ไม่เปิดผ่าน doPost)
+ * เพิ่มคอลัมน์ promptPayId ต่อท้ายชีต Dorms (คอลัมน์ที่ 8
+ * ต่อจาก createdAt) — ไม่ต้องเติมค่า default เพราะปล่อยว่าง
+ * ไว้ได้ตามปกติ (แปลว่าหอนั้นยังไม่ได้ตั้งค่าพร้อมเพย์)
+ */
+function migrateAddPromptPayField_() {
+  const sheet = getSpreadsheet_().getSheetByName("Dorms");
+
+  if (!sheet) {
+    Logger.log("ข้าม (ไม่พบชีต): Dorms");
+    return;
+  }
+
+  const headerCell = sheet.getRange(1, 8);
+
+  if (
+    String(headerCell.getValue() || "").trim() !== "promptPayId"
+  ) {
+    headerCell.setValue("promptPayId");
+  }
+
+  Logger.log("migrateAddPromptPayField_() เสร็จสมบูรณ์");
+}
+
+/**
  * รันครั้งเดียวจาก Apps Script editor — ตัวนี้ตั้งชื่อ
  * แบบไม่มี "_" ต่อท้าย เพื่อให้โผล่ใน dropdown "เรียกใช้"
  * (ฟังก์ชันที่ลงท้ายด้วย _ จะถูกซ่อนจาก dropdown อัตโนมัติ)
  *
- * รวม 3 ขั้นตอน setup ที่ต้องทำครั้งเดียวไว้ในปุ่มเดียว:
+ * รวม 4 ขั้นตอน setup ที่ต้องทำครั้งเดียวไว้ในปุ่มเดียว:
  * เพิ่มคอลัมน์ dormId, เพิ่มคอลัมน์ phone/avatarUrl/avatarFileId,
- * และสร้างบัญชี superadmin
+ * เพิ่มคอลัมน์ promptPayId, และสร้างบัญชี superadmin
  */
 function runOneTimeSetup() {
+  // ต้องรันก่อน migrateAddDormId_() เสมอ — migrateAddDormId_()
+  // เรียก getDormsSheet_() ซึ่งจะเช็คว่าหัวตารางครบ 8 คอลัมน์
+  // (รวม promptPayId) ถ้าสลับลำดับ ชีต Dorms ที่มีอยู่แล้ว
+  // (หัวตารางเก่ามีแค่ 7 คอลัมน์) จะ throw ก่อนได้เพิ่มคอลัมน์ที่ 8
+  migrateAddPromptPayField_();
   migrateAddDormId_();
   migrateAddProfileFields_();
   createInitialSuperAdmin();

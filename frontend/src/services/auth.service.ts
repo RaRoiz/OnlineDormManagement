@@ -7,6 +7,8 @@ export interface User {
   role: string;
   dormId?: string;
   dormName?: string;
+  promptPayId?: string;
+  lineBotUserId?: string;
   phone?: string;
   avatarUrl?: string;
 }
@@ -196,13 +198,17 @@ export async function uploadAvatar(
 }
 
 export async function updateOwnDorm(
-  dormName: string
+  dormName: string,
+  promptPayId: string,
+  lineChannelAccessToken: string
 ): Promise<ProfileResponse> {
   const result =
     await apiRequest<ProfileResponse>({
       action: "updateOwnDorm",
       token: getToken(),
-      dormName
+      dormName,
+      promptPayId,
+      lineChannelAccessToken
     });
 
   if (result.success && result.user) {

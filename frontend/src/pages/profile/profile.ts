@@ -118,6 +118,21 @@ const dormNameInput =
     "#dorm-name-input"
   );
 
+const promptPayIdInput =
+  document.querySelector<HTMLInputElement>(
+    "#promptpay-id-input"
+  );
+
+const lineTokenInput =
+  document.querySelector<HTMLInputElement>(
+    "#line-token-input"
+  );
+
+const lineConnectionStatus =
+  document.querySelector<HTMLElement>(
+    "#line-connection-status"
+  );
+
 const dormMessage =
   document.querySelector<HTMLElement>(
     "#dorm-message"
@@ -188,6 +203,31 @@ function loadUserIntoForm(): void {
 
   if (dormNameInput) {
     dormNameInput.value = user.dormName ?? "";
+  }
+
+  if (promptPayIdInput) {
+    promptPayIdInput.value = user.promptPayId ?? "";
+  }
+
+  // ไม่ส่ง token จริงกลับมาเก็บที่ฝั่งเว็บเลย (เก็บแค่สถานะ
+  // เชื่อมต่อ) ช่องนี้เลยปล่อยว่างเสมอ — ถ้าไม่แก้ ระบบจะคง
+  // ค่าที่ตั้งไว้เดิม ไม่ได้แปลว่าล้างค่า
+  const isLineConnected = Boolean(user.lineBotUserId);
+
+  if (lineTokenInput) {
+    lineTokenInput.placeholder = isLineConnected
+      ? "•••••••••••• (ตั้งค่าไว้แล้ว — กรอกใหม่เพื่อเปลี่ยน)"
+      : "วาง Channel Access Token จาก LINE Developers Console";
+  }
+
+  if (lineConnectionStatus) {
+    lineConnectionStatus.textContent = isLineConnected
+      ? "เชื่อมต่อแล้ว ✅"
+      : "ยังไม่ได้เชื่อมต่อ";
+
+    lineConnectionStatus.className = isLineConnected
+      ? "status-badge status-paid"
+      : "status-badge status-unpaid";
   }
 
   if (inviteLinkInput && user.dormId) {
@@ -479,6 +519,12 @@ dormForm?.addEventListener(
     const dormName =
       dormNameInput?.value.trim() ?? "";
 
+    const promptPayId =
+      promptPayIdInput?.value.trim() ?? "";
+
+    const lineChannelAccessToken =
+      lineTokenInput?.value.trim() ?? "";
+
     if (!dormName) {
       setMessage(
         dormMessage,
@@ -497,7 +543,9 @@ dormForm?.addEventListener(
 
     try {
       const result = await updateOwnDorm(
-        dormName
+        dormName,
+        promptPayId,
+        lineChannelAccessToken
       );
 
       if (!result.success) {
@@ -510,20 +558,26 @@ dormForm?.addEventListener(
         return;
       }
 
-      showToast("บันทึกชื่อหอสำเร็จ", "success");
+      if (lineTokenInput) {
+        lineTokenInput.value = "";
+      }
+
+      loadUserIntoForm();
+
+      showToast("บันทึกข้อมูลหอสำเร็จ", "success");
     } catch (error) {
       setMessage(
         dormMessage,
         error instanceof Error
           ? error.message
-          : "บันทึกชื่อหอไม่สำเร็จ",
+          : "บันทึกข้อมูลหอไม่สำเร็จ",
         "error"
       );
     } finally {
       if (dormSaveButton) {
         dormSaveButton.disabled = false;
         dormSaveButton.textContent =
-          "บันทึกชื่อหอ";
+          "บันทึกข้อมูลหอ";
       }
     }
   }

@@ -126,6 +126,52 @@
                 required
               />
             </div>
+
+            <div class="form-group form-group-full">
+              <label for="promptpay-id-input">
+                เลขพร้อมเพย์ (สำหรับสร้าง QR บนบิล)
+              </label>
+
+              <input
+                id="promptpay-id-input"
+                name="promptPayId"
+                type="text"
+                inputmode="numeric"
+                placeholder="เบอร์โทร 10 หลัก หรือเลขบัตรประชาชน 13 หลัก"
+              />
+
+              <small class="field-hint">
+                ปล่อยว่างได้ถ้ายังไม่ต้องการแสดง QR บนบิล
+              </small>
+            </div>
+
+            <div class="form-group form-group-full">
+              <label for="line-token-input">
+                LINE Channel Access Token
+                <span
+                  id="line-connection-status"
+                  class="status-badge status-unpaid"
+                >
+                  ยังไม่ได้เชื่อมต่อ
+                </span>
+              </label>
+
+              <input
+                id="line-token-input"
+                name="lineChannelAccessToken"
+                type="password"
+                autocomplete="off"
+                placeholder="วาง Channel Access Token จาก LINE Developers Console"
+              />
+
+              <small class="field-hint">
+                หอนี้ต้องมี LINE Official Account ของตัวเอง (สมัครฟรี)
+                เพื่อไม่ให้เลขห้องชนกับหอข้างเวลาผู้เช่าลงทะเบียน —
+                <a href="/src/pages/profile/line-guide.html">
+                  ดูวิธีสร้างและเชื่อมต่อแบบละเอียด →
+                </a>
+              </small>
+            </div>
           </div>
 
           <div
@@ -140,7 +186,7 @@
               class="primary-button"
               type="submit"
             >
-              บันทึกชื่อหอ
+              บันทึกข้อมูลหอ
             </button>
           </div>
         </form>

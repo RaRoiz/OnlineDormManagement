@@ -93,6 +93,10 @@ function createRoom(request) {
     const duplicate = values
       .slice(1)
       .some(row => {
+        if (!rowInDormScope_(row, index, auth)) {
+          return false;
+        }
+
         const existingRoomNo = String(
           row[index.roomNo] || ""
         )
@@ -214,10 +218,14 @@ function updateRoom(request) {
       };
     }
 
-    // ตรวจสอบเลขห้องซ้ำ โดยไม่ตรวจแถวของตัวเอง
+    // ตรวจสอบเลขห้องซ้ำ เฉพาะในหอเดียวกัน โดยไม่ตรวจแถวของตัวเอง
     const duplicate = values
       .slice(1)
       .some(row => {
+        if (!rowInDormScope_(row, index, auth)) {
+          return false;
+        }
+
         const currentRoomId = String(
           row[index.roomId] || ""
         ).trim();

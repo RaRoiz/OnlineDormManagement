@@ -1120,6 +1120,12 @@ tbody tr[data-bill-id]:focus-visible {
   border-color: var(--warn-line);
 }
 
+.status-pending {
+  color: var(--info);
+  background: var(--info-bg);
+  border-color: var(--info-line);
+}
+
 .status-overdue {
   color: var(--danger);
   background: var(--danger-bg);
@@ -1200,6 +1206,16 @@ tbody tr[data-bill-id]:focus-visible {
 .print-button:hover:not(:disabled) {
   background: var(--info-bg);
   border-color: var(--info);
+}
+
+.qr-button {
+  color: var(--brand);
+  border-color: var(--brand-tint-line);
+}
+
+.qr-button:hover:not(:disabled) {
+  background: var(--brand-tint);
+  border-color: var(--brand);
 }
 
 .line-button {
@@ -1525,6 +1541,28 @@ tbody tr[data-bill-id]:focus-visible {
 
 .modal-detail-list dd:last-child {
   margin-bottom: 0;
+}
+
+.qr-dialog-image {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  margin: 4px auto 16px;
+
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+
+  padding: 12px;
+}
+
+.qr-dialog-caption {
+  margin: 0 0 22px;
+
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
 }
 
 .modal-field span {

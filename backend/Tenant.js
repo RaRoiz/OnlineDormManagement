@@ -110,6 +110,10 @@ function createTenant(request) {
     const duplicateActiveTenant = values
       .slice(1)
       .some(function (row) {
+        if (!rowInDormScope_(row, index, auth)) {
+          return false;
+        }
+
         const citizenId = String(
           row[index.citizenId] || ""
         ).trim();
@@ -284,6 +288,10 @@ function updateTenant(request) {
     const duplicateActiveTenant = values
       .slice(1)
       .some(function (row) {
+        if (!rowInDormScope_(row, index, auth)) {
+          return false;
+        }
+
         const currentTenantId = String(
           row[index.tenantId] || ""
         ).trim();
@@ -926,7 +934,13 @@ function tenantFromRow_(
   };
 }
 
-function getRoomMap_() {
+/**
+ * dormId เป็น optional — ไม่ใส่จะได้ห้องทุกหอเหมือนเดิม (ใช้
+ * ตอนแค่แปล roomId → roomNo จากแถวที่ dorm-scope ผ่านมาแล้ว)
+ * ใส่ dormId เมื่อไหร่ที่ค้นหาจาก "เลขห้อง" ตรงๆ (เช่นฝั่ง LINE
+ * bot) เพราะเลขห้องซ้ำกันข้ามหอได้ ต้องกรองก่อนเทียบ
+ */
+function getRoomMap_(dormId) {
   const roomSheet = getRoomsSheet_();
   const values =
     roomSheet.getDataRange().getValues();
@@ -941,6 +955,13 @@ function getRoomMap_() {
     getRoomHeaderIndex_(values[0]);
 
   values.slice(1).forEach(function (row) {
+    if (
+      dormId &&
+      String(row[index.dormId] || "").trim() !== dormId
+    ) {
+      return;
+    }
+
     const roomId = String(
       row[index.roomId] || ""
     ).trim();

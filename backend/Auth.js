@@ -74,7 +74,10 @@ function login(request) {
         fullName: String(row[userIndex.fullName]),
         role: String(row[userIndex.role]),
         dormId: dormId,
-        dormName: findDormName_(dormId)
+        dormName: findDormName_(dormId),
+        promptPayId: findDormPromptPayId_(dormId),
+        lineBotUserId:
+          getDormLineCredentials_(dormId).botUserId
       };
 
       const token = Utilities.getUuid();

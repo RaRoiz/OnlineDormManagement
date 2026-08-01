@@ -1,5 +1,6 @@
 export type BillStatus =
   | "UNPAID"
+  | "PENDING"
   | "PAID";
 
 export interface Bill {
@@ -29,6 +30,8 @@ export interface Bill {
   dueDate: string;
   paymentStatus: BillStatus;
   paidAt: string;
+
+  slipUrl?: string;
 
   note: string;
 

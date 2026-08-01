@@ -302,18 +302,134 @@ export function promptDialog(
   });
 }
 
+/**
+ * Popup แสดง QR code ขนาดใหญ่กลางจอ (ใช้กับ QR พร้อมเพย์)
+ * พร้อมคำอธิบายสั้นๆ ใต้ภาพ — ปิดได้ทางเดียว ไม่มี confirm/cancel
+ */
+export function qrDialog(
+  title: string,
+  imageDataUrl: string,
+  caption?: string
+): Promise<void> {
+  activeOverlay?.remove();
+
+  return new Promise<void>(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+
+    const heading = document.createElement("h3");
+    heading.className = "modal-title";
+    heading.textContent = title;
+
+    const image = document.createElement("img");
+    image.className = "qr-dialog-image";
+    image.src = imageDataUrl;
+    image.alt = title;
+
+    modal.append(heading, image);
+
+    if (caption) {
+      const captionEl = document.createElement("p");
+      captionEl.className = "qr-dialog-caption";
+      captionEl.textContent = caption;
+      modal.append(captionEl);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "modal-actions";
+
+    const closeButton =
+      document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className =
+      "secondary-button modal-cancel";
+    closeButton.textContent = "ปิด";
+
+    actions.append(closeButton);
+    modal.append(actions);
+    overlay.append(modal);
+    document.body.append(overlay);
+    activeOverlay = overlay;
+
+    const previousFocus =
+      document.activeElement as HTMLElement | null;
+
+    function close(): void {
+      document.removeEventListener(
+        "keydown",
+        onKeydown
+      );
+
+      overlay.classList.add("is-closing");
+
+      overlay.addEventListener(
+        "animationend",
+        () => {
+          overlay.remove();
+
+          if (activeOverlay === overlay) {
+            activeOverlay = null;
+          }
+
+          previousFocus?.focus?.();
+          resolve();
+        },
+        { once: true }
+      );
+    }
+
+    function onKeydown(event: KeyboardEvent): void {
+      if (
+        event.key === "Escape" ||
+        event.key === "Enter"
+      ) {
+        close();
+      }
+    }
+
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) {
+        close();
+      }
+    });
+
+    closeButton.addEventListener("click", close);
+
+    document.addEventListener("keydown", onKeydown);
+
+    requestAnimationFrame(() => {
+      overlay.classList.add("is-open");
+      closeButton.focus();
+    });
+  });
+}
+
 export interface DetailField {
   label: string;
   value: string;
 }
 
+export interface DetailAction {
+  label: string;
+  onClick: () => void;
+  tone?: "default" | "danger";
+}
+
 /**
  * Popup แสดงรายละเอียดแบบอ่านอย่างเดียว (label/value ทุกฟิลด์
- * ของเรคคอร์ด) ใช้กับปุ่ม "ดูรายละเอียด" ในตารางที่คอลัมน์เยอะ
+ * ของเรคคอร์ด) ใช้กับการกดแถวในตารางที่คอลัมน์เยอะ — ใส่
+ * actions เพิ่มได้ (เช่น "ส่ง LINE"/"แก้ไข") เพื่อทำรายการ
+ * ต่อได้เลยจากในนี้ ไม่ต้องปิดแล้วไปหาปุ่มในตารางอีกที
  */
 export function detailDialog(
   title: string,
-  fields: DetailField[]
+  fields: DetailField[],
+  actionButtons: DetailAction[] = []
 ): Promise<void> {
   activeOverlay?.remove();
 
@@ -345,6 +461,23 @@ export function detailDialog(
 
     const actions = document.createElement("div");
     actions.className = "modal-actions";
+
+    actionButtons.forEach(action => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className =
+        action.tone === "danger"
+          ? "primary-button is-danger"
+          : "secondary-button";
+      button.textContent = action.label;
+
+      button.addEventListener("click", () => {
+        close();
+        action.onClick();
+      });
+
+      actions.append(button);
+    });
 
     const closeButton =
       document.createElement("button");

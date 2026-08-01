@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+      วิธีเชื่อมต่อ LINE Official Account | Dorm Management
+    </title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("dorm_theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia(
+              "(prefers-color-scheme: dark)"
+            ).matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+
+  <body>
+    <header class="page-header">
+      <a
+        class="back-link"
+        href="/src/pages/profile/profile.html"
+      >
+        ← กลับหน้าโปรไฟล์
+      </a>
+
+      <h1>วิธีเชื่อมต่อ LINE Official Account</h1>
+
+      <button
+        id="logout-button"
+        class="logout-button"
+        type="button"
+      >
+        ออกจากระบบ
+      </button>
+    </header>
+
+    <main class="line-guide-page profile-page">
+      <section class="page-title">
+        <div>
+          <p class="eyebrow">LINE INTEGRATION</p>
+          <h2>ตั้งค่า LINE OA ให้หอของคุณ</h2>
+          <p>
+            แต่ละหอต้องมี LINE Official Account เป็นของตัวเอง
+            เพื่อไม่ให้เลขห้องชนกับหอข้างเคียงตอนผู้เช่าลงทะเบียน
+          </p>
+        </div>
+      </section>
+
+      <div class="guide-legend">
+        <span class="guide-tag line">
+          <span class="dot"></span>
+          ทำใน LINE Developers Console
+        </span>
+        <span class="guide-tag sys">
+          <span class="dot"></span>
+          ทำในเว็บนี้
+        </span>
+      </div>
+
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ทำไมต้องทำแบบนี้</p>
+            <h3>บอทตัวเดียวใช้ร่วมกันไม่ได้</h3>
+          </div>
+        </div>
+
+        <p class="guide-lead">
+          ถ้าทุกหอใช้ LINE บอทตัวเดียวกัน ตอนผู้เช่าลงทะเบียนด้วยการพิมพ์เลขห้อง
+          ระบบจะแยกไม่ออกว่า "ห้อง 101" ที่พิมพ์มาเป็นของหอไหน
+          เพราะหลายหอมักมีเลขห้องซ้ำกัน — แยกบอทต่อหอ ปัญหานี้หมดไปทันที
+        </p>
+      </section>
+
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ส่วนที่ 1 · ~10 นาที · ไม่มีค่าใช้จ่าย</p>
+            <h3>สร้าง LINE Official Account</h3>
+          </div>
+        </div>
+
+        <ol class="guide-steps">
+          <li class="guide-step line">
+            <span class="guide-tag-mini">LINE Developers Console</span>
+            <h4>เข้า developers.line.biz แล้วเข้าสู่ระบบ</h4>
+            <p>ใช้บัญชี LINE ปกติ หรือสร้าง LINE Business ID ก็ได้</p>
+          </li>
+
+          <li class="guide-step line">
+            <span class="guide-tag-mini">LINE Developers Console</span>
+            <h4>สร้างผู้ให้บริการ (Provider)</h4>
+            <p>
+              ถ้ายังไม่เคยมี กด <strong>Create</strong> แล้วตั้งชื่ออะไรก็ได้
+              เช่น ชื่อหอ หรือชื่อธุรกิจ
+            </p>
+          </li>
+
+          <li class="guide-step line">
+            <span class="guide-tag-mini">LINE Developers Console</span>
+            <h4>สร้างช่องทาง (channel) แบบ Messaging API</h4>
+            <p>
+              ในหน้า Provider กด <strong>Create a channel</strong> →
+              เลือก <strong>Messaging API</strong> → กรอกชื่อ OA
+              รูปโปรไฟล์ หมวดหมู่ แล้วกด Create จนเสร็จ
+            </p>
+          </li>
+
+          <li class="guide-step line">
+            <span class="guide-tag-mini">LINE Developers Console</span>
+            <h4>คัดลอก Channel Access Token</h4>
+            <p>
+              เข้า channel ที่สร้าง → แท็บ <strong>Messaging API</strong> →
+              เลื่อนหาหัวข้อ <strong>Channel access token</strong> →
+              ถ้ายังไม่มีกด <strong>Issue</strong> → กดคัดลอกเก็บไว้
+            </p>
+            <p>เก็บให้ดี ห้ามแชร์ต่อ — เหมือนรหัสผ่านของบอท</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ส่วนที่ 2 · ~3 นาที</p>
+            <h3>เชื่อมเข้าระบบของเรา</h3>
+          </div>
+        </div>
+
+        <ol class="guide-steps" start="5">
+          <li class="guide-step sys">
+            <span class="guide-tag-mini">เว็บนี้</span>
+            <h4>
+              เปิดหน้า
+              <a href="/src/pages/profile/profile.html">
+                "โปรไฟล์ของฉัน"
+              </a>
+              → หัวข้อ "หอของฉัน"
+            </h4>
+            <p>
+              วาง Channel Access Token ในช่องที่เตรียมไว้
+              แล้วกดบันทึกข้อมูลหอ
+            </p>
+            <p>
+              ระบบจะเช็คกับ LINE ทันทีตอนกดบันทึก — ถ้า token ผิดจะแจ้งเตือนเลย
+              ไม่ต้องรอไปเจอตอนส่งบิลจริง
+            </p>
+          </li>
+
+          <li class="guide-step line">
+            <span class="guide-tag-mini">LINE Developers Console</span>
+            <h4>ตั้งค่า Webhook URL</h4>
+            <p>
+              กลับไปแท็บ Messaging API เดิม เลื่อนหา
+              <strong>Webhook settings</strong> → กด Edit → วาง URL
+              ด้านล่างนี้ → กด Update → เปิดสวิตช์
+              <strong>Use webhook</strong> ให้ติด
+            </p>
+            <p class="guide-webhook-url" id="webhook-url-box"></p>
+          </li>
+
+          <li class="guide-step line">
+            <span class="guide-tag-mini">LINE Developers Console</span>
+            <h4>ปิด auto-reply เริ่มต้นของ LINE</h4>
+            <p>
+              ไปที่แท็บ <strong>LINE Official Account features</strong> →
+              เปิดลิงก์ไป LINE Official Account Manager → ปิด
+              <strong>Greeting message</strong> และ
+              <strong>Auto-reply messages</strong> ไม่งั้นจะชนกับข้อความที่ระบบเราตอบเอง
+            </p>
+          </li>
+        </ol>
+
+        <div class="guide-callout">
+          <span class="icon">💡</span>
+          <p>
+            <strong>ปุ่ม "Verify" ข้าง Webhook URL อาจขึ้น timeout</strong> —
+            ปกติของระบบที่ใช้ Google Apps Script เป็น backend
+            เพราะตอบช้ากว่าที่ปุ่มนี้จะรอไหว ไม่ได้แปลว่าเชื่อมต่อไม่ได้จริง
+            วิธีที่ชัวร์สุดคือลองแอดเพื่อนแล้วพิมพ์เลขห้องดูตามส่วนที่ 3 ด้านล่าง
+          </p>
+        </div>
+      </section>
+
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ส่วนที่ 3</p>
+            <h3>ผู้เช่าลงทะเบียนยังไง</h3>
+          </div>
+        </div>
+
+        <p class="guide-lead">
+          ส่ง QR code ของ OA ให้ผู้เช่าสแกนแอดเป็นเพื่อน แล้วให้ทำตามนี้
+        </p>
+
+        <div class="guide-chat">
+          <div class="guide-bubble bot">สวัสดีครับ 🙏 ยินดีต้อนรับสู่ระบบแจ้งบิลหอพักสบายดี
+
+กรุณาพิมพ์ "เลขห้อง" ของคุณ (เช่น 101)
+เพื่อลงทะเบียนรับใบแจ้งหนี้ทาง LINE</div>
+          <div class="guide-bubble user">101</div>
+          <div class="guide-bubble bot">ลงทะเบียนสำเร็จ ✅
+คุณ สมชาย ใจดี ห้อง 101
+
+ระบบจะส่งใบแจ้งหนี้ให้ทาง LINE นี้ครับ</div>
+        </div>
+      </section>
+
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ส่วนที่ 4</p>
+            <h3>ใช้งานประจำวัน — ส่งบิลจนถึงยืนยันจ่ายเงิน</h3>
+          </div>
+        </div>
+
+        <p class="guide-lead">
+          กด "ส่ง LINE" บนบิลที่หน้าเว็บของเรา ที่เหลือทำงานผ่านแชทเป็นหลัก
+        </p>
+
+        <div class="guide-flow">
+          <span class="guide-flow-step">กด "ส่ง LINE"</span>
+          <span class="guide-flow-arrow">→</span>
+          <span class="guide-flow-step">ผู้เช่าได้บิล + QR</span>
+          <span class="guide-flow-arrow">→</span>
+          <span class="guide-flow-step">สแกนจ่าย</span>
+          <span class="guide-flow-arrow">→</span>
+          <span class="guide-flow-step">ส่งสลิปในแชท</span>
+          <span class="guide-flow-arrow">→</span>
+          <span class="guide-flow-step">เจ้าของหอกดยืนยัน</span>
+        </div>
+
+        <div class="guide-chat">
+          <div class="guide-bubble bot">ได้รับสลิปแล้วครับ ⏳ รอเจ้าของหอตรวจสอบและยืนยันการชำระเงินครับ</div>
+          <div class="guide-bubble bot">ยืนยันการชำระเงินเรียบร้อยแล้วครับ ✅ ขอบคุณครับ</div>
+        </div>
+
+        <div class="guide-callout sys">
+          <span class="icon">📋</span>
+          <p>
+            ข้อความ "ยืนยันการชำระเงิน" จะส่งออกไป <strong>ก็ต่อเมื่อ</strong>
+            เจ้าของหอกดปุ่ม <strong>"ยืนยันชำระแล้ว"</strong> ที่บิลใบนั้น —
+            ระบบไม่ยืนยันเงินให้อัตโนมัติ ต้องมีคนเช็คสลิปก่อนเสมอ
+            เพื่อกันสลิปปลอม
+          </p>
+        </div>
+      </section>
+
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">คำถามที่พบบ่อย</p>
+            <h3>ติดขัดตรงไหน เช็คตรงนี้ก่อน</h3>
+          </div>
+        </div>
+
+        <div class="guide-faq">
+          <div class="guide-faq-item">
+            <h4>ต้องทำกี่ครั้ง</h4>
+            <p>ทำครั้งเดียวต่อหอ 1 หอ ต่อ LINE OA 1 บัญชี ไม่ต้องทำซ้ำอีก</p>
+          </div>
+
+          <div class="guide-faq-item">
+            <h4>เปลี่ยน token ทีหลังได้ไหม</h4>
+            <p>
+              ได้ กลับมาวาง token ใหม่ที่หน้าโปรไฟล์แล้วบันทึกอีกครั้ง
+              ถ้าปล่อยช่องว่างไว้แล้วบันทึก ระบบจะคงค่าเดิมไว้
+              ไม่ได้ตัดการเชื่อมต่อ
+            </p>
+          </div>
+
+          <div class="guide-faq-item">
+            <h4>ไม่เห็นปุ่ม "QR พร้อมเพย์" บนบิล</h4>
+            <p>
+              ต้องตั้งค่าเลขพร้อมเพย์ในหน้าโปรไฟล์ก่อน (แยกจาก LINE token
+              คนละช่องกัน) ปุ่มถึงจะขึ้น
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/src/pages/profile/line-guide.ts"
+    ></script>
+  </body>
+</html>

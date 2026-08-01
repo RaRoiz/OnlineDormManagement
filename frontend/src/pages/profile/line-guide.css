@@ -1,0 +1,334 @@
+@import "../../styles/theme.css";
+@import "./profile.css";
+
+.line-guide-page {
+  max-width: 760px;
+}
+
+/* =========================
+   Legend (LINE console vs เว็บนี้)
+========================= */
+
+.guide-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  margin: -10px 0 26px;
+}
+
+.guide-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 14px 6px 10px;
+
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.guide-tag .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.guide-tag.line {
+  color: var(--ok);
+  background: var(--ok-bg);
+  border-color: var(--ok-line);
+}
+.guide-tag.line .dot {
+  background: var(--ok);
+}
+
+.guide-tag.sys {
+  color: var(--brand);
+  background: var(--brand-tint);
+  border-color: var(--brand-tint-line);
+}
+.guide-tag.sys .dot {
+  background: var(--brand);
+}
+
+.guide-lead {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  line-height: 1.7;
+}
+
+/* =========================
+   Step list
+========================= */
+
+.guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+  counter-reset: guide-step;
+}
+
+.guide-step {
+  position: relative;
+
+  padding: 16px 18px 16px 56px;
+
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+
+  counter-increment: guide-step;
+}
+
+.guide-step::before {
+  content: counter(guide-step);
+
+  position: absolute;
+  top: 16px;
+  left: 16px;
+
+  display: grid;
+  place-items: center;
+
+  width: 28px;
+  height: 28px;
+
+  border-radius: 8px;
+
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.guide-step.line::before {
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+
+.guide-step.sys::before {
+  color: var(--brand);
+  background: var(--brand-tint);
+}
+
+.guide-tag-mini {
+  display: block;
+  margin-bottom: 6px;
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.guide-step.line .guide-tag-mini {
+  color: var(--ok);
+}
+.guide-step.sys .guide-tag-mini {
+  color: var(--brand);
+}
+
+.guide-step h4 {
+  margin: 0 0 6px;
+
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.guide-step p {
+  margin: 0;
+
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.guide-step p + p {
+  margin-top: 6px;
+}
+
+.guide-step a {
+  color: var(--brand);
+}
+
+.guide-webhook-url {
+  margin-top: 10px !important;
+  padding: 10px 12px;
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+
+  font-family: monospace;
+  font-size: 12.5px;
+  word-break: break-all;
+}
+
+/* =========================
+   Callout
+========================= */
+
+.guide-callout {
+  display: flex;
+  gap: 12px;
+
+  margin-top: 18px;
+  padding: 14px 16px;
+
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  border-radius: var(--r-sm);
+}
+
+.guide-callout.sys {
+  background: var(--brand-tint);
+  border-color: var(--brand-tint-line);
+}
+
+.guide-callout .icon {
+  flex: none;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.guide-callout p {
+  margin: 0;
+
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
+.guide-callout strong {
+  color: var(--ink);
+}
+
+/* =========================
+   Chat mockup
+========================= */
+
+.guide-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  padding: 20px 16px;
+  margin-top: 16px;
+
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+.guide-bubble {
+  max-width: 84%;
+
+  padding: 10px 14px;
+
+  border-radius: 16px;
+
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+
+  box-shadow: var(--shadow-sm);
+}
+
+.guide-bubble.bot {
+  align-self: flex-start;
+
+  color: var(--ink);
+  background: var(--surface);
+
+  border-bottom-left-radius: 4px;
+}
+
+.guide-bubble.user {
+  align-self: flex-end;
+
+  color: #fff;
+  background: var(--ok);
+
+  border-bottom-right-radius: 4px;
+}
+
+/* =========================
+   Flow strip
+========================= */
+
+.guide-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+
+  margin: 4px 0 0;
+}
+
+.guide-flow-step {
+  padding: 8px 13px;
+
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.guide-flow-arrow {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* =========================
+   FAQ
+========================= */
+
+.guide-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guide-faq-item {
+  padding: 14px 16px;
+
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+
+.guide-faq-item h4 {
+  margin: 0 0 6px;
+
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.guide-faq-item p {
+  margin: 0;
+
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+@media (max-width: 560px) {
+  .guide-step {
+    padding-left: 50px;
+  }
+}

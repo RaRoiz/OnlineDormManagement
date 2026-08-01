@@ -64,6 +64,11 @@ export default defineConfig({
           "src/pages/profile/profile.html"
         ),
 
+        lineGuide: resolve(
+          root,
+          "src/pages/profile/line-guide.html"
+        ),
+
         staff: resolve(
           root,
           "src/pages/staff/staff.html"

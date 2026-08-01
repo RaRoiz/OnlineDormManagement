@@ -1,4 +1,4 @@
-const API_URL =
+export const API_URL =
   "https://script.google.com/macros/s/AKfycbzFmXKql5ctO9TDkW7XFRGwr72CFFUOjbBM3tVPe-KYFyw50A98GDYnc325ZFLpYeMG3Q/exec";
 
 

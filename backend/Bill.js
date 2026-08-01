@@ -51,6 +51,9 @@ function getBills(request) {
       values[0]
     );
 
+  const slipUrlByBillId =
+    getSlipUrlByBillId_();
+
   const bills = values
     .slice(1)
     .filter(function (row) {
@@ -62,10 +65,15 @@ function getBills(request) {
       return rowInDormScope_(row, index, auth);
     })
     .map(function (row) {
-      return billFromRow_(
+      const bill = billFromRow_(
         row,
         index
       );
+
+      bill.slipUrl =
+        slipUrlByBillId[bill.billId] || "";
+
+      return bill;
     })
     .sort(function (a, b) {
       return String(
@@ -80,6 +88,27 @@ function getBills(request) {
     message: "โหลดข้อมูลสำเร็จ",
     data: bills
   };
+}
+
+/** อ่านชีต PaymentSlips ครั้งเดียว แล้วทำ map billId -> slipUrl
+ * ให้ getBills() ผูกกับแต่ละบิลได้ — ไม่แตะ BILL_HEADERS เลย
+ * (เก็บสลิปแยกชีต กันปัญหาหัวตารางไม่ตรงแบบที่เจอกับ Dorms) */
+function getSlipUrlByBillId_() {
+  const sheet = getPaymentSlipsSheet_();
+  const values = sheet.getDataRange().getValues();
+
+  const map = {};
+
+  for (let i = 1; i < values.length; i++) {
+    const billId = String(values[i][0] || "").trim();
+    const slipUrl = String(values[i][1] || "").trim();
+
+    if (billId) {
+      map[billId] = slipUrl;
+    }
+  }
+
+  return map;
 }
 
 function createBill(request) {
@@ -647,6 +676,37 @@ function markBillPaid(request) {
           )
           .getValues()[0];
 
+      const confirmedBill = billFromRow_(
+        updatedValues,
+        index
+      );
+
+      // แจ้งผู้เช่ากลับทาง LINE ถ้าเคยลงทะเบียนไว้ —
+      // พลาดได้ไม่เป็นไร ห้ามทำให้การยืนยันชำระเงินล้มเหลว
+      try {
+        const lineUserId = findLineUserIdByTenantId_(
+          confirmedBill.tenantId
+        );
+
+        const lineToken = getDormLineCredentials_(
+          String((auth.user && auth.user.dormId) || "")
+        ).token;
+
+        if (lineUserId && lineToken) {
+          pushLineMessage_(lineToken, lineUserId, [{
+            type: "text",
+            text:
+              "ยืนยันการชำระเงินเรียบร้อยแล้วครับ ✅ " +
+              "ขอบคุณครับ"
+          }]);
+        }
+      } catch (error) {
+        console.error(
+          "แจ้ง LINE ยืนยันชำระเงินไม่สำเร็จ:",
+          error
+        );
+      }
+
       // ล้าง cache ให้หน้าอื่นเห็นข้อมูลใหม่ทันที
       bumpDormCache_();
 
@@ -654,10 +714,7 @@ function markBillPaid(request) {
         success: true,
         message:
           "บันทึกการชำระเงินสำเร็จ",
-        data: billFromRow_(
-          updatedValues,
-          index
-        )
+        data: confirmedBill
       };
     }
 

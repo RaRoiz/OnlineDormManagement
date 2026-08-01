@@ -17,8 +17,12 @@ import {
   updateBill
 } from "../../services/bill.service";
 
-import { confirmDialog, detailDialog } from "../../utils/dialog";
+import { confirmDialog, detailDialog, qrDialog } from "../../utils/dialog";
 import { showToast } from "../../utils/toast";
+
+import { getCurrentUser } from "../../services/auth.service";
+import { buildPromptPayPayload } from "../../utils/promptpay";
+import QRCode from "qrcode";
 
 import {
   getMeters
@@ -322,9 +326,15 @@ function getRoomById(
 
 function getBillStatus(
   bill: Bill
-): "UNPAID" | "PAID" | "OVERDUE" {
+): "UNPAID" | "PENDING" | "PAID" | "OVERDUE" {
   if (bill.paymentStatus === "PAID") {
     return "PAID";
+  }
+
+  // ส่งสลิปมาแล้ว รอเจ้าของหอตรวจสอบ — ไม่ต้องเช็คเกินกำหนด
+  // เพราะกำลังรอดำเนินการอยู่แล้ว ไม่ใช่ปล่อยค้าง
+  if (bill.paymentStatus === "PENDING") {
+    return "PENDING";
   }
 
   // dueDate อาจมาเป็น "YYYY-MM-DD" หรือ ISO เต็ม
@@ -706,6 +716,10 @@ function renderBills(): void {
       PAGE_SIZE
     );
 
+    const hasPromptPay = Boolean(
+      getCurrentUser()?.promptPayId
+    );
+
     tableBody.innerHTML =
       pageBills
       .map(bill => {
@@ -715,16 +729,20 @@ function renderBills(): void {
         const statusText =
           status === "PAID"
             ? "ชำระแล้ว"
-            : status === "OVERDUE"
-              ? "เกินกำหนด"
-              : "ยังไม่ชำระ";
+            : status === "PENDING"
+              ? "รอตรวจสอบ"
+              : status === "OVERDUE"
+                ? "เกินกำหนด"
+                : "ยังไม่ชำระ";
 
         const statusClass =
           status === "PAID"
             ? "status-paid"
-            : status === "OVERDUE"
-              ? "status-overdue"
-              : "status-unpaid";
+            : status === "PENDING"
+              ? "status-pending"
+              : status === "OVERDUE"
+                ? "status-overdue"
+                : "status-unpaid";
 
         const safeBillId =
           escapeHtml(bill.billId);
@@ -778,52 +796,101 @@ function renderBills(): void {
               </button>
 
               ${
-                bill.paymentStatus ===
-                "UNPAID"
+                bill.paymentStatus === "PAID"
                   ? `
-                    <button
-                      class="table-button line-button"
-                      type="button"
-                      data-action="line"
-                      data-bill-id="${safeBillId}"
-                    >
-                      ส่ง LINE
-                    </button>
-
-                    <button
-                      class="table-button edit-button"
-                      type="button"
-                      data-action="edit"
-                      data-bill-id="${safeBillId}"
-                    >
-                      แก้ไข
-                    </button>
-
-                    <button
-                      class="table-button paid-button"
-                      type="button"
-                      data-action="paid"
-                      data-bill-id="${safeBillId}"
-                    >
-                      ชำระแล้ว
-                    </button>
-
-                    <button
-                      class="table-button delete-button"
-                      type="button"
-                      data-action="delete"
-                      data-bill-id="${safeBillId}"
-                    >
-                      ลบ
-                    </button>
-                  `
-                  : `
                     <span class="paid-at-text">
                       ชำระ ${formatDate(
                         bill.paidAt
                       )}
                     </span>
                   `
+                  : bill.paymentStatus === "PENDING"
+                    ? `
+                      ${
+                        bill.slipUrl
+                          ? `
+                            <a
+                              class="table-button"
+                              href="${escapeHtml(bill.slipUrl)}"
+                              target="_blank"
+                              rel="noopener"
+                            >
+                              ดูสลิป
+                            </a>
+                          `
+                          : ""
+                      }
+
+                      <button
+                        class="table-button paid-button"
+                        type="button"
+                        data-action="paid"
+                        data-bill-id="${safeBillId}"
+                      >
+                        ยืนยันชำระแล้ว
+                      </button>
+
+                      <button
+                        class="table-button edit-button"
+                        type="button"
+                        data-action="edit"
+                        data-bill-id="${safeBillId}"
+                      >
+                        แก้ไข
+                      </button>
+                    `
+                    : `
+                      ${
+                        hasPromptPay
+                          ? `
+                            <button
+                              class="table-button qr-button"
+                              type="button"
+                              data-action="qr"
+                              data-bill-id="${safeBillId}"
+                            >
+                              QR พร้อมเพย์
+                            </button>
+                          `
+                          : ""
+                      }
+
+                      <button
+                        class="table-button line-button"
+                        type="button"
+                        data-action="line"
+                        data-bill-id="${safeBillId}"
+                      >
+                        ส่ง LINE
+                      </button>
+
+                      <button
+                        class="table-button edit-button"
+                        type="button"
+                        data-action="edit"
+                        data-bill-id="${safeBillId}"
+                      >
+                        แก้ไข
+                      </button>
+
+                      <button
+                        class="table-button paid-button"
+                        type="button"
+                        data-action="paid"
+                        data-bill-id="${safeBillId}"
+                      >
+                        ชำระแล้ว
+                      </button>
+
+                      <button
+                        class="table-button delete-button"
+                        type="button"
+                        data-action="delete"
+                        data-bill-id="${safeBillId}"
+                      >
+                        ลบ
+                      </button>
+                    `
               }
             </td>
           </tr>
@@ -850,7 +917,25 @@ function renderBills(): void {
  * ผู้ใช้กด "พิมพ์" ในหน้าต่างที่เด้งขึ้น
  * แล้วเลือกเครื่องพิมพ์ หรือ Save as PDF ได้เลย
  */
-function printBill(bill: Bill): void {
+async function printBill(bill: Bill): Promise<void> {
+  // เปิดหน้าต่างก่อนเสมอ (แบบ sync ในสาย click handler)
+  // ไม่งั้นเบราว์เซอร์บางตัวจะมองว่าไม่ได้มาจาก user gesture
+  // แล้วบล็อก popup หลังจากรอ await สร้าง QR เสร็จ
+  const printWindow = window.open(
+    "",
+    "_blank",
+    "width=800,height=920"
+  );
+
+  if (!printWindow) {
+    showPageMessage(
+      "เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต popup",
+      "error"
+    );
+
+    return;
+  }
+
   const status = getBillStatus(bill);
 
   const statusText =
@@ -904,6 +989,32 @@ function printBill(bill: Bill): void {
     bill.paymentStatus === "PAID"
       ? `<p class="paid">ชำระเงินแล้วเมื่อ ${formatDate(bill.paidAt)}</p>`
       : "";
+
+  const promptPayId = getCurrentUser()?.promptPayId;
+  let qrHtml = "";
+
+  if (promptPayId && bill.paymentStatus === "UNPAID") {
+    try {
+      const payload = buildPromptPayPayload(
+        promptPayId,
+        bill.totalAmount
+      );
+
+      const dataUrl = await QRCode.toDataURL(payload, {
+        width: 220,
+        margin: 1
+      });
+
+      qrHtml = `
+        <div class="qr-block">
+          <img src="${dataUrl}" alt="QR พร้อมเพย์" />
+          <p>สแกนจ่ายผ่านพร้อมเพย์ — ยอด ${formatMoney(bill.totalAmount)}</p>
+        </div>
+      `;
+    } catch (error) {
+      console.error("Generate PromptPay QR error:", error);
+    }
+  }
 
   const html = `<!doctype html>
 <html lang="th">
@@ -1017,6 +1128,27 @@ function printBill(bill: Bill): void {
   .note { color: #555; font-size: 13px; }
   .paid { color: #1a7a43; font-weight: 700; }
 
+  .qr-block {
+    margin: 24px 0 8px;
+    padding: 18px;
+
+    border: 1.5px dashed #999;
+    border-radius: 10px;
+
+    text-align: center;
+  }
+
+  .qr-block img {
+    width: 180px;
+    height: 180px;
+  }
+
+  .qr-block p {
+    margin: 8px 0 0;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+
   .footer {
     margin-top: 36px;
     padding-top: 14px;
@@ -1090,6 +1222,7 @@ function printBill(bill: Bill): void {
   </table>
 
   ${paidHtml}
+  ${qrHtml}
   ${noteHtml}
 
   <div class="footer">
@@ -1098,21 +1231,6 @@ function printBill(bill: Bill): void {
   </div>
 </body>
 </html>`;
-
-  const printWindow = window.open(
-    "",
-    "_blank",
-    "width=800,height=920"
-  );
-
-  if (!printWindow) {
-    showPageMessage(
-      "เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต popup",
-      "error"
-    );
-
-    return;
-  }
 
   printWindow.document.write(html);
   printWindow.document.close();
@@ -1279,7 +1397,72 @@ form?.addEventListener(
   }
 );
 
+/**
+ * ยืนยัน + ส่งบิลทาง LINE — เรียกใช้ร่วมกันได้ทั้งจากปุ่ม
+ * "ส่ง LINE" ในตาราง และจากปุ่มในป๊อปอัปรายละเอียดบิล
+ */
+async function sendBillViaLine(
+  bill: Bill,
+  button?: HTMLButtonElement
+): Promise<void> {
+  const confirmed = await confirmDialog({
+    title: "ส่งใบแจ้งหนี้ทาง LINE",
+    message: `ส่งบิล ${bill.billNo} ให้ ${bill.tenantName} ทาง LINE หรือไม่`,
+    confirmText: "ส่ง LINE"
+  });
+
+  if (!confirmed) {
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+  }
+
+  try {
+    const result = await sendBillLine(bill.billId);
+
+    if (!result.success) {
+      showPageMessage(result.message, "error");
+      return;
+    }
+
+    showPageMessage(result.message, "success");
+  } catch (error) {
+    showPageMessage(
+      error instanceof Error
+        ? error.message
+        : "ส่ง LINE ไม่สำเร็จ",
+      "error"
+    );
+  } finally {
+    if (button) {
+      button.disabled = false;
+    }
+  }
+}
+
 function openBillDetail(bill: Bill): void {
+  const editAction = {
+    label: "แก้ไข",
+    onClick: () => openForm(bill)
+  };
+
+  const actions =
+    bill.paymentStatus === "UNPAID"
+      ? [
+          {
+            label: "ส่ง LINE",
+            onClick: () => {
+              void sendBillViaLine(bill);
+            }
+          },
+          editAction
+        ]
+      : bill.paymentStatus === "PENDING"
+        ? [editAction]
+        : [];
+
   void detailDialog(`รายละเอียดบิล ${bill.billNo}`, [
     { label: "เลขที่บิล", value: bill.billNo },
     { label: "ห้อง", value: bill.roomNo },
@@ -1328,7 +1511,45 @@ function openBillDetail(bill: Bill): void {
         : "-"
     },
     { label: "หมายเหตุ", value: bill.note || "-" }
-  ]);
+  ], actions);
+}
+
+async function openBillQr(bill: Bill): Promise<void> {
+  const promptPayId = getCurrentUser()?.promptPayId;
+
+  if (!promptPayId) {
+    showPageMessage(
+      "ยังไม่ได้ตั้งค่าเลขพร้อมเพย์ของหอ กรุณาไปตั้งค่าที่หน้าโปรไฟล์",
+      "error"
+    );
+
+    return;
+  }
+
+  try {
+    const payload = buildPromptPayPayload(
+      promptPayId,
+      bill.totalAmount
+    );
+
+    const dataUrl = await QRCode.toDataURL(payload, {
+      width: 320,
+      margin: 1
+    });
+
+    void qrDialog(
+      `QR พร้อมเพย์ — บิล ${bill.billNo}`,
+      dataUrl,
+      `ยอดชำระ ${formatMoney(bill.totalAmount)}`
+    );
+  } catch (error) {
+    showPageMessage(
+      error instanceof Error
+        ? error.message
+        : "ไม่สามารถสร้าง QR พร้อมเพย์ได้",
+      "error"
+    );
+  }
 }
 
 async function handleBillAction(
@@ -1353,7 +1574,12 @@ async function handleBillAction(
     }
 
     if (action === "print") {
-      printBill(bill);
+      void printBill(bill);
+      return;
+    }
+
+    if (action === "qr") {
+      await openBillQr(bill);
       return;
     }
 
@@ -1363,46 +1589,7 @@ async function handleBillAction(
     }
 
     if (action === "line") {
-      const confirmed = await confirmDialog({
-        title: "ส่งใบแจ้งหนี้ทาง LINE",
-        message: `ส่งบิล ${bill.billNo} ให้ ${bill.tenantName} ทาง LINE หรือไม่`,
-        confirmText: "ส่ง LINE"
-      });
-
-      if (!confirmed) {
-        return;
-      }
-
-      target.disabled = true;
-
-      try {
-        const result =
-          await sendBillLine(billId);
-
-        if (!result.success) {
-          showPageMessage(
-            result.message,
-            "error"
-          );
-
-          return;
-        }
-
-        showPageMessage(
-          result.message,
-          "success"
-        );
-      } catch (error) {
-        showPageMessage(
-          error instanceof Error
-            ? error.message
-            : "ส่ง LINE ไม่สำเร็จ",
-          "error"
-        );
-      } finally {
-        target.disabled = false;
-      }
-
+      await sendBillViaLine(bill, target);
       return;
     }
 
