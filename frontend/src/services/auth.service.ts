@@ -201,7 +201,6 @@ export async function uploadAvatar(
 }
 
 export async function updateOwnDorm(
-  dormName: string,
   promptPayId: string,
   lineChannelAccessToken: string
 ): Promise<ProfileResponse> {
@@ -209,7 +208,6 @@ export async function updateOwnDorm(
     await apiRequest<ProfileResponse>({
       action: "updateOwnDorm",
       token: getToken(),
-      dormName,
       promptPayId,
       lineChannelAccessToken
     });

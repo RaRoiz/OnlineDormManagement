@@ -60,7 +60,11 @@ function getDormPublicInfo(request) {
 }
 
 /**
- * ให้ OWNER แก้ไขค่าตั้งของหอ (ชื่อหอ / พร้อมเพย์ / LINE OA)
+ * ให้ OWNER แก้ไขค่าตั้งของหอ (พร้อมเพย์ / LINE OA)
+ *
+ * ชื่อหอไม่มีช่องให้แก้ในหน้าเว็บแล้ว — ถ้า request ไม่ส่ง
+ * dormName มา จะคงค่าเดิมไว้ ไม่ล้างทิ้ง (ตั้งค่าได้ที่
+ * Script Property ชื่อ DORM_NAME หรือผ่าน Setup.gs)
  */
 function updateOwnDorm(request) {
   const auth = validateToken(request.token);
@@ -69,16 +73,12 @@ function updateOwnDorm(request) {
     return auth;
   }
 
-  const dormName = String(
+  const requestedDormName = String(
     request.dormName || ""
   ).trim();
 
-  if (!dormName) {
-    return {
-      success: false,
-      message: "กรุณากรอกชื่อหอ"
-    };
-  }
+  const dormName =
+    requestedDormName || getDormName_();
 
   const promptPayDigits = String(
     request.promptPayId || ""

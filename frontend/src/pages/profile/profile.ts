@@ -113,11 +113,6 @@ const dormForm =
     "#dorm-form"
   );
 
-const dormNameInput =
-  document.querySelector<HTMLInputElement>(
-    "#dorm-name-input"
-  );
-
 const promptPayIdInput =
   document.querySelector<HTMLInputElement>(
     "#promptpay-id-input"
@@ -175,7 +170,7 @@ function loadUserIntoForm(): void {
     return;
   }
 
-  // ชื่อหอ + ลิงก์เชิญพนักงาน เป็นเรื่องจัดการหอ
+  // ตั้งค่าหอ + ลิงก์เชิญพนักงาน เป็นเรื่องจัดการหอ
   // ไม่ใช่ข้อมูลส่วนตัว — เห็นได้เฉพาะ OWNER
   if (dormSection && !isOwner()) {
     dormSection.hidden = true;
@@ -199,10 +194,6 @@ function loadUserIntoForm(): void {
 
   if (phoneInput) {
     phoneInput.value = user.phone ?? "";
-  }
-
-  if (dormNameInput) {
-    dormNameInput.value = user.dormName ?? "";
   }
 
   if (promptPayIdInput) {
@@ -519,24 +510,11 @@ dormForm?.addEventListener(
     event.preventDefault();
     setMessage(dormMessage, "", "success");
 
-    const dormName =
-      dormNameInput?.value.trim() ?? "";
-
     const promptPayId =
       promptPayIdInput?.value.trim() ?? "";
 
     const lineChannelAccessToken =
       lineTokenInput?.value.trim() ?? "";
-
-    if (!dormName) {
-      setMessage(
-        dormMessage,
-        "กรุณากรอกชื่อหอ",
-        "error"
-      );
-
-      return;
-    }
 
     if (dormSaveButton) {
       dormSaveButton.disabled = true;
@@ -546,7 +524,6 @@ dormForm?.addEventListener(
 
     try {
       const result = await updateOwnDorm(
-        dormName,
         promptPayId,
         lineChannelAccessToken
       );
