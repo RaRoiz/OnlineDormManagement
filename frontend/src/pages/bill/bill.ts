@@ -1083,6 +1083,55 @@ async function printBill(bill: Bill): Promise<void> {
     );
   }
 
+  /* ยอดค้างจากบิลเดือนก่อนของผู้เช่าคนเดียวกัน (คำนวณที่ backend
+     ดู Arrears.gs) — ถ้าไม่มีค้าง ใบเสร็จจะแสดงยอดรวมแถวเดียว
+     เหมือนเดิม ไม่มีบรรทัดส่วนเกินมากวน */
+  const previousDue = Number(bill.previousDue || 0);
+  const previousDueCount = Number(bill.previousDueCount || 0);
+
+  const grandTotal = bill.totalAmount + previousDue;
+
+  const arrearsLabel =
+    "ค้างชำระจากเดือนก่อน" +
+    (previousDueCount
+      ? ` (${previousDueCount} ใบ` +
+        (bill.previousDueOldestMonth
+          ? ` ตั้งแต่ ${formatMonth(
+              bill.previousDueOldestMonth
+            )}`
+          : "") +
+        ")"
+      : "");
+
+  const totalsHtml =
+    previousDue > 0
+      ? `
+        <tr class="total">
+          <td>ยอดรวมเดือนนี้</td>
+          <td class="num">
+            ${formatMoney(bill.totalAmount)}
+          </td>
+        </tr>
+
+        <tr class="arrears-row">
+          <td>${escapeHtml(arrearsLabel)}</td>
+          <td class="num">${formatMoney(previousDue)}</td>
+        </tr>
+
+        <tr class="total grand-total">
+          <td>รวมที่ต้องชำระทั้งสิ้น</td>
+          <td class="num">${formatMoney(grandTotal)}</td>
+        </tr>
+      `
+      : `
+        <tr class="total">
+          <td>ยอดรวมทั้งหมด</td>
+          <td class="num">
+            ${formatMoney(bill.totalAmount)}
+          </td>
+        </tr>
+      `;
+
   const noteHtml = bill.note
     ? `<p class="note">หมายเหตุ: ${escapeHtml(bill.note)}</p>`
     : "";
@@ -1111,6 +1160,14 @@ async function printBill(bill: Bill): Promise<void> {
         <div class="qr-block">
           <img src="${dataUrl}" alt="QR พร้อมเพย์" />
           <p>สแกนจ่ายผ่านพร้อมเพย์ — ยอด ${formatMoney(bill.totalAmount)}</p>
+          ${
+            previousDue > 0
+              ? `<p class="qr-warning">
+                   QR นี้เป็นยอดของเดือนนี้เท่านั้น
+                   ยอดค้างเดือนก่อนต้องโอนแยกอีกครั้ง
+                 </p>`
+              : ""
+          }
         </div>
       `;
     } catch (error) {
@@ -1235,6 +1292,33 @@ async function printBill(bill: Bill): Promise<void> {
     font-weight: 700;
   }
 
+  /* ยอดค้างเดือนก่อน — แทรกระหว่างยอดเดือนนี้กับยอดรวมทั้งสิ้น
+     ตัวเล็กกว่าและไม่มีเส้นคั่น เพื่อไม่ให้แข่งกับยอดรวมทั้งสิ้น */
+  .arrears-row td {
+    border-top: 0;
+    border-bottom: 0;
+
+    padding-top: 4px;
+    padding-bottom: 4px;
+
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .grand-total td {
+    border-top: 1.5px solid #1c1c1c;
+    font-size: 20px;
+  }
+
+  .qr-warning {
+    max-width: 220px;
+    margin: 6px auto 0;
+
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
   .status {
     display: inline-block;
     margin-top: 8px;
@@ -1337,13 +1421,7 @@ async function printBill(bill: Bill): Promise<void> {
 
     <tbody>
       ${itemsHtml}
-
-      <tr class="total">
-        <td>ยอดรวมทั้งหมด</td>
-        <td class="num">
-          ${formatMoney(bill.totalAmount)}
-        </td>
-      </tr>
+      ${totalsHtml}
     </tbody>
   </table>
 
