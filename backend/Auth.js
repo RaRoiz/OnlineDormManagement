@@ -738,6 +738,82 @@ function createInitialAdmin() {
 }
 
 /**
+ * รันครั้งเดียวจาก Apps Script editor เพื่อสร้างบัญชีผู้ดูแลระบบ
+ *
+ * สร้างจากหน้าเว็บไม่ได้โดยตั้งใจ — SUPER_ADMIN จัดการบัญชีคนอื่นได้
+ * ถ้าเปิดให้สร้างผ่าน API บัญชีที่ถูกยึดจะสร้างผู้ดูแลเพิ่มเองได้
+ *
+ * ตั้ง Script Property ชื่อ INITIAL_SUPERADMIN_PASSWORD ก่อนรัน
+ */
+function createInitialSuperAdmin() {
+  const sheet = getUsersSheet_();
+  const values = sheet.getDataRange().getValues();
+  const index = createHeaderIndex(values[0]);
+
+  const existingRow = values
+    .slice(1)
+    .findIndex(row =>
+      String(row[index.username] || "")
+        .trim()
+        .toLowerCase() === "superadmin"
+    );
+
+  const password = getRequiredProperty_(
+    "INITIAL_SUPERADMIN_PASSWORD"
+  );
+
+  const salt = Utilities.getUuid().replace(/-/g, "");
+  const passwordHash = hashPassword(password, salt);
+
+  // มีอยู่แล้ว — ตั้งรหัสผ่านใหม่และเปิดใช้งานให้ (ใช้กู้บัญชีได้)
+  if (existingRow !== -1) {
+    const targetRow = existingRow + 2;
+
+    sheet
+      .getRange(targetRow, index.salt + 1, 1, 1)
+      .setValue(salt);
+
+    sheet
+      .getRange(targetRow, index.passwordHash + 1, 1, 1)
+      .setValue(passwordHash);
+
+    sheet
+      .getRange(targetRow, index.role + 1, 1, 1)
+      .setValue("SUPER_ADMIN");
+
+    sheet
+      .getRange(targetRow, index.active + 1, 1, 1)
+      .setValue(true);
+
+    clearLoginFailures_("superadmin");
+
+    Logger.log(
+      "มีบัญชี superadmin อยู่แล้ว — ตั้งรหัสผ่านใหม่" +
+      "และเปิดใช้งานให้เรียบร้อย"
+    );
+
+    return;
+  }
+
+  const newRow = new Array(values[0].length).fill("");
+
+  newRow[index.userId] = Utilities.getUuid();
+  newRow[index.username] = "superadmin";
+  newRow[index.passwordHash] = passwordHash;
+  newRow[index.salt] = salt;
+  newRow[index.fullName] = "ผู้ดูแลระบบ";
+  newRow[index.role] = "SUPER_ADMIN";
+  newRow[index.active] = true;
+
+  sheet.appendRow(newRow);
+
+  Logger.log(
+    "สร้างบัญชี superadmin สำเร็จ — " +
+    "รหัสผ่านตามค่าใน Script Property INITIAL_SUPERADMIN_PASSWORD"
+  );
+}
+
+/**
  * รายชื่อพนักงาน (role USER) ทั้งหมด — ใช้เฉพาะ OWNER
  * (เดิมกรองเฉพาะหอตัวเอง ตอนนี้เลิกแยกตามหอแล้ว)
  */

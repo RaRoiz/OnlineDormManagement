@@ -1,6 +1,7 @@
 import {
   isLoggedIn,
-  isOwner
+  isOwner,
+  isSuperAdmin
 } from "../services/auth.service";
 
 /**
@@ -15,6 +16,7 @@ interface SidebarItem {
   label: string;
   accent?: string;
   ownerOnly?: boolean;
+  superAdminOnly?: boolean;
 }
 
 const MENU_ITEMS: SidebarItem[] = [
@@ -60,6 +62,14 @@ const MENU_ITEMS: SidebarItem[] = [
     label: "Dashboard / Report",
     accent: "#ec4899",
     ownerOnly: true
+  },
+
+  {
+    href: "/src/pages/admin/users.html",
+    icon: "🛡️",
+    label: "จัดการผู้ใช้",
+    accent: "#8b5cf6",
+    superAdminOnly: true
   }
 ];
 
@@ -189,8 +199,16 @@ export function renderSidebar(): void {
   const hideOwnerMenu =
     isLoggedIn() && !isOwner();
 
+  // เมนูจัดการผู้ใช้เห็นเฉพาะ SUPER_ADMIN
+  const superAdminUser =
+    isLoggedIn() && isSuperAdmin();
+
   MENU_ITEMS.forEach(item => {
     if (item.ownerOnly && hideOwnerMenu) {
+      return;
+    }
+
+    if (item.superAdminOnly && !superAdminUser) {
       return;
     }
 

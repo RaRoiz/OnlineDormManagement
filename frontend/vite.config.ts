@@ -49,6 +49,11 @@ export default defineConfig({
           "src/pages/report/report.html"
         ),
 
+        adminUsers: resolve(
+          root,
+          "src/pages/admin/users.html"
+        ),
+
         profile: resolve(
           root,
           "src/pages/profile/profile.html"

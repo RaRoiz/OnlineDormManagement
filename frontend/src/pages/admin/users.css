@@ -1,0 +1,120 @@
+@import "../../styles/theme.css";
+
+.users-page table {
+  min-width: 820px;
+}
+
+.search-group {
+  max-width: 360px;
+  margin-bottom: 18px;
+}
+
+.report-section {
+  margin-bottom: 24px;
+  padding: 26px;
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+
+  box-shadow: var(--shadow);
+}
+
+.section-heading {
+  margin-bottom: 22px;
+}
+
+.section-heading h3 {
+  margin: 4px 0 0;
+
+  color: var(--ink);
+  font-size: 22px;
+}
+
+.create-user-grid {
+  display: grid;
+  gap: 16px;
+
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(220px, 1fr)
+  );
+}
+
+.form-hint {
+  margin: 14px 0 18px;
+
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ปุ่มจัดการในตาราง — วางเรียงและตัดบรรทัดได้บนจอแคบ */
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.row-actions button {
+  padding: 6px 12px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  color: var(--ink);
+  background: var(--surface-2);
+
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.row-actions button:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.row-actions button.danger:hover {
+  border-color: var(--danger, #ef4444);
+  color: var(--danger, #ef4444);
+}
+
+.row-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 4px 10px;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+
+.role-badge.role-super-admin {
+  color: #8b5cf6;
+  border-color: #8b5cf6;
+}
+
+.role-badge.role-owner {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.role-badge.role-user {
+  color: var(--ink-soft);
+}
+
+.self-tag {
+  margin-left: 6px;
+
+  color: var(--ink-soft);
+  font-size: 12px;
+}

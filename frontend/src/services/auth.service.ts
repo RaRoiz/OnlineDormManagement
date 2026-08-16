@@ -82,13 +82,23 @@ export function setCurrentUser(user: User): void {
   );
 }
 
+/** SUPER_ADMIN อยู่เหนือ OWNER จึงถือว่ามีสิทธิ์ระดับ OWNER ด้วย */
 export function isOwner(): boolean {
+  const role = String(getCurrentUser()?.role ?? "")
+    .trim()
+    .toUpperCase();
+
+  return role === "OWNER" || role === "SUPER_ADMIN";
+}
+
+/** ผู้ดูแลระบบ — อยู่เหนือ OWNER ทำได้ทุกอย่างที่ OWNER ทำได้ */
+export function isSuperAdmin(): boolean {
   const user = getCurrentUser();
 
   return (
     String(user?.role ?? "")
       .trim()
-      .toUpperCase() === "OWNER"
+      .toUpperCase() === "SUPER_ADMIN"
   );
 }
 
@@ -105,6 +115,14 @@ export function roleLabel(
 
   if (value === "USER") {
     return "STAFF";
+  }
+
+  if (value === "SUPER_ADMIN") {
+    return "ผู้ดูแลระบบ";
+  }
+
+  if (value === "OWNER") {
+    return "เจ้าของหอ";
   }
 
   return value || "-";

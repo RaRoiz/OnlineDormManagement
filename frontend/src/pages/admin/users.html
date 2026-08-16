@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+      จัดการผู้ใช้ | Dorm Management
+    </title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("dorm_theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia(
+              "(prefers-color-scheme: dark)"
+            ).matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+
+  <body>
+    <header class="page-header">
+      <a
+        class="back-link"
+        href="/index.html"
+      >
+        ← กลับหน้า Home
+      </a>
+
+      <h1>จัดการผู้ใช้</h1>
+
+      <button
+        id="logout-button"
+        class="logout-button"
+        type="button"
+      >
+        ออกจากระบบ
+      </button>
+    </header>
+
+    <main class="users-page">
+      <section class="page-title">
+        <div>
+          <p class="eyebrow">SUPER ADMIN</p>
+
+          <h2>บัญชีผู้ใช้ทั้งหมด</h2>
+
+          <p>
+            ทั้งหมด
+            <strong id="total-users">0</strong>
+            บัญชี
+          </p>
+        </div>
+      </section>
+
+      <div
+        id="page-message"
+        class="page-message"
+        role="alert"
+      ></div>
+
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CREATE</p>
+            <h3>สร้างบัญชีใหม่</h3>
+          </div>
+        </div>
+
+        <form id="create-user-form" novalidate>
+          <div class="create-user-grid">
+            <div class="form-group">
+              <label for="new-full-name">
+                ชื่อ-นามสกุล
+              </label>
+
+              <input
+                id="new-full-name"
+                type="text"
+                placeholder="เช่น สมชาย ใจดี"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="new-username">
+                ชื่อผู้ใช้
+              </label>
+
+              <input
+                id="new-username"
+                type="text"
+                autocomplete="off"
+                placeholder="อังกฤษ/ตัวเลข อย่างน้อย 4 ตัว"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="new-password">
+                รหัสผ่าน
+              </label>
+
+              <input
+                id="new-password"
+                type="password"
+                autocomplete="new-password"
+                placeholder="อย่างน้อย 8 ตัวอักษร"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="new-role">บทบาท</label>
+
+              <select id="new-role">
+                <option value="USER">
+                  พนักงาน (STAFF)
+                </option>
+
+                <option value="OWNER">
+                  เจ้าของหอ (OWNER)
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <p class="form-hint">
+            บัญชีผู้ดูแลระบบ (SUPER_ADMIN)
+            สร้างจากหน้านี้ไม่ได้ ต้องรัน
+            createInitialSuperAdmin() ใน Apps Script
+          </p>
+
+          <button
+            id="create-user-button"
+            class="primary-button"
+            type="submit"
+          >
+            สร้างบัญชี
+          </button>
+        </form>
+      </section>
+
+      <section class="report-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">USER LIST</p>
+            <h3>บัญชีในระบบ</h3>
+          </div>
+        </div>
+
+        <div class="form-group search-group">
+          <label for="search-input">ค้นหา</label>
+
+          <input
+            id="search-input"
+            type="search"
+            placeholder="ค้นหาชื่อ, ชื่อผู้ใช้, บทบาท..."
+          />
+        </div>
+
+        <div class="table-card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ชื่อ-นามสกุล</th>
+                  <th>ชื่อผู้ใช้</th>
+                  <th>บทบาท</th>
+                  <th>สถานะ</th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+
+              <tbody id="users-table-body">
+                <tr>
+                  <td class="loading-cell" colspan="5">
+                    กำลังโหลดข้อมูล...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div
+          id="users-pagination"
+          class="pagination-controls"
+        ></div>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/src/pages/admin/users.ts"
+    ></script>
+  </body>
+</html>

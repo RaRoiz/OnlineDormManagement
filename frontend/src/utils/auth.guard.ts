@@ -2,6 +2,7 @@ import {
   getCurrentUser,
   isLoggedIn,
   isOwner,
+  isSuperAdmin,
   logout,
   roleLabel
 } from "../services/auth.service";
@@ -45,6 +46,23 @@ export function requireOwner(): boolean {
   }
 
   if (!isOwner()) {
+    window.location.replace("/index.html");
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * สำหรับหน้าที่ใช้ได้เฉพาะผู้ดูแลระบบ (SUPER_ADMIN)
+ * เช่น หน้าจัดการบัญชีผู้ใช้
+ */
+export function requireSuperAdmin(): boolean {
+  if (!requireLogin()) {
+    return false;
+  }
+
+  if (!isSuperAdmin()) {
     window.location.replace("/index.html");
     return false;
   }

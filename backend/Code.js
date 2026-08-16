@@ -166,6 +166,26 @@ function doPost(e) {
       case "getReportPageData":
         return jsonResponse(ownerOnly_(request, getReportPageData));
 
+      /* ========== จัดการบัญชีผู้ใช้ (SUPER_ADMIN) ========== */
+
+      case "getUsers":
+        return jsonResponse(superAdminOnly_(request, getUsers));
+
+      case "createManagedUser":
+        return jsonResponse(
+          superAdminOnly_(request, createManagedUser)
+        );
+
+      case "setUserActive":
+        return jsonResponse(
+          superAdminOnly_(request, setUserActive)
+        );
+
+      case "resetUserPassword":
+        return jsonResponse(
+          superAdminOnly_(request, resetUserPassword)
+        );
+
       /* default ต้องอยู่ท้ายสุดเสมอ */
 
       default:
