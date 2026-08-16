@@ -775,6 +775,19 @@ function renderBills(): void {
                   bill.totalAmount
                 )}
               </strong>
+
+              ${
+                bill.previousDue
+                  ? `
+                    <br />
+                    <small class="arrears-note">
+                      ค้างเก่า
+                      ${formatMoney(bill.previousDue)}
+                      (${bill.previousDueCount} ใบ)
+                    </small>
+                  `
+                  : ""
+              }
             </td>
 
             <td>

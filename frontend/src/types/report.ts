@@ -75,8 +75,28 @@ export interface DashboardSummary {
   waterAmount: number;
   electricAmount: number;
 
+  /* ยอดค้างสะสม "ทุกเดือน" ต่างจาก outstandingAmount
+     ที่คิดเฉพาะเดือนที่เลือก */
+  arrearsAmount: number;
+  arrearsBills: number;
+
+  /* ส่งสลิปมาแล้วรอเจ้าของหอตรวจสอบ — ไม่นับเป็นยอดค้าง */
+  pendingAmount: number;
+  pendingBills: number;
+
+  topDebtors: DebtorItem[];
+
   monthlyRevenue: MonthlyRevenueItem[];
   recentBills: RecentBillItem[];
+}
+
+export interface DebtorItem {
+  tenantId: string;
+  tenantName: string;
+  roomNo: string;
+  amount: number;
+  count: number;
+  oldestMonth: string;
 }
 
 export interface ApiResponse<T> {

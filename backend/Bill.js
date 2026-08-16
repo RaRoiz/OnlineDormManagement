@@ -54,6 +54,12 @@ function getBills(request) {
   const slipUrlByBillId =
     getSlipUrlByBillId_();
 
+  // ยอดค้างจากบิลเดือนก่อนของผู้เช่าคนเดียวกัน (Arrears.gs)
+  const arrearsByBillId = buildArrearsIndex_(
+    values.slice(1),
+    index
+  );
+
   const bills = values
     .slice(1)
     .filter(function (row) {
@@ -69,6 +75,15 @@ function getBills(request) {
 
       bill.slipUrl =
         slipUrlByBillId[bill.billId] || "";
+
+      const arrears =
+        arrearsByBillId[bill.billId] || {};
+
+      bill.previousDue = arrears.amount || 0;
+      bill.previousDueCount = arrears.count || 0;
+
+      bill.previousDueOldestMonth =
+        arrears.oldestMonth || "";
 
       return bill;
     })

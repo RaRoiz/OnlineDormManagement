@@ -26,7 +26,7 @@ const SETUP_VALUES = {
   STAFF_SIGNUP_CODE: "",
 
   /* ใช้ตอนย้ายมาระบบหอเดียว — dormId ของหอที่จะเก็บไว้
-     (ดูรายชื่อได้จาก listDormsForCleanup ใน Dorm.gs) */
+     (ดูรายชื่อได้จาก listDormsForCleanup ใน Migration.gs) */
   KEEP_DORM_ID: "",
 
   /* ค่าตั้งของหอ — ปกติไม่ต้องกรอกเอง

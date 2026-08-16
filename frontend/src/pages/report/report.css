@@ -229,3 +229,15 @@
     width: 100%;
   }
 }
+
+/* ยอดค้างสะสม — ตารางผู้เช่าที่ค้างชำระ */
+.arrears-amount {
+  color: var(--danger, #ef4444);
+}
+
+#debtors-note {
+  margin: 6px 0 0;
+
+  color: var(--muted);
+  font-size: 13px;
+}

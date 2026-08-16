@@ -27,6 +27,7 @@ import {
 
 import type {
   DashboardSummary,
+  DebtorItem,
   ReportCellValue,
   ReportColumn,
   ReportData,
@@ -182,6 +183,59 @@ function formatDateTime(
   }).format(date);
 }
 
+/**
+ * ตารางผู้เช่าที่ค้างชำระ — ซ่อนทั้งส่วนถ้าไม่มีใครค้าง
+ */
+function renderDebtors(
+  debtors: DebtorItem[]
+): void {
+  const section =
+    document.querySelector<HTMLElement>(
+      "#debtors-section"
+    );
+
+  const tableBody =
+    document.querySelector<HTMLTableSectionElement>(
+      "#debtors-table-body"
+    );
+
+  if (!section || !tableBody) {
+    return;
+  }
+
+  if (debtors.length === 0) {
+    section.hidden = true;
+    tableBody.innerHTML = "";
+    return;
+  }
+
+  section.hidden = false;
+
+  tableBody.innerHTML = debtors
+    .map(debtor => `
+      <tr>
+        <td>${escapeHtml(debtor.roomNo || "-")}</td>
+
+        <td>${escapeHtml(
+          debtor.tenantName || "-"
+        )}</td>
+
+        <td>${debtor.count} บิล</td>
+
+        <td>${escapeHtml(
+          debtor.oldestMonth || "-"
+        )}</td>
+
+        <td>
+          <strong class="arrears-amount">
+            ${formatMoney(debtor.amount)}
+          </strong>
+        </td>
+      </tr>
+    `)
+    .join("");
+}
+
 function setText(
   selector: string,
   value: string
@@ -262,6 +316,21 @@ function renderDashboard(
     "#outstanding-amount",
     formatMoney(summary.outstandingAmount)
   );
+
+  setText(
+    "#arrears-amount",
+    formatMoney(summary.arrearsAmount ?? 0)
+  );
+
+  setText(
+    "#arrears-detail",
+    summary.pendingBills
+      ? `${summary.arrearsBills ?? 0} บิล · รอตรวจสอบอีก ` +
+        `${formatMoney(summary.pendingAmount ?? 0)}`
+      : `${summary.arrearsBills ?? 0} บิล`
+  );
+
+  renderDebtors(summary.topDebtors ?? []);
 
   setText(
     "#paid-amount",

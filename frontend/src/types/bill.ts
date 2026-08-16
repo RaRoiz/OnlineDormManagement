@@ -33,6 +33,12 @@ export interface Bill {
 
   slipUrl?: string;
 
+  /* ยอดค้างจากบิลเดือนก่อนของผู้เช่าคนเดียวกัน (สถานะ UNPAID)
+     คำนวณที่ backend — ดู Arrears.gs */
+  previousDue?: number;
+  previousDueCount?: number;
+  previousDueOldestMonth?: string;
+
   note: string;
 
   createdAt: string;

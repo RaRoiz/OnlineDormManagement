@@ -125,6 +125,16 @@
           <small>ตามเดือนที่เลือก</small>
         </article>
 
+        <article class="summary-card danger-card">
+          <span>ค้างสะสมทุกเดือน</span>
+          <strong id="arrears-amount">
+            ฿0
+          </strong>
+          <small id="arrears-detail">
+            0 บิล
+          </small>
+        </article>
+
         <article class="summary-card success-card">
           <span>รายรับที่ชำระแล้ว</span>
           <strong id="paid-amount">
@@ -142,6 +152,43 @@
             น้ำ ฿0 · ไฟ ฿0
           </small>
         </article>
+      </section>
+
+      <!-- ผู้เช่าที่ค้างชำระ -->
+      <section
+        id="debtors-section"
+        class="report-section"
+        hidden
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ARREARS</p>
+            <h3>ผู้เช่าที่ค้างชำระมากที่สุด</h3>
+
+            <p id="debtors-note">
+              นับเฉพาะบิลที่ยังไม่ชำระ
+              (ไม่รวมบิลที่ส่งสลิปแล้วรอตรวจสอบ)
+            </p>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ห้อง</th>
+                  <th>ผู้เช่า</th>
+                  <th>ค้างกี่บิล</th>
+                  <th>ค้างตั้งแต่</th>
+                  <th>ยอดค้าง</th>
+                </tr>
+              </thead>
+
+              <tbody id="debtors-table-body"></tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       <!-- Report -->

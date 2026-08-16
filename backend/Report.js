@@ -303,6 +303,13 @@ function getDashboardSummary(request) {
       };
     });
 
+  /* ยอดค้างสะสม "ทุกเดือน" ไม่ใช่เฉพาะเดือนที่เลือก
+     (outstandingAmount ด้านบนคิดเฉพาะเดือนที่เลือก) */
+  const arrears = summarizeArrears_(
+    bills,
+    billsData.index
+  );
+
   return {
     success: true,
     message:
@@ -325,6 +332,13 @@ function getDashboardSummary(request) {
         outstandingAmount,
 
       paidAmount: paidAmount,
+
+      /* ยอดค้างสะสมทุกเดือน + ผู้เช่าที่ค้างมากที่สุด */
+      arrearsAmount: arrears.totalAmount,
+      arrearsBills: arrears.totalBills,
+      pendingAmount: arrears.pendingAmount,
+      pendingBills: arrears.pendingBills,
+      topDebtors: arrears.tenants.slice(0, 5),
 
       waterAmount: waterAmount,
       electricAmount:
