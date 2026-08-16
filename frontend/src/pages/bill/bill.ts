@@ -181,6 +181,14 @@ function formatMoney(value: number): string {
   }).format(value);
 }
 
+/** ตัวเลขหน่วยมิเตอร์ — ไม่ใส่สัญลักษณ์เงิน */
+function formatUnits(value: number): string {
+  return new Intl.NumberFormat("th-TH", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(Number(value) || 0);
+}
+
 function formatMonth(value: string): string {
   if (!value) {
     return "-";
@@ -930,6 +938,87 @@ function renderBills(): void {
  * ผู้ใช้กด "พิมพ์" ในหน้าต่างที่เด้งขึ้น
  * แล้วเลือกเครื่องพิมพ์ หรือ Save as PDF ได้เลย
  */
+/**
+ * ตารางเลขมิเตอร์น้ำ-ไฟ สำหรับใบเสร็จที่พิมพ์
+ * แสดงเลขครั้งก่อน / ครั้งนี้ / ใช้ไปกี่หน่วย / หน่วยละเท่าไร
+ *
+ * คืนสตริงว่างถ้าหามิเตอร์ของบิลใบนี้ไม่เจอ (เช่น มิเตอร์ถูกลบ
+ * ไปแล้วแต่บิลยังอยู่) — ใบเสร็จส่วนอื่นยังพิมพ์ได้ตามปกติ
+ */
+function buildMeterSectionHtml(bill: Bill): string {
+  const meter = meters.find(
+    item => item.meterId === bill.meterId
+  );
+
+  if (!meter) {
+    return "";
+  }
+
+  const meterRow = (
+    label: string,
+    unit: string,
+    previous: number,
+    current: number,
+    units: number,
+    rate: number,
+    amount: number
+  ): string => `
+    <tr>
+      <td>${escapeHtml(label)}</td>
+      <td class="num">${formatUnits(previous)}</td>
+      <td class="num">${formatUnits(current)}</td>
+      <td class="num">
+        <strong>${formatUnits(units)}</strong>
+        ${escapeHtml(unit)}
+      </td>
+      <td class="num">${formatMoney(rate)}</td>
+      <td class="num">${formatMoney(amount)}</td>
+    </tr>
+  `;
+
+  return `
+    <h2 class="section-title">
+      การใช้น้ำ-ไฟ ประจำเดือน
+      ${escapeHtml(formatMonth(meter.billingMonth))}
+    </h2>
+
+    <table class="meter-table">
+      <thead>
+        <tr>
+          <th>มิเตอร์</th>
+          <th class="num">เลขครั้งก่อน</th>
+          <th class="num">เลขครั้งนี้</th>
+          <th class="num">ใช้ไป</th>
+          <th class="num">หน่วยละ</th>
+          <th class="num">เป็นเงิน</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        ${meterRow(
+          "น้ำประปา",
+          "หน่วย",
+          meter.waterPrevious,
+          meter.waterCurrent,
+          meter.waterUnits,
+          meter.waterRate,
+          meter.waterAmount
+        )}
+
+        ${meterRow(
+          "ไฟฟ้า",
+          "หน่วย",
+          meter.electricPrevious,
+          meter.electricCurrent,
+          meter.electricUnits,
+          meter.electricRate,
+          meter.electricAmount
+        )}
+      </tbody>
+    </table>
+  `;
+}
+
 async function printBill(bill: Bill): Promise<void> {
   // เปิดหน้าต่างก่อนเสมอ (แบบ sync ในสาย click handler)
   // ไม่งั้นเบราว์เซอร์บางตัวจะมองว่าไม่ได้มาจาก user gesture
@@ -1118,6 +1207,26 @@ async function printBill(bill: Bill): Promise<void> {
     white-space: nowrap;
   }
 
+  .section-title {
+    margin: 0 0 10px;
+
+    color: #444;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  /* ตารางมิเตอร์มี 6 คอลัมน์ ต้องเล็กลงหน่อยให้พอดีหน้ากระดาษ */
+  .meter-table {
+    margin-bottom: 24px;
+    font-size: 13px;
+  }
+
+  .meter-table th,
+  .meter-table td {
+    padding: 7px 8px;
+  }
+
   .total td {
     border-top: 2px solid #1c1c1c;
     border-bottom: 0;
@@ -1213,6 +1322,10 @@ async function printBill(bill: Bill): Promise<void> {
       <span class="status">${statusText}</span>
     </div>
   </div>
+
+  ${buildMeterSectionHtml(bill)}
+
+  <h2 class="section-title">รายการค่าใช้จ่าย</h2>
 
   <table>
     <thead>
