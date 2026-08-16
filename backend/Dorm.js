@@ -1284,6 +1284,7 @@ function runOneTimeSetup() {
 
   Logger.log(
     "runOneTimeSetup() เสร็จสมบูรณ์ทั้งหมด — " +
-    "login superadmin / SuperAdmin@1234 ได้แล้ว"
+    "login ด้วย superadmin และรหัสผ่านที่ตั้งไว้ใน " +
+    "Script Property INITIAL_SUPERADMIN_PASSWORD ได้แล้ว"
   );
 }

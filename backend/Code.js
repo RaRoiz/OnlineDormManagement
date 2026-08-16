@@ -11,7 +11,7 @@ function doPost(e) {
       e.postData?.contents || "{}"
     );
 
-    console.log("Request:", JSON.stringify(request));
+    // ห้าม log ตัว request ทั้งก้อน — มี password และ token ปนอยู่
     console.log("Action:", request.action);
 
     // Webhook จาก LINE (มี events ไม่มี action)

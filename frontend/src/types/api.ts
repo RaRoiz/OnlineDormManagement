@@ -10,8 +10,7 @@ interface ApiRequest {
 export async function apiRequest<T>(
   data: ApiRequest
 ): Promise<T> {
-  console.log("API request:", data);
-
+  // ห้าม log request/response — มี password และ token ปนอยู่
   const response = await fetch(API_URL, {
     method: "POST",
     headers: {
@@ -22,8 +21,6 @@ export async function apiRequest<T>(
   });
 
   const responseText = await response.text();
-
-  console.log("API response:", responseText);
 
   if (!response.ok) {
     throw new Error(

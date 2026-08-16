@@ -1,12 +1,67 @@
-// เก็บ ID จริงใน Script Properties (ไม่ขึ้น GitHub)
-// Apps Script → Project Settings → Script Properties
-// เพิ่ม property ชื่อ SPREADSHEET_ID
+/**
+ * อ่านค่าลับจาก Script Properties — ไม่มีค่า fallback ในโค้ด
+ * เพราะไฟล์นี้ขึ้น GitHub ถ้า property หาย ให้ล้มทันที
+ * ดีกว่าเผลอไปใช้ค่าที่ฝังไว้ในโค้ด
+ *
+ * Apps Script → Project Settings → Script Properties
+ */
+function getRequiredProperty_(name) {
+  const value = String(
+    PropertiesService
+      .getScriptProperties()
+      .getProperty(name) || ""
+  ).trim();
+
+  if (!value) {
+    throw new Error(
+      "ยังไม่ได้ตั้งค่า Script Property: " + name +
+      " (Apps Script → Project Settings → Script Properties)"
+    );
+  }
+
+  return value;
+}
+
 const SPREADSHEET_ID =
-  PropertiesService
-    .getScriptProperties()
-    .getProperty("SPREADSHEET_ID") || "1EjKqetYjCLDe6D-Xuqz6BJXZat9skeYmhnQ-TAmFWYM";
+  getRequiredProperty_("SPREADSHEET_ID");
+
 const USERS_SHEET = "Users";
 const SESSION_SECONDS = 21600; // 6 ชั่วโมง
+
+/* ========== กันเดารหัสผ่านรัวๆ ==========
+   Apps Script อ่าน IP ของผู้เรียกไม่ได้ จึงนับตาม
+   username ได้อย่างเดียว — แลกมากับการที่คนอื่น
+   จงใจยิงผิดเพื่อล็อกบัญชีเราได้ (ยอมรับได้กว่า
+   ปล่อยให้เดารหัสผ่านไม่จำกัด) */
+
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_SECONDS = 900; // 15 นาที
+
+function loginFailureKey_(username) {
+  return "loginfail:" + username;
+}
+
+function loginFailureCount_(username) {
+  const value = CacheService
+    .getScriptCache()
+    .get(loginFailureKey_(username));
+
+  return value ? Number(value) : 0;
+}
+
+function recordLoginFailure_(username) {
+  CacheService.getScriptCache().put(
+    loginFailureKey_(username),
+    String(loginFailureCount_(username) + 1),
+    LOGIN_LOCKOUT_SECONDS
+  );
+}
+
+function clearLoginFailures_(username) {
+  CacheService
+    .getScriptCache()
+    .remove(loginFailureKey_(username));
+}
 
 function login(request) {
   const username = String(request.username || "").trim().toLowerCase();
@@ -16,6 +71,14 @@ function login(request) {
     return {
       success: false,
       message: "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน"
+    };
+  }
+
+  if (loginFailureCount_(username) >= LOGIN_MAX_ATTEMPTS) {
+    return {
+      success: false,
+      message:
+        "ใส่รหัสผ่านผิดเกินกำหนด กรุณารอ 15 นาทีแล้วลองใหม่"
     };
   }
 
@@ -89,6 +152,8 @@ function login(request) {
         SESSION_SECONDS
       );
 
+      clearLoginFailures_(username);
+
       return {
         success: true,
         message: "เข้าสู่ระบบสำเร็จ",
@@ -97,6 +162,8 @@ function login(request) {
       };
     }
   }
+
+  recordLoginFailure_(username);
 
   return {
     success: false,
@@ -139,70 +206,6 @@ function logout(token) {
     success: true,
     message: "ออกจากระบบเรียบร้อย"
   };
-}
-
-/**
- * ชั่วคราว — ลบบัญชีทดสอบเก่า 3 บัญชีที่ระบุชื่อผู้ใช้ตรงๆ
- * (adtae67, tayler, tae04) ออกจาก Users sheet
- * รันครั้งเดียวจาก Apps Script editor แล้วลบฟังก์ชันนี้ทิ้งได้
- */
-function deleteTestStaffAccounts() {
-  const usernamesToDelete = [
-    "adtae67",
-    "tayler",
-    "tae04"
-  ];
-
-  const sheet = getUsersSheet_();
-  const values = sheet.getDataRange().getValues();
-  const index = createHeaderIndex(values[0]);
-
-  let deletedCount = 0;
-
-  for (let i = values.length - 1; i >= 1; i--) {
-    const username = String(
-      values[i][index.username] || ""
-    )
-      .trim()
-      .toLowerCase();
-
-    if (usernamesToDelete.indexOf(username) !== -1) {
-      sheet.deleteRow(i + 1);
-      deletedCount++;
-      Logger.log("ลบแถว: " + username);
-    }
-  }
-
-  Logger.log(
-    "ลบบัญชีทดสอบสำเร็จ " + deletedCount + " บัญชี"
-  );
-}
-
-/**
- * DEBUG ชั่วคราว — รันจาก Apps Script editor เพื่อดูค่า
- * username/role/dormId ของทุกแถวใน Users sheet ตรงๆ
- * (แค่ดู ไม่แก้ไขอะไร) ลบทิ้งได้เมื่อเช็คปัญหาเสร็จแล้ว
- */
-function debugListUsers() {
-  const sheet = getUsersSheet_();
-  const values = sheet.getDataRange().getValues();
-  const index = createHeaderIndex(values[0]);
-
-  Logger.log("คอลัมน์ dormId อยู่ตำแหน่ง (0-based): " + index.dormId);
-
-  values.slice(1).forEach(function (row) {
-    const username = String(row[index.username] || "");
-    const role = String(row[index.role] || "");
-
-    const dormId =
-      index.dormId === undefined
-        ? "(ไม่มีคอลัมน์ dormId)"
-        : "[" + String(row[index.dormId] || "") + "]";
-
-    Logger.log(
-      username + " | role=" + role + " | dormId=" + dormId
-    );
-  });
 }
 
 /**
@@ -405,9 +408,63 @@ function getAvatarFolder_() {
   return DriveApp.createFolder(folderName);
 }
 
+const AVATAR_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
+
+/* นามสกุลไฟล์ตามชนิดรูปที่รองรับ — ใช้ตั้งชื่อไฟล์เอง
+   ไม่เอาชื่อที่ผู้ใช้ส่งมาไปตั้งบน Drive */
+const AVATAR_EXTENSION_BY_MIME = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp"
+};
+
+/**
+ * ตรวจชนิดไฟล์จาก magic bytes จริง ไม่เชื่อ mimeType ที่ client ส่งมา
+ * (base64Decode คืน byte แบบมีเครื่องหมาย ต้องแปลงเป็น 0-255 ก่อน)
+ * คืนค่า mime type ที่ตรวจได้ หรือ "" ถ้าไม่ใช่รูปที่รองรับ
+ */
+function detectImageMimeType_(bytes) {
+  if (!bytes || bytes.length < 12) {
+    return "";
+  }
+
+  const at = function (position) {
+    const value = bytes[position];
+    return value < 0 ? value + 256 : value;
+  };
+
+  if (
+    at(0) === 0xff && at(1) === 0xd8 && at(2) === 0xff
+  ) {
+    return "image/jpeg";
+  }
+
+  if (
+    at(0) === 0x89 && at(1) === 0x50 &&
+    at(2) === 0x4e && at(3) === 0x47
+  ) {
+    return "image/png";
+  }
+
+  if (
+    at(0) === 0x52 && at(1) === 0x49 &&
+    at(2) === 0x46 && at(3) === 0x46 &&
+    at(8) === 0x57 && at(9) === 0x45 &&
+    at(10) === 0x42 && at(11) === 0x50
+  ) {
+    return "image/webp";
+  }
+
+  return "";
+}
+
 /**
  * ให้ OWNER อัปโหลดรูปโปรไฟล์ของตัวเอง (เก็บบน Google Drive)
  * ลบไฟล์รูปเก่าทิ้งถ้ามี เพื่อไม่ให้ไฟล์ค้างสะสม
+ *
+ * ไฟล์ที่อัปโหลดถูกตั้งเป็นสาธารณะ (ANYONE_WITH_LINK) จึงต้อง
+ * ตรวจให้แน่ว่าเป็นรูปจริงและไม่ใหญ่เกินไป มิฉะนั้นจะกลายเป็น
+ * ที่ฝากไฟล์ให้คนอื่นและกิน quota ของ Drive เจ้าของระบบ
  */
 function uploadAvatar(request) {
   const auth = validateToken(request.token);
@@ -415,14 +472,6 @@ function uploadAvatar(request) {
   if (!auth.success) {
     return auth;
   }
-
-  const fileName = String(
-    request.fileName || "avatar"
-  ).trim();
-
-  const mimeType = String(
-    request.mimeType || "image/jpeg"
-  ).trim();
 
   const base64Data = String(
     request.base64Data || ""
@@ -432,6 +481,35 @@ function uploadAvatar(request) {
     return {
       success: false,
       message: "ไม่พบไฟล์รูปภาพ"
+    };
+  }
+
+  let bytes;
+
+  try {
+    bytes = Utilities.base64Decode(base64Data);
+  } catch (error) {
+    return {
+      success: false,
+      message: "ไฟล์รูปภาพไม่ถูกต้อง"
+    };
+  }
+
+  if (bytes.length > AVATAR_MAX_BYTES) {
+    return {
+      success: false,
+      message: "ไฟล์รูปต้องมีขนาดไม่เกิน 2 MB"
+    };
+  }
+
+  // เชื่อ magic bytes เท่านั้น ไม่เชื่อ request.mimeType
+  const detectedMimeType = detectImageMimeType_(bytes);
+
+  if (!detectedMimeType) {
+    return {
+      success: false,
+      message:
+        "รองรับเฉพาะไฟล์รูป JPG, PNG และ WebP เท่านั้น"
     };
   }
 
@@ -453,9 +531,16 @@ function uploadAvatar(request) {
       };
     }
 
+    // ตั้งชื่อไฟล์เองจาก userId — กันชื่อไฟล์แปลกๆ ที่ผู้ใช้ส่งมา
+    const fileName =
+      "avatar-" +
+      auth.user.userId +
+      "." +
+      AVATAR_EXTENSION_BY_MIME[detectedMimeType];
+
     const blob = Utilities.newBlob(
-      Utilities.base64Decode(base64Data),
-      mimeType,
+      bytes,
+      detectedMimeType,
       fileName
     );
 
@@ -599,7 +684,12 @@ function createInitialAdmin() {
   }
 
   const username = "admin";
-  const password = "Admin@1234";
+
+  // อ่านจาก Script Properties — ห้ามฝังรหัสผ่านในโค้ดที่ขึ้น GitHub
+  const password = getRequiredProperty_(
+    "INITIAL_ADMIN_PASSWORD"
+  );
+
   const salt = Utilities.getUuid();
   const passwordHash = hashPassword(password, salt);
 
@@ -615,7 +705,7 @@ function createInitialAdmin() {
 
   Logger.log("สร้างบัญชี admin สำเร็จ");
   Logger.log("Username: admin");
-  Logger.log("Password: Admin@1234");
+  Logger.log("Password: ตามค่าใน Script Property INITIAL_ADMIN_PASSWORD");
 }
 
 /**
@@ -639,7 +729,12 @@ function createInitialSuperAdmin() {
   }
 
   const username = "superadmin";
-  const password = "SuperAdmin@1234";
+
+  // อ่านจาก Script Properties — ห้ามฝังรหัสผ่านในโค้ดที่ขึ้น GitHub
+  const password = getRequiredProperty_(
+    "INITIAL_SUPERADMIN_PASSWORD"
+  );
+
   const salt = Utilities.getUuid();
   const passwordHash = hashPassword(password, salt);
 
@@ -655,11 +750,12 @@ function createInitialSuperAdmin() {
 
   Logger.log("สร้างบัญชี superadmin สำเร็จ");
   Logger.log("Username: superadmin");
-  Logger.log("Password: SuperAdmin@1234");
+  Logger.log("Password: ตามค่าใน Script Property INITIAL_SUPERADMIN_PASSWORD");
 }
 
 /**
- * รายชื่อพนักงาน (role USER) ของหอตัวเอง — ใช้เฉพาะ OWNER
+ * รายชื่อพนักงาน (role USER) ทั้งหมด — ใช้เฉพาะ OWNER
+ * (เดิมกรองเฉพาะหอตัวเอง ตอนนี้เลิกแยกตามหอแล้ว)
  */
 function getStaff(request) {
   const auth = validateToken(request.token);
@@ -667,10 +763,6 @@ function getStaff(request) {
   if (!auth.success) {
     return auth;
   }
-
-  const dormId = String(
-    auth.user.dormId || ""
-  ).trim();
 
   const sheet = getUsersSheet_();
   const values = sheet.getDataRange().getValues();
@@ -697,16 +789,6 @@ function getStaff(request) {
         String(row[index.role] || "")
           .trim()
           .toUpperCase() === "USER"
-      );
-    })
-    .filter(function (row) {
-      if (index.dormId === undefined) {
-        return true;
-      }
-
-      return (
-        String(row[index.dormId] || "").trim() ===
-        dormId
       );
     })
     .map(function (row) {

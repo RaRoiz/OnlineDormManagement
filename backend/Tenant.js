@@ -110,7 +110,7 @@ function createTenant(request) {
     const duplicateActiveTenant = values
       .slice(1)
       .some(function (row) {
-        if (!rowInDormScope_(row, index, auth)) {
+        if (!sameDormRow_(row, index, auth)) {
           return false;
         }
 
@@ -288,7 +288,7 @@ function updateTenant(request) {
     const duplicateActiveTenant = values
       .slice(1)
       .some(function (row) {
-        if (!rowInDormScope_(row, index, auth)) {
+        if (!sameDormRow_(row, index, auth)) {
           return false;
         }
 

@@ -688,8 +688,18 @@ function markBillPaid(request) {
           confirmedBill.tenantId
         );
 
+        /* ใช้ LINE token ของหอที่บิลใบนี้สังกัด ไม่ใช่ของคนกดยืนยัน —
+           ตั้งแต่เลิกแยกข้อมูลตามหอ คนหอหนึ่งเปิดบิลของอีกหอได้
+           ถ้าใช้ token ของคนกด จะ push ไปหา userId ของอีก channel
+           ซึ่ง LINE ปฏิเสธเสมอ */
+        const billDormId =
+          index.dormId === undefined
+            ? ""
+            : String(row[index.dormId] || "").trim();
+
         const lineToken = getDormLineCredentials_(
-          String((auth.user && auth.user.dormId) || "")
+          billDormId ||
+            String((auth.user && auth.user.dormId) || "")
         ).token;
 
         if (lineUserId && lineToken) {

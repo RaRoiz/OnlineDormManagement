@@ -93,7 +93,7 @@ function createRoom(request) {
     const duplicate = values
       .slice(1)
       .some(row => {
-        if (!rowInDormScope_(row, index, auth)) {
+        if (!sameDormRow_(row, index, auth)) {
           return false;
         }
 
@@ -222,7 +222,7 @@ function updateRoom(request) {
     const duplicate = values
       .slice(1)
       .some(row => {
-        if (!rowInDormScope_(row, index, auth)) {
+        if (!sameDormRow_(row, index, auth)) {
           return false;
         }
 
