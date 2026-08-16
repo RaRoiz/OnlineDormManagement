@@ -207,7 +207,7 @@ function renderUsersTable(): void {
           }">
             ${
               user.active
-                ? "ใช้งานอยู่"
+                ? "เปิดใช้งาน"
                 : "ปิดใช้งาน"
             }
           </span>

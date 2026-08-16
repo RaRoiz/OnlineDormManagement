@@ -139,7 +139,7 @@ function renderStaffTable(): void {
           }">
             ${
               member.active
-                ? "ใช้งานอยู่"
+                ? "เปิดใช้งาน"
                 : "ปิดใช้งาน"
             }
           </span>
