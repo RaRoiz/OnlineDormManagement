@@ -99,8 +99,8 @@ function putDormCache_(name, result) {
  * ห่อฟังก์ชันอ่านเดิมด้วย cache
  * ตรวจ token ก่อนเสมอ (session อยู่ใน cache อยู่แล้ว เร็ว)
  *
- * cache key ผูกกับ dormId ของผู้เรียกเสมอ — มิฉะนั้นหอ A
- * จะได้ผลลัพธ์ที่ cache ไว้ให้หอ B (ข้อมูลรั่วข้ามหอ)
+ * ระบบเป็นหอเดียว ผู้ใช้ทุกคนจึงได้ผลลัพธ์ชุดเดียวกัน
+ * ใช้ cache key เดียวร่วมกันได้
  */
 function cachedList_(name, request, loader) {
   const auth = validateToken(request.token);
@@ -109,8 +109,7 @@ function cachedList_(name, request, loader) {
     return auth;
   }
 
-  const scopedName = dormScopedCacheName_(name, auth);
-  const cached = getDormCache_(scopedName);
+  const cached = getDormCache_(name);
 
   if (cached) {
     return cached;
@@ -119,72 +118,10 @@ function cachedList_(name, request, loader) {
   const result = loader(request);
 
   if (result && result.success) {
-    putDormCache_(scopedName, result);
+    putDormCache_(name, result);
   }
 
   return result;
-}
-
-/* =========================================
-   ขอบเขตข้อมูลตามหอ (dormId) — ปิดการกรองแล้ว
-   -----------------------------------------
-   เดิมผู้ใช้แต่ละคนเห็นเฉพาะข้อมูลหอตัวเอง
-   ตอนนี้ทุกคนเห็นข้อมูลทุกหอเหมือนกันหมด
-
-   คอลัมน์ dormId ยังถูกเขียนลงชีตตามปกติ และ
-   ฟังก์ชันสองตัวนี้ยังถูกเรียกจากทุกจุดเหมือนเดิม
-   ถ้าต้องการกลับไปแยกข้อมูลตามหออีกครั้ง ให้เอา
-   โค้ดเดิมที่คอมเมนต์ไว้ในแต่ละฟังก์ชันกลับมาใช้
-   โดยไม่ต้องแก้ไฟล์อื่นเลย
-========================================= */
-
-function dormScopedCacheName_(name, auth) {
-  /* เดิม: แยก cache ตามหอ (SUPER_ADMIN ใช้ ":ALL")
-     ตอนนี้ทุกคนได้ผลลัพธ์ชุดเดียวกัน จึงใช้ key เดียว */
-  return name;
-}
-
-function rowInDormScope_(row, index, auth) {
-  /* เดิม: SUPER_ADMIN ผ่านทุกแถว นอกนั้นเทียบ
-     row[index.dormId] กับ auth.user.dormId
-     ตอนนี้ไม่กรองแล้ว — ทุกแถวผ่านหมด */
-  return true;
-}
-
-/**
- * ตรรกะการเทียบหอแบบเดิม — เก็บไว้ใช้เฉพาะ "การตรวจข้อมูลซ้ำ"
- * (เลขห้องซ้ำ / ผู้เช่าซ้ำ) ซึ่งเป็นกฎความถูกต้องของข้อมูล
- * คนละเรื่องกับการมองเห็นข้อมูล
- *
- * ถ้าใช้ rowInDormScope_ (ที่ตอนนี้ผ่านทุกแถว) กับการตรวจซ้ำด้วย
- * ห้อง "101" ของหอ A จะชนกับห้อง "101" ของหอ B ทำให้แก้ไขห้อง
- * ที่มีอยู่เดิมไม่ได้เลย
- *
- * ถ้าต้องการให้เลขห้องห้ามซ้ำทั้งระบบจริงๆ ให้เปลี่ยนตัวนี้
- * เป็น return true
- */
-function sameDormRow_(row, index, auth) {
-  const role = String(
-    (auth.user && auth.user.role) || ""
-  )
-    .trim()
-    .toUpperCase();
-
-  if (role === "SUPER_ADMIN") {
-    return true;
-  }
-
-  if (index.dormId === undefined) {
-    return true;
-  }
-
-  const dormId = String(
-    (auth.user && auth.user.dormId) || ""
-  );
-
-  return (
-    String(row[index.dormId] || "") === dormId
-  );
 }
 
 /* =========================================
@@ -213,32 +150,6 @@ function ownerOnly_(request, handler) {
       success: false,
       message:
         "สิทธิ์ไม่เพียงพอ ฟีเจอร์นี้ใช้ได้เฉพาะเจ้าของระบบ (OWNER)"
-    };
-  }
-
-  return handler(request);
-}
-
-/* SUPER_ADMIN: เห็น/จัดการได้ทุกหอ ใช้กับ action ใน Dorm.js */
-
-function superAdminOnly_(request, handler) {
-  const auth = validateToken(request.token);
-
-  if (!auth.success) {
-    return auth;
-  }
-
-  const role = String(
-    (auth.user && auth.user.role) || ""
-  )
-    .trim()
-    .toUpperCase();
-
-  if (role !== "SUPER_ADMIN") {
-    return {
-      success: false,
-      message:
-        "สิทธิ์ไม่เพียงพอ ฟีเจอร์นี้ใช้ได้เฉพาะผู้ดูแลระบบ (SUPER_ADMIN)"
     };
   }
 
@@ -282,7 +193,7 @@ function getBillPageData(request) {
     return auth;
   }
 
-  const cacheName = dormScopedCacheName_("page:bill", auth);
+  const cacheName = "page:bill";
   const cached = getDormCache_(cacheName);
 
   if (cached) {
@@ -329,7 +240,7 @@ function getMeterPageData(request) {
     return auth;
   }
 
-  const cacheName = dormScopedCacheName_("page:meter", auth);
+  const cacheName = "page:meter";
   const cached = getDormCache_(cacheName);
 
   if (cached) {
@@ -369,7 +280,7 @@ function getTenantPageData(request) {
     return auth;
   }
 
-  const cacheName = dormScopedCacheName_("page:tenant", auth);
+  const cacheName = "page:tenant";
   const cached = getDormCache_(cacheName);
 
   if (cached) {

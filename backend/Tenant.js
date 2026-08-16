@@ -45,9 +45,6 @@ function getTenants(request) {
         row[index.tenantId] || ""
       ).trim();
     })
-    .filter(function (row) {
-      return rowInDormScope_(row, index, auth);
-    })
     .map(function (row) {
       return tenantFromRow_(
         row,
@@ -69,10 +66,6 @@ function createTenant(request) {
   if (!auth.success) {
     return auth;
   }
-
-  const dormId = String(
-    (auth.user && auth.user.dormId) || ""
-  );
 
   const input = validateTenantInput_(
     request.tenant
@@ -110,10 +103,6 @@ function createTenant(request) {
     const duplicateActiveTenant = values
       .slice(1)
       .some(function (row) {
-        if (!sameDormRow_(row, index, auth)) {
-          return false;
-        }
-
         const citizenId = String(
           row[index.citizenId] || ""
         ).trim();
@@ -168,8 +157,7 @@ sheet.appendRow([
   createdTenant.checkOutDate,
   createdTenant.status,
   createdTenant.createdAt,
-  createdTenant.updatedAt,
-  dormId
+  createdTenant.updatedAt
 ]);
 
 bumpDormCache_();
@@ -235,13 +223,6 @@ function updateTenant(request) {
       };
     }
 
-    if (!rowInDormScope_(values[targetRow - 1], index, auth)) {
-      return {
-        success: false,
-        message: "ไม่พบข้อมูลผู้เช่า"
-      };
-    }
-
     const originalRow =
       values[targetRow - 1];
 
@@ -288,10 +269,6 @@ function updateTenant(request) {
     const duplicateActiveTenant = values
       .slice(1)
       .some(function (row) {
-        if (!sameDormRow_(row, index, auth)) {
-          return false;
-        }
-
         const currentTenantId = String(
           row[index.tenantId] || ""
         ).trim();
@@ -438,13 +415,6 @@ function checkoutTenant(request) {
 
       if (currentTenantId !== tenantId) {
         continue;
-      }
-
-      if (!rowInDormScope_(row, index, auth)) {
-        return {
-          success: false,
-          message: "ไม่พบข้อมูลผู้เช่า"
-        };
       }
 
       const currentStatus = String(
@@ -629,13 +599,6 @@ function deleteTenant(request) {
 
       if (currentTenantId !== tenantId) {
         continue;
-      }
-
-      if (!rowInDormScope_(row, index, auth)) {
-        return {
-          success: false,
-          message: "ไม่พบข้อมูลผู้เช่า"
-        };
       }
 
       const status = String(
@@ -934,13 +897,8 @@ function tenantFromRow_(
   };
 }
 
-/**
- * dormId เป็น optional — ไม่ใส่จะได้ห้องทุกหอเหมือนเดิม (ใช้
- * ตอนแค่แปล roomId → roomNo จากแถวที่ dorm-scope ผ่านมาแล้ว)
- * ใส่ dormId เมื่อไหร่ที่ค้นหาจาก "เลขห้อง" ตรงๆ (เช่นฝั่ง LINE
- * bot) เพราะเลขห้องซ้ำกันข้ามหอได้ ต้องกรองก่อนเทียบ
- */
-function getRoomMap_(dormId) {
+/** แผนที่ roomId → roomNo ของห้องทั้งหมด */
+function getRoomMap_() {
   const roomSheet = getRoomsSheet_();
   const values =
     roomSheet.getDataRange().getValues();
@@ -955,13 +913,6 @@ function getRoomMap_(dormId) {
     getRoomHeaderIndex_(values[0]);
 
   values.slice(1).forEach(function (row) {
-    if (
-      dormId &&
-      String(row[index.dormId] || "").trim() !== dormId
-    ) {
-      return;
-    }
-
     const roomId = String(
       row[index.roomId] || ""
     ).trim();

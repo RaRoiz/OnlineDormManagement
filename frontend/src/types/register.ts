@@ -1,12 +1,14 @@
-export type RegisterRole = "OWNER" | "USER";
+/* ระบบหอเดียว: สมัครผ่านหน้าเว็บได้เฉพาะพนักงาน */
+export type RegisterRole = "USER";
 
 export interface RegisterInput {
   username: string;
   fullName: string;
   password: string;
   role: RegisterRole;
-  dormName?: string;
-  dormId?: string;
+
+  /** รหัสเชิญที่เจ้าของหอออกให้ (มาจาก ?code= บน URL) */
+  signupCode: string;
 }
 
 export interface DormPublicInfo {

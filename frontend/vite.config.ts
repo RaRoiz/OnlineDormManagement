@@ -49,16 +49,6 @@ export default defineConfig({
           "src/pages/report/report.html"
         ),
 
-        admin: resolve(
-          root,
-          "src/pages/admin/admin.html"
-        ),
-
-        dormDetail: resolve(
-          root,
-          "src/pages/admin/dorm-detail.html"
-        ),
-
         profile: resolve(
           root,
           "src/pages/profile/profile.html"

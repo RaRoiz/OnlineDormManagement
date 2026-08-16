@@ -166,20 +166,6 @@ function doPost(e) {
       case "getReportPageData":
         return jsonResponse(ownerOnly_(request, getReportPageData));
 
-      /* ========== Dorms (SUPER_ADMIN) ========== */
-
-      case "getDorms":
-        return jsonResponse(superAdminOnly_(request, getDorms));
-
-      case "createDorm":
-        return jsonResponse(superAdminOnly_(request, createDorm));
-
-      case "getPlatformSummary":
-        return jsonResponse(superAdminOnly_(request, getPlatformSummary));
-
-      case "getDormDetail":
-        return jsonResponse(superAdminOnly_(request, getDormDetail));
-
       /* default ต้องอยู่ท้ายสุดเสมอ */
 
       default:

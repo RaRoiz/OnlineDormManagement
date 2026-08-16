@@ -22,6 +22,29 @@ function getRequiredProperty_(name) {
   return value;
 }
 
+/** อ่านค่าตั้งที่ "ไม่มีก็ได้" — คืนสตริงว่างถ้ายังไม่ได้ตั้ง */
+function getOptionalProperty_(name) {
+  return String(
+    PropertiesService
+      .getScriptProperties()
+      .getProperty(name) || ""
+  ).trim();
+}
+
+/** เขียนค่าตั้ง — ค่าว่างคือลบ property นั้นทิ้ง */
+function setProperty_(name, value) {
+  const properties =
+    PropertiesService.getScriptProperties();
+
+  const text = String(value || "").trim();
+
+  if (text) {
+    properties.setProperty(name, text);
+  } else {
+    properties.deleteProperty(name);
+  }
+}
+
 const SPREADSHEET_ID =
   getRequiredProperty_("SPREADSHEET_ID");
 
@@ -127,20 +150,14 @@ function login(request) {
         break;
       }
 
-      const dormId = String(
-        row[userIndex.dormId] || ""
-      );
-
       const user = {
         userId: String(row[userIndex.userId]),
         username: String(row[userIndex.username]),
         fullName: String(row[userIndex.fullName]),
         role: String(row[userIndex.role]),
-        dormId: dormId,
-        dormName: findDormName_(dormId),
-        promptPayId: findDormPromptPayId_(dormId),
-        lineBotUserId:
-          getDormLineCredentials_(dormId).botUserId
+        dormName: getDormName_(),
+        promptPayId: getPromptPayId_(),
+        lineBotUserId: getLineCredentials_().botUserId
       };
 
       const token = Utilities.getUuid();
@@ -709,51 +726,6 @@ function createInitialAdmin() {
 }
 
 /**
- * รันครั้งเดียวจาก Apps Script editor เพื่อสร้างบัญชี SUPER_ADMIN
- * (เห็น/จัดการได้ทุกหอ — ไม่มี dormId ประจำตัว ปล่อยคอลัมน์ dormId ว่างไว้)
- * ควรรันหลัง migrateAddDormId_() (Dorm.js) เพื่อให้ชีต Users มีคอลัมน์ dormId แล้ว
- */
-function createInitialSuperAdmin() {
-  const sheet = getUsersSheet_();
-  const values = sheet.getDataRange().getValues();
-
-  const superAdminExists = values
-    .slice(1)
-    .some(row =>
-      String(row[1]).trim().toLowerCase() === "superadmin"
-    );
-
-  if (superAdminExists) {
-    Logger.log("มีบัญชี superadmin อยู่แล้ว");
-    return;
-  }
-
-  const username = "superadmin";
-
-  // อ่านจาก Script Properties — ห้ามฝังรหัสผ่านในโค้ดที่ขึ้น GitHub
-  const password = getRequiredProperty_(
-    "INITIAL_SUPERADMIN_PASSWORD"
-  );
-
-  const salt = Utilities.getUuid();
-  const passwordHash = hashPassword(password, salt);
-
-  sheet.appendRow([
-    Utilities.getUuid(),
-    username,
-    passwordHash,
-    salt,
-    "ผู้ดูแลระบบ",
-    "SUPER_ADMIN",
-    true
-  ]);
-
-  Logger.log("สร้างบัญชี superadmin สำเร็จ");
-  Logger.log("Username: superadmin");
-  Logger.log("Password: ตามค่าใน Script Property INITIAL_SUPERADMIN_PASSWORD");
-}
-
-/**
  * รายชื่อพนักงาน (role USER) ทั้งหมด — ใช้เฉพาะ OWNER
  * (เดิมกรองเฉพาะหอตัวเอง ตอนนี้เลิกแยกตามหอแล้ว)
  */
@@ -844,12 +816,8 @@ function registerUser(request) {
 
   const isOwnerSignup = role === "OWNER";
 
-  const dormName = String(
-    input.dormName || ""
-  ).trim();
-
-  const requestedDormId = String(
-    input.dormId || ""
+  const signupCode = String(
+    input.signupCode || ""
   ).trim();
 
   if (!fullName) {
@@ -888,18 +856,39 @@ function registerUser(request) {
     };
   }
 
-  if (isOwnerSignup && !dormName) {
-    return {
-      success: false,
-      message: "กรุณากรอกชื่อหอ"
-    };
-  }
-
-  if (!isOwnerSignup && !requestedDormId) {
+  /* ระบบหอเดียว: สมัครเป็น OWNER ผ่านหน้าเว็บไม่ได้อีกแล้ว
+     เดิมการสมัครเป็น OWNER จะสร้าง "หอใหม่" ที่ข้อมูลแยกขาด
+     จากคนอื่น จึงไม่มีอันตราย แต่พอเหลือหอเดียว OWNER ใหม่
+     จะเห็นข้อมูลทั้งระบบทันที ถ้ายังเปิดให้สมัครอิสระ
+     ใครก็ยึดระบบได้ — ต้องสร้างจาก Apps Script editor เท่านั้น */
+  if (isOwnerSignup) {
     return {
       success: false,
       message:
-        "ลิงก์สมัครไม่ถูกต้อง กรุณาขอลิงก์จากเจ้าของหอ"
+        "ไม่สามารถสมัครเป็นเจ้าของหอผ่านหน้าเว็บได้ " +
+        "กรุณาติดต่อผู้ดูแลระบบ"
+    };
+  }
+
+  /* พนักงานต้องกรอกรหัสเชิญที่ตรงกับ Script Property
+     ชื่อ STAFF_SIGNUP_CODE — ทำหน้าที่แทนลิงก์ที่มี dormId
+     ของระบบเดิม ถ้าไม่ได้ตั้งค่าไว้ = ปิดรับสมัคร */
+  const expectedSignupCode = getOptionalProperty_(
+    "STAFF_SIGNUP_CODE"
+  );
+
+  if (!expectedSignupCode) {
+    return {
+      success: false,
+      message: "ระบบปิดรับสมัครพนักงานอยู่ในขณะนี้"
+    };
+  }
+
+  if (signupCode !== expectedSignupCode) {
+    return {
+      success: false,
+      message:
+        "รหัสเชิญไม่ถูกต้อง กรุณาขอลิงก์สมัครจากเจ้าของหอ"
     };
   }
 
@@ -951,28 +940,6 @@ function registerUser(request) {
       };
     }
 
-    let dormId = requestedDormId;
-
-    if (isOwnerSignup) {
-      dormId = Utilities.getUuid();
-
-      getDormsSheet_().appendRow([
-        dormId,
-        dormName,
-        fullName,
-        "",
-        "",
-        "ACTIVE",
-        new Date().toISOString()
-      ]);
-    } else if (!findDormName_(dormId)) {
-      return {
-        success: false,
-        message:
-          "ไม่พบหอที่ระบุ ลิงก์อาจไม่ถูกต้อง"
-      };
-    }
-
     const userId =
       Utilities.getUuid();
 
@@ -1011,18 +978,14 @@ function registerUser(request) {
     newRow[index.fullName] =
       fullName;
 
-    const finalRole =
-      isOwnerSignup ? "OWNER" : "USER";
+    // สมัครผ่านหน้าเว็บได้เฉพาะพนักงาน (ดูเงื่อนไขด้านบน)
+    const finalRole = "USER";
 
     newRow[index.role] =
       finalRole;
 
     newRow[index.active] =
       true;
-
-    if (index.dormId !== undefined) {
-      newRow[index.dormId] = dormId;
-    }
 
     sheet.appendRow(newRow);
 

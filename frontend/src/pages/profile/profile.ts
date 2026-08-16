@@ -230,9 +230,12 @@ function loadUserIntoForm(): void {
       : "status-badge status-unpaid";
   }
 
-  if (inviteLinkInput && user.dormId) {
+  /* ลิงก์เชิญพนักงาน — ต่อท้ายด้วยรหัสเชิญที่ตั้งไว้ใน
+     Script Property ชื่อ STAFF_SIGNUP_CODE (ไม่ส่งค่ารหัส
+     มาที่ฝั่งเว็บ เพื่อไม่ให้หลุดผ่าน sessionStorage) */
+  if (inviteLinkInput) {
     inviteLinkInput.value =
-      `${window.location.origin}/src/pages/register/register.html?dorm=${user.dormId}`;
+      `${window.location.origin}/src/pages/register/register.html?code=`;
   }
 }
 

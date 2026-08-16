@@ -61,10 +61,8 @@ const togglePasswordButton =
 
 /**
  * คืน URL ที่ผู้ใช้ต้องการเข้า หลัง Login สำเร็จ
- * ถ้าไม่มี redirect ระบุมา และเป็น SUPER_ADMIN
- * ให้ไปหน้า Admin แทนหน้า Home
  */
-function getRedirectUrl(role?: string): string {
+function getRedirectUrl(): string {
   const searchParams =
     new URLSearchParams(window.location.search);
 
@@ -79,11 +77,7 @@ function getRedirectUrl(role?: string): string {
   const explicitRedirect =
     queryRedirect ?? storedRedirect;
 
-  const defaultUrl =
-    String(role ?? "").trim().toUpperCase() ===
-    "SUPER_ADMIN"
-      ? "/src/pages/admin/admin.html"
-      : "/index.html";
+  const defaultUrl = "/index.html";
 
   const redirectUrl =
     explicitRedirect ?? defaultUrl;
@@ -340,9 +334,7 @@ form?.addEventListener(
         "success"
       );
 
-      const redirectUrl = getRedirectUrl(
-        result.user?.role
-      );
+      const redirectUrl = getRedirectUrl();
 
       await playLoginSuccessAnimation();
       window.location.replace(redirectUrl);
@@ -366,9 +358,7 @@ form?.addEventListener(
 
 function initializeLoginPage(): void {
   if (isLoggedIn()) {
-    window.location.replace(
-      getRedirectUrl(getCurrentUser()?.role)
-    );
+    window.location.replace(getRedirectUrl());
 
     return;
   }

@@ -39,9 +39,6 @@ function getRooms(request) {
         row[index.roomId] || ""
       ).trim() !== "";
     })
-    .filter(function (row) {
-      return rowInDormScope_(row, index, auth);
-    })
     .map(function (row) {
       return roomFromRow_(
         row,
@@ -75,10 +72,6 @@ function createRoom(request) {
     return auth;
   }
 
-  const dormId = String(
-    (auth.user && auth.user.dormId) || ""
-  );
-
   // ต้องใช้ request.room ไม่ใช่ room
   const input = validateRoomInput_(request.room);
 
@@ -93,10 +86,6 @@ function createRoom(request) {
     const duplicate = values
       .slice(1)
       .some(row => {
-        if (!sameDormRow_(row, index, auth)) {
-          return false;
-        }
-
         const existingRoomNo = String(
           row[index.roomNo] || ""
         )
@@ -139,8 +128,7 @@ sheet.appendRow([
   createdRoom.price,
   createdRoom.floor,
   createdRoom.createdAt,
-  createdRoom.updatedAt,
-  dormId
+  createdRoom.updatedAt
 ]);
 
 bumpDormCache_();
@@ -211,21 +199,10 @@ function updateRoom(request) {
       };
     }
 
-    if (!rowInDormScope_(values[targetRow - 1], index, auth)) {
-      return {
-        success: false,
-        message: "ไม่พบข้อมูลห้องพัก"
-      };
-    }
-
     // ตรวจสอบเลขห้องซ้ำ เฉพาะในหอเดียวกัน โดยไม่ตรวจแถวของตัวเอง
     const duplicate = values
       .slice(1)
       .some(row => {
-        if (!sameDormRow_(row, index, auth)) {
-          return false;
-        }
-
         const currentRoomId = String(
           row[index.roomId] || ""
         ).trim();
@@ -356,13 +333,6 @@ function deleteRoom(request) {
 
       if (currentRoomId !== roomId) {
         continue;
-      }
-
-      if (!rowInDormScope_(values[i], index, auth)) {
-        return {
-          success: false,
-          message: "ไม่พบข้อมูลห้องพัก"
-        };
       }
 
       sheet.deleteRow(i + 1);

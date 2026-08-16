@@ -6,39 +6,17 @@ import {
   registerUser
 } from "../../services/register.service";
 
-import type {
-  RegisterInput,
-  RegisterRole
-} from "../../types/register";
+import type { RegisterInput } from "../../types/register";
+
+/**
+ * ระบบหอเดียว: สมัครผ่านหน้านี้ได้เฉพาะ "พนักงาน" และต้องมา
+ * ด้วยลิงก์เชิญที่เจ้าของหอออกให้ (?code=...) เท่านั้น
+ * บัญชีเจ้าของหอสร้างจาก Apps Script editor เท่านั้น
+ */
 
 const form =
   document.querySelector<HTMLFormElement>(
     "#register-form"
-  );
-
-const ownerTab =
-  document.querySelector<HTMLButtonElement>(
-    "#role-owner-tab"
-  );
-
-const staffTab =
-  document.querySelector<HTMLButtonElement>(
-    "#role-staff-tab"
-  );
-
-const dormNameGroup =
-  document.querySelector<HTMLElement>(
-    "#dorm-name-group"
-  );
-
-const dormNameInput =
-  document.querySelector<HTMLInputElement>(
-    "#dorm-name"
-  );
-
-const dormInviteGroup =
-  document.querySelector<HTMLElement>(
-    "#dorm-invite-group"
   );
 
 const dormInviteNameElement =
@@ -76,8 +54,7 @@ const registerButton =
     "#register-button"
   );
 
-let currentRole: RegisterRole = "OWNER";
-let inviteDormId: string | null = null;
+let signupCode: string | null = null;
 
 function showMessage(
   text: string,
@@ -118,86 +95,42 @@ function setInviteStatus(
   );
 }
 
-function applyRoleView(): void {
-  ownerTab?.classList.toggle(
-    "is-active",
-    currentRole === "OWNER"
-  );
-
-  staffTab?.classList.toggle(
-    "is-active",
-    currentRole === "USER"
-  );
-
-  if (dormNameGroup) {
-    dormNameGroup.hidden =
-      currentRole !== "OWNER";
-  }
-
-  if (dormInviteGroup) {
-    dormInviteGroup.hidden =
-      currentRole !== "USER";
-  }
-
-  if (currentRole === "USER" && !inviteDormId) {
-    setInviteStatus(
-      "ต้องใช้ลิงก์เชิญจากเจ้าของหอ กรุณาขอลิงก์จากเจ้าของหอของคุณ",
-      true
-    );
-
-    if (registerButton) {
-      registerButton.disabled = true;
-    }
-  } else if (registerButton) {
-    registerButton.disabled = false;
+function setFormEnabled(enabled: boolean): void {
+  if (registerButton) {
+    registerButton.disabled = !enabled;
   }
 }
 
-async function resolveInviteDorm(
-  dormId: string
-): Promise<void> {
-  setInviteStatus("กำลังตรวจสอบลิงก์...", false);
+/**
+ * โชว์ชื่อหอให้ผู้สมัครเห็นว่ากำลังสมัครเข้าที่ไหน
+ * (ตัวรหัสเชิญตรวจจริงที่ฝั่ง backend ตอนกดสมัคร —
+ * ไม่ตรวจที่นี่ เพื่อไม่ให้กลายเป็นเครื่องมือเดารหัส)
+ */
+async function loadDormName(): Promise<void> {
+  setInviteStatus("กำลังโหลดข้อมูลหอ...", false);
 
   try {
-    const result = await getDormPublicInfo(dormId);
+    const result = await getDormPublicInfo();
 
     if (!result.success || !result.data) {
-      inviteDormId = null;
       setInviteStatus(
-        result.message || "ไม่พบหอที่ระบุ",
+        result.message || "ไม่พบข้อมูลหอ",
         true
       );
 
-      applyRoleView();
       return;
     }
 
-    inviteDormId = dormId;
     setInviteStatus(result.data.dormName, false);
-    applyRoleView();
   } catch (error) {
-    inviteDormId = null;
-
     setInviteStatus(
       error instanceof Error
         ? error.message
-        : "ไม่สามารถตรวจสอบลิงก์ได้",
+        : "ไม่สามารถโหลดข้อมูลหอได้",
       true
     );
-
-    applyRoleView();
   }
 }
-
-ownerTab?.addEventListener("click", () => {
-  currentRole = "OWNER";
-  applyRoleView();
-});
-
-staffTab?.addEventListener("click", () => {
-  currentRole = "USER";
-  applyRoleView();
-});
 
 function readForm(): RegisterInput | null {
   const fullName =
@@ -264,30 +197,7 @@ function readForm(): RegisterInput | null {
     return null;
   }
 
-  if (currentRole === "OWNER") {
-    const dormName =
-      dormNameInput?.value.trim() ?? "";
-
-    if (!dormName) {
-      showMessage(
-        "กรุณากรอกชื่อหอ",
-        "error"
-      );
-
-      dormNameInput?.focus();
-      return null;
-    }
-
-    return {
-      fullName,
-      username,
-      password,
-      role: "OWNER",
-      dormName
-    };
-  }
-
-  if (!inviteDormId) {
+  if (!signupCode) {
     showMessage(
       "ต้องใช้ลิงก์เชิญจากเจ้าของหอ กรุณาขอลิงก์จากเจ้าของหอของคุณ",
       "error"
@@ -301,7 +211,7 @@ function readForm(): RegisterInput | null {
     username,
     password,
     role: "USER",
-    dormId: inviteDormId
+    signupCode
   };
 }
 
@@ -369,17 +279,20 @@ function initializeRegisterPage(): void {
     window.location.search
   );
 
-  const dormParam = params.get("dorm");
+  signupCode = params.get("code");
 
-  if (dormParam) {
-    currentRole = "USER";
-    applyRoleView();
-    void resolveInviteDorm(dormParam);
+  if (!signupCode) {
+    setInviteStatus(
+      "ต้องใช้ลิงก์เชิญจากเจ้าของหอ กรุณาขอลิงก์จากเจ้าของหอของคุณ",
+      true
+    );
+
+    setFormEnabled(false);
     return;
   }
 
-  currentRole = "OWNER";
-  applyRoleView();
+  setFormEnabled(true);
+  void loadDormName();
 }
 
 initializeRegisterPage();

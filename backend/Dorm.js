@@ -1,250 +1,51 @@
-const DORMS_SHEET = "Dorms";
-
-const DORM_HEADERS = [
-  "dormId",
-  "dormName",
-  "ownerName",
-  "phone",
-  "address",
-  "status",
-  "createdAt",
-  "promptPayId"
-];
-
-/* หอเริ่มต้นที่ migrateAddDormId_() สร้างให้ข้อมูลเดิมก่อนมีระบบหลายหอ */
-const DEFAULT_DORM_ID = "DORM-DEFAULT";
-
-function getDormsSheet_() {
-  // ใช้ handle กลางจาก Performance.js
-  const spreadsheet = getSpreadsheet_();
-
-  let sheet = spreadsheet.getSheetByName(DORMS_SHEET);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(DORMS_SHEET);
-    sheet.appendRow(DORM_HEADERS);
-    return sheet;
-  }
-
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(DORM_HEADERS);
-    return sheet;
-  }
-
-  const actualHeaders = sheet
-    .getRange(1, 1, 1, DORM_HEADERS.length)
-    .getDisplayValues()[0]
-    .map(header => String(header).trim());
-
-  const headerIsCorrect = DORM_HEADERS.every(
-    (header, index) => actualHeaders[index] === header
-  );
-
-  if (!headerIsCorrect) {
-    throw new Error(
-      "หัวตารางชีต Dorms ไม่ถูกต้อง กรุณาเรียงเป็น: " +
-      DORM_HEADERS.join(" | ")
-    );
-  }
-
-  return sheet;
-}
-
-function getDormHeaderIndex_(headers) {
-  const index = {};
-
-  headers.forEach((header, position) => {
-    index[String(header).trim()] = position;
-  });
-
-  DORM_HEADERS.forEach(header => {
-    if (index[header] === undefined) {
-      throw new Error(
-        "ไม่พบคอลัมน์ " + header + " ในชีต Dorms"
-      );
-    }
-  });
-
-  return index;
-}
-
 /**
- * หาชื่อหอจาก dormId — คืนสตริงว่างถ้าไม่พบ/ไม่มี dormId
- * ใช้ทั้งใน login() (Auth.js), registerUser() (Auth.js),
- * และ getDormPublicInfo() ด้านล่าง
+ * Dorm.gs — ค่าตั้งของหอพัก (ระบบหอเดียว)
+ *
+ * เดิมระบบรองรับหลายหอ ค่าตั้งของแต่ละหอเก็บเป็นแถวในชีต "Dorms"
+ * และทุกชีตมีคอลัมน์ dormId กำกับว่าแถวนั้นเป็นของหอไหน
+ *
+ * ตอนนี้ระบบเป็นหอเดียว ค่าตั้งย้ายมาอยู่ใน Script Properties
+ * ไม่ต้องมีชีต Dorms และไม่ต้องมีคอลัมน์ dormId อีกต่อไป
+ *
+ * ตั้งค่าที่ Apps Script → Project Settings → Script Properties
  */
-function findDormName_(dormId) {
-  if (!dormId) {
-    return "";
-  }
 
-  const sheet = getDormsSheet_();
-  const values = sheet.getDataRange().getValues();
+const DORM_NAME_PROPERTY = "DORM_NAME";
+const PROMPTPAY_ID_PROPERTY = "PROMPTPAY_ID";
+const LINE_TOKEN_PROPERTY = "LINE_CHANNEL_ACCESS_TOKEN";
+const LINE_BOT_USER_ID_PROPERTY = "LINE_BOT_USER_ID";
 
-  if (values.length <= 1) {
-    return "";
-  }
-
-  const index = getDormHeaderIndex_(values[0]);
-
-  const row = values.slice(1).find(function (r) {
-    return (
-      String(r[index.dormId] || "").trim() === dormId
-    );
-  });
-
-  return row
-    ? String(row[index.dormName] || "").trim()
-    : "";
+/** ชื่อหอ — สตริงว่างถ้ายังไม่ได้ตั้ง */
+function getDormName_() {
+  return getOptionalProperty_(DORM_NAME_PROPERTY);
 }
 
-/**
- * หาเลขพร้อมเพย์ (เบอร์โทร/เลขบัตรประชาชน) ของหอจาก dormId
- * คืนสตริงว่างถ้าไม่พบ/ยังไม่ได้ตั้งค่า — ใช้ตอน login()
- * เพื่อฝังไว้ใน session ให้หน้าบิลสร้าง QR ได้โดยไม่ต้องยิง
- * request แยก
- */
-function findDormPromptPayId_(dormId) {
-  if (!dormId) {
-    return "";
-  }
-
-  const sheet = getDormsSheet_();
-  const values = sheet.getDataRange().getValues();
-
-  if (values.length <= 1) {
-    return "";
-  }
-
-  const index = getDormHeaderIndex_(values[0]);
-
-  const row = values.slice(1).find(function (r) {
-    return (
-      String(r[index.dormId] || "").trim() === dormId
-    );
-  });
-
-  return row
-    ? String(row[index.promptPayId] || "").trim()
-    : "";
+/** เลขพร้อมเพย์สำหรับสร้าง QR บนบิล */
+function getPromptPayId_() {
+  return getOptionalProperty_(PROMPTPAY_ID_PROPERTY);
 }
 
-/* =========================
-   LINE Official Account ต่อหอ (คอลัมน์ 9-10 บนชีต Dorms)
-   — เขียน/อ่านด้วยตำแหน่งคอลัมน์ตรงๆ ไม่ผ่าน DORM_HEADERS
-   เพื่อไม่ให้ getDormsSheet_() (ที่เช็คหัวตารางเข้มงวด และถูก
-   เรียกแทบทุก request) พังกับสเปรดชีตเก่าที่ยังไม่มี 2 คอลัมน์นี้
-========================= */
-
-const DORM_LINE_TOKEN_COLUMN = 9;
-const DORM_LINE_BOT_USER_ID_COLUMN = 10;
-
-/** คืน { token, botUserId } — สตริงว่างถ้ายังไม่ได้ตั้งค่า */
-function getDormLineCredentials_(dormId) {
-  if (!dormId) {
-    return { token: "", botUserId: "" };
-  }
-
-  const sheet = getDormsSheet_();
-  const values = sheet.getDataRange().getValues();
-
-  if (values.length <= 1) {
-    return { token: "", botUserId: "" };
-  }
-
-  const index = getDormHeaderIndex_(values[0]);
-
-  const row = values.slice(1).find(function (r) {
-    return (
-      String(r[index.dormId] || "").trim() === dormId
-    );
-  });
-
-  if (!row) {
-    return { token: "", botUserId: "" };
-  }
-
+/** คืน { token, botUserId } — สตริงว่างถ้ายังไม่ได้เชื่อม LINE */
+function getLineCredentials_() {
   return {
-    token: String(
-      row[DORM_LINE_TOKEN_COLUMN - 1] || ""
-    ).trim(),
-
-    botUserId: String(
-      row[DORM_LINE_BOT_USER_ID_COLUMN - 1] || ""
-    ).trim()
+    token: getOptionalProperty_(LINE_TOKEN_PROPERTY),
+    botUserId: getOptionalProperty_(
+      LINE_BOT_USER_ID_PROPERTY
+    )
   };
 }
 
-/** ย้อนจาก lineBotUserId (payload.destination ของ webhook)
- * กลับไปหา dormId — ใช้ตอน handleLineWebhook_() แยกว่า
- * ข้อความนี้เป็นของ LINE OA ของหอไหน */
-function findDormIdByLineBotUserId_(botUserId) {
-  if (!botUserId) {
-    return "";
-  }
-
-  const sheet = getDormsSheet_();
-  const values = sheet.getDataRange().getValues();
-
-  if (values.length <= 1) {
-    return "";
-  }
-
-  const index = getDormHeaderIndex_(values[0]);
-
-  const row = values.slice(1).find(function (r) {
-    return (
-      String(
-        r[DORM_LINE_BOT_USER_ID_COLUMN - 1] || ""
-      ).trim() === botUserId
-    );
-  });
-
-  return row
-    ? String(row[index.dormId] || "").trim()
-    : "";
-}
-
-function setDormLineCredentials_(targetRow, token, botUserId) {
-  const sheet = getDormsSheet_();
-
-  sheet
-    .getRange(targetRow, DORM_LINE_TOKEN_COLUMN, 1, 1)
-    .setValue(token);
-
-  sheet
-    .getRange(
-      targetRow,
-      DORM_LINE_BOT_USER_ID_COLUMN,
-      1,
-      1
-    )
-    .setValue(botUserId);
-}
-
 /**
- * ดูชื่อหอจาก dormId แบบสาธารณะ — ไม่ต้อง login
- * (เรียกจากหน้า register ก่อนสมัคร เพื่อโชว์ว่ากำลัง
- * สมัครเป็นพนักงานของหอไหน) คืนแค่ชื่อ ไม่มีข้อมูลอื่น
+ * ดูชื่อหอแบบสาธารณะ — ไม่ต้อง login
+ * (หน้า register เรียกเพื่อโชว์ว่ากำลังสมัครเข้าหอชื่ออะไร)
  */
 function getDormPublicInfo(request) {
-  const dormId = String(
-    request.dormId || ""
-  ).trim();
-
-  if (!dormId) {
-    return {
-      success: false,
-      message: "ไม่พบรหัสหอ"
-    };
-  }
-
-  const dormName = findDormName_(dormId);
+  const dormName = getDormName_();
 
   if (!dormName) {
     return {
       success: false,
-      message: "ไม่พบหอที่ระบุ"
+      message: "ยังไม่ได้ตั้งชื่อหอในระบบ"
     };
   }
 
@@ -256,7 +57,7 @@ function getDormPublicInfo(request) {
 }
 
 /**
- * ให้ OWNER แก้ไขชื่อหอของตัวเอง (แก้ได้เฉพาะหอตัวเอง)
+ * ให้ OWNER แก้ไขค่าตั้งของหอ (ชื่อหอ / พร้อมเพย์ / LINE OA)
  */
 function updateOwnDorm(request) {
   const auth = validateToken(request.token);
@@ -295,10 +96,7 @@ function updateOwnDorm(request) {
   // ไม่ส่ง token ดิบกลับไปให้ frontend เก็บไว้เลย (แสดงแค่สถานะ
   // เชื่อมต่อ) ดังนั้นถ้าช่องนี้ว่าง แปลว่า "ไม่ได้ตั้งใจแก้"
   // ไม่ใช่ "อยากล้างค่าเดิม" — คงค่า token/botUserId เดิมไว้
-  const existingLineCredentials =
-    getDormLineCredentials_(
-      String(auth.user.dormId || "").trim()
-    );
+  const existingLineCredentials = getLineCredentials_();
 
   const lineChannelAccessToken = String(
     request.lineChannelAccessToken || ""
@@ -342,56 +140,24 @@ function updateOwnDorm(request) {
     lineTokenToSave = lineChannelAccessToken;
   }
 
-  const dormId = String(
-    auth.user.dormId || ""
-  ).trim();
-
-  if (!dormId) {
-    return {
-      success: false,
-      message: "ไม่พบหอของบัญชีนี้"
-    };
-  }
-
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
 
   try {
-    const sheet = getDormsSheet_();
-    const values = sheet.getDataRange().getValues();
-    const index = getDormHeaderIndex_(values[0]);
+    setProperty_(DORM_NAME_PROPERTY, dormName);
 
-    let targetRow = -1;
+    setProperty_(
+      PROMPTPAY_ID_PROPERTY,
+      promptPayDigits
+    );
 
-    for (let i = 1; i < values.length; i++) {
-      const currentDormId = String(
-        values[i][index.dormId] || ""
-      ).trim();
+    setProperty_(
+      LINE_TOKEN_PROPERTY,
+      lineTokenToSave
+    );
 
-      if (currentDormId === dormId) {
-        targetRow = i + 1;
-        break;
-      }
-    }
-
-    if (targetRow === -1) {
-      return {
-        success: false,
-        message: "ไม่พบหอของบัญชีนี้"
-      };
-    }
-
-    sheet
-      .getRange(targetRow, index.dormName + 1, 1, 1)
-      .setValue(dormName);
-
-    sheet
-      .getRange(targetRow, index.promptPayId + 1, 1, 1)
-      .setValue(promptPayDigits);
-
-    setDormLineCredentials_(
-      targetRow,
-      lineTokenToSave,
+    setProperty_(
+      LINE_BOT_USER_ID_PROPERTY,
       lineBotUserId
     );
 
@@ -413,7 +179,7 @@ function updateOwnDorm(request) {
 
     return {
       success: true,
-      message: "แก้ไขชื่อหอสำเร็จ",
+      message: "บันทึกค่าตั้งของหอสำเร็จ",
       user: updatedUser
     };
   } finally {
@@ -421,870 +187,220 @@ function updateOwnDorm(request) {
   }
 }
 
-/**
- * สรุปสถิติของแต่ละหอ (จำนวนห้อง/อัตราเข้าพัก/ผู้เช่า/ยอดค้างชำระ)
- * ใช้เฉพาะ SUPER_ADMIN — เห็นได้ทุกหอ
- */
-function getDorms(request) {
-  const auth = validateToken(request.token);
+/* =========================================
+   ย้ายจากระบบหลายหอ → หอเดียว (รันครั้งเดียว)
+   -----------------------------------------
+   ลำดับที่ต้องทำ:
 
-  if (!auth.success) {
-    return auth;
+   1. สำรองสเปรดชีตก่อน (ไฟล์ → ทำสำเนา) — ขั้นตอนนี้
+      ลบข้อมูลถาวร กู้คืนจากในสคริปต์ไม่ได้
+   2. ตั้ง Script Property ชื่อ KEEP_DORM_ID เป็น dormId
+      ของหอที่จะเก็บไว้ (ดูรายชื่อด้วย listDormsForCleanup)
+   3. รัน importDormSettingsFromSheet() — คัดลอกชื่อหอ /
+      พร้อมเพย์ / LINE token ของหอนั้นมาเป็น Script Properties
+   4. deploy โค้ดใหม่ แล้วทดสอบว่าระบบใช้งานได้ครบ
+   5. รัน previewCollapseToSingleDorm() ดูว่าจะลบอะไรบ้าง
+   6. รัน collapseToSingleDorm() เมื่อมั่นใจแล้ว
+========================================= */
+
+const DORM_SCOPED_SHEETS = [
+  "Users",
+  "Rooms",
+  "Tenants",
+  "Meters",
+  "Bills",
+  "LineLinks"
+];
+
+/** พิมพ์รายชื่อหอทั้งหมดใน Log เพื่อเลือกว่าจะเก็บหอไหน */
+function listDormsForCleanup() {
+  const sheet =
+    getSpreadsheet_().getSheetByName("Dorms");
+
+  if (!sheet) {
+    Logger.log("ไม่พบชีต Dorms (อาจย้ายมาระบบหอเดียวแล้ว)");
+    return;
   }
 
-  const sheet = getDormsSheet_();
   const values = sheet.getDataRange().getValues();
 
   if (values.length <= 1) {
-    return {
-      success: true,
-      message: "โหลดข้อมูลสำเร็จ",
-      data: []
-    };
+    Logger.log("ชีต Dorms ว่าง");
+    return;
   }
 
-  const index = getDormHeaderIndex_(values[0]);
+  Logger.log("dormId | ชื่อหอ | เจ้าของ | มี LINE token");
 
-  const roomsData = readReportSheet_("Rooms");
-  const tenantsData = readReportSheet_("Tenants");
-  const billsData = readReportSheet_("Bills");
-
-  const rooms = getValidReportRows_(
-    roomsData,
-    "roomId",
-    auth
-  );
-
-  const tenants = getValidReportRows_(
-    tenantsData,
-    "tenantId",
-    auth
-  );
-
-  const bills = getValidReportRows_(
-    billsData,
-    "billId",
-    auth
-  );
-
-  const roomCountByDorm = {};
-
-  rooms.forEach(function (row) {
-    const dormId = reportText_(
-      row,
-      roomsData.index,
-      "dormId"
+  values.slice(1).forEach(function (row) {
+    Logger.log(
+      String(row[0] || "") + " | " +
+      String(row[1] || "") + " | " +
+      String(row[2] || "") + " | " +
+      (String(row[8] || "").trim() ? "มี" : "ไม่มี")
     );
-
-    roomCountByDorm[dormId] =
-      (roomCountByDorm[dormId] || 0) + 1;
   });
 
-  const occupiedRoomsByDorm = {};
-  const activeTenantsByDorm = {};
-
-  tenants.forEach(function (row) {
-    const status = reportText_(
-      row,
-      tenantsData.index,
-      "status"
-    ).toUpperCase();
-
-    if (status !== "ACTIVE") {
-      return;
-    }
-
-    const dormId = reportText_(
-      row,
-      tenantsData.index,
-      "dormId"
-    );
-
-    activeTenantsByDorm[dormId] =
-      (activeTenantsByDorm[dormId] || 0) + 1;
-
-    const roomId = reportText_(
-      row,
-      tenantsData.index,
-      "roomId"
-    );
-
-    if (!roomId) {
-      return;
-    }
-
-    if (!occupiedRoomsByDorm[dormId]) {
-      occupiedRoomsByDorm[dormId] = new Set();
-    }
-
-    occupiedRoomsByDorm[dormId].add(roomId);
-  });
-
-  const unpaidAmountByDorm = {};
-
-  bills.forEach(function (row) {
-    const paymentStatus = reportText_(
-      row,
-      billsData.index,
-      "paymentStatus"
-    ).toUpperCase();
-
-    if (paymentStatus === "PAID") {
-      return;
-    }
-
-    const dormId = reportText_(
-      row,
-      billsData.index,
-      "dormId"
-    );
-
-    const totalAmount = reportNumber_(
-      row,
-      billsData.index,
-      "totalAmount"
-    );
-
-    unpaidAmountByDorm[dormId] =
-      (unpaidAmountByDorm[dormId] || 0) + totalAmount;
-  });
-
-  const dorms = values
-    .slice(1)
-    .filter(function (row) {
-      return String(row[index.dormId] || "").trim() !== "";
-    })
-    .map(function (row) {
-      const dormId = String(row[index.dormId]).trim();
-      const roomCount = roomCountByDorm[dormId] || 0;
-
-      const occupiedCount = occupiedRoomsByDorm[dormId]
-        ? occupiedRoomsByDorm[dormId].size
-        : 0;
-
-      return {
-        dormId: dormId,
-
-        dormName: String(
-          row[index.dormName] || ""
-        ).trim(),
-
-        ownerName: String(
-          row[index.ownerName] || ""
-        ).trim(),
-
-        phone: String(
-          row[index.phone] || ""
-        ).trim(),
-
-        address: String(
-          row[index.address] || ""
-        ).trim(),
-
-        status: String(
-          row[index.status] || ""
-        ).trim(),
-
-        createdAt: formatSheetDate_(
-          row[index.createdAt]
-        ),
-
-        roomCount: roomCount,
-        occupiedCount: occupiedCount,
-
-        occupancyRate: roomCount > 0
-          ? Math.round(
-            (occupiedCount / roomCount) * 1000
-          ) / 10
-          : 0,
-
-        activeTenants:
-          activeTenantsByDorm[dormId] || 0,
-
-        unpaidAmount:
-          unpaidAmountByDorm[dormId] || 0
-      };
-    })
-    .sort(function (a, b) {
-      return b.createdAt.localeCompare(a.createdAt);
-    });
-
-  return {
-    success: true,
-    message: "โหลดข้อมูลสำเร็จ",
-    data: dorms
-  };
+  Logger.log(
+    "\nเลือก dormId ที่จะเก็บ แล้วตั้งเป็น Script Property " +
+    "ชื่อ KEEP_DORM_ID"
+  );
 }
 
 /**
- * รายละเอียดเต็มของหอเดียว (ห้อง/ผู้เช่า/พนักงาน+เจ้าของ/บิล)
- * ใช้เฉพาะ SUPER_ADMIN — กด "ดูรายละเอียด" จากหน้า Admin
+ * คัดลอกค่าตั้งของหอที่เลือก จากชีต Dorms มาเป็น Script Properties
+ * (ทำก่อน collapseToSingleDorm เพื่อไม่ต้องพิมพ์ LINE token เอง)
  */
-function getDormDetail(request) {
-  const auth = validateToken(request.token);
+function importDormSettingsFromSheet() {
+  const keepDormId = getRequiredProperty_("KEEP_DORM_ID");
 
-  if (!auth.success) {
-    return auth;
+  const sheet =
+    getSpreadsheet_().getSheetByName("Dorms");
+
+  if (!sheet) {
+    throw new Error("ไม่พบชีต Dorms");
   }
 
-  const dormId = String(
-    request.dormId || ""
-  ).trim();
+  const values = sheet.getDataRange().getValues();
 
-  if (!dormId) {
-    return {
-      success: false,
-      message: "ไม่พบรหัสหอ"
-    };
+  const row = values.slice(1).find(function (r) {
+    return String(r[0] || "").trim() === keepDormId;
+  });
+
+  if (!row) {
+    throw new Error(
+      "ไม่พบหอ " + keepDormId + " ในชีต Dorms"
+    );
   }
 
-  const dormsSheet = getDormsSheet_();
-  const dormValues = dormsSheet.getDataRange().getValues();
-  const dormIndex = getDormHeaderIndex_(dormValues[0]);
+  setProperty_(DORM_NAME_PROPERTY, row[1]);
+  setProperty_(PROMPTPAY_ID_PROPERTY, row[7]);
+  setProperty_(LINE_TOKEN_PROPERTY, row[8]);
+  setProperty_(LINE_BOT_USER_ID_PROPERTY, row[9]);
 
-  const dormRow = dormValues.slice(1).find(function (row) {
-    return (
-      String(row[dormIndex.dormId] || "").trim() ===
-      dormId
-    );
-  });
-
-  if (!dormRow) {
-    return {
-      success: false,
-      message: "ไม่พบหอที่ระบุ"
-    };
-  }
-
-  const dorm = {
-    dormId: dormId,
-    dormName: String(
-      dormRow[dormIndex.dormName] || ""
-    ).trim(),
-    ownerName: String(
-      dormRow[dormIndex.ownerName] || ""
-    ).trim(),
-    status: String(
-      dormRow[dormIndex.status] || ""
-    ).trim()
-  };
-
-  const roomsData = readReportSheet_("Rooms");
-  const tenantsData = readReportSheet_("Tenants");
-  const billsData = readReportSheet_("Bills");
-
-  const belongsToDorm = function (row, data) {
-    return (
-      reportText_(row, data.index, "dormId") === dormId
-    );
-  };
-
-  const roomRows = getValidReportRows_(
-    roomsData,
-    "roomId",
-    auth
-  ).filter(function (row) {
-    return belongsToDorm(row, roomsData);
-  });
-
-  const tenantRows = getValidReportRows_(
-    tenantsData,
-    "tenantId",
-    auth
-  ).filter(function (row) {
-    return belongsToDorm(row, tenantsData);
-  });
-
-  const billRows = getValidReportRows_(
-    billsData,
-    "billId",
-    auth
-  ).filter(function (row) {
-    return belongsToDorm(row, billsData);
-  });
-
-  const roomNoById = {};
-
-  roomRows.forEach(function (row) {
-    const roomId = reportText_(
-      row,
-      roomsData.index,
-      "roomId"
-    );
-
-    roomNoById[roomId] = reportText_(
-      row,
-      roomsData.index,
-      "roomNo"
-    );
-  });
-
-  const occupiedRoomIds = {};
-
-  tenantRows.forEach(function (row) {
-    const status = reportText_(
-      row,
-      tenantsData.index,
-      "status"
-    ).toUpperCase();
-
-    if (status !== "ACTIVE") {
-      return;
-    }
-
-    const roomId = reportText_(
-      row,
-      tenantsData.index,
-      "roomId"
-    );
-
-    if (roomId) {
-      occupiedRoomIds[roomId] = true;
-    }
-  });
-
-  const rooms = roomRows
-    .map(function (row) {
-      const roomId = reportText_(
-        row,
-        roomsData.index,
-        "roomId"
-      );
-
-      return {
-        roomNo: reportText_(
-          row,
-          roomsData.index,
-          "roomNo"
-        ),
-        roomType: reportText_(
-          row,
-          roomsData.index,
-          "roomType"
-        ),
-        price: reportNumber_(
-          row,
-          roomsData.index,
-          "price"
-        ),
-        floor: reportNumber_(
-          row,
-          roomsData.index,
-          "floor"
-        ),
-        status: occupiedRoomIds[roomId]
-          ? "ไม่ว่าง"
-          : "ว่าง"
-      };
-    })
-    .sort(function (a, b) {
-      return a.floor - b.floor;
-    });
-
-  const tenants = tenantRows.map(function (row) {
-    const roomId = reportText_(
-      row,
-      tenantsData.index,
-      "roomId"
-    );
-
-    return {
-      fullName: reportText_(
-        row,
-        tenantsData.index,
-        "fullName"
-      ),
-      roomNo: roomNoById[roomId] || "",
-      status: reportText_(
-        row,
-        tenantsData.index,
-        "status"
-      ),
-      checkInDate: reportText_(
-        row,
-        tenantsData.index,
-        "checkInDate"
-      )
-    };
-  });
-
-  const bills = billRows
-    .map(function (row) {
-      return {
-        billNo: reportText_(
-          row,
-          billsData.index,
-          "billNo"
-        ),
-        roomNo: reportText_(
-          row,
-          billsData.index,
-          "roomNo"
-        ),
-        tenantName: reportText_(
-          row,
-          billsData.index,
-          "tenantName"
-        ),
-        billingMonth: reportText_(
-          row,
-          billsData.index,
-          "billingMonth"
-        ),
-        totalAmount: reportNumber_(
-          row,
-          billsData.index,
-          "totalAmount"
-        ),
-        paymentStatus: reportText_(
-          row,
-          billsData.index,
-          "paymentStatus"
-        ),
-        dueDate: reportText_(
-          row,
-          billsData.index,
-          "dueDate"
-        )
-      };
-    })
-    .sort(function (a, b) {
-      return b.billingMonth.localeCompare(
-        a.billingMonth
-      );
-    });
-
-  const usersSheet = getUsersSheet_();
-  const userValues = usersSheet.getDataRange().getValues();
-  const userIndex = createHeaderIndex(userValues[0]);
-
-  const staff = userValues
-    .slice(1)
-    .filter(function (row) {
-      return (
-        String(row[userIndex.userId] || "").trim() !==
-        ""
-      );
-    })
-    .filter(function (row) {
-      if (userIndex.dormId === undefined) {
-        return false;
-      }
-
-      return (
-        String(row[userIndex.dormId] || "").trim() ===
-        dormId
-      );
-    })
-    .map(function (row) {
-      const activeValue = row[userIndex.active];
-
-      const active =
-        activeValue === true ||
-        String(activeValue).trim().toLowerCase() ===
-          "true" ||
-        String(activeValue).trim() === "1";
-
-      return {
-        fullName: String(
-          row[userIndex.fullName] || ""
-        ),
-        username: String(
-          row[userIndex.username] || ""
-        ),
-        role: String(
-          row[userIndex.role] || ""
-        ).trim().toUpperCase(),
-        active: active
-      };
-    });
-
-  return {
-    success: true,
-    message: "โหลดข้อมูลสำเร็จ",
-    data: {
-      dorm: dorm,
-      rooms: rooms,
-      tenants: tenants,
-      staff: staff,
-      bills: bills
-    }
-  };
-}
-
-/**
- * สรุปภาพรวมทั้งแพลตฟอร์ม (ทุกหอรวมกัน) — ใช้เฉพาะ SUPER_ADMIN
- */
-function getPlatformSummary(request) {
-  const auth = validateToken(request.token);
-
-  if (!auth.success) {
-    return auth;
-  }
-
-  const dormsResult = getDorms(request);
-
-  if (!dormsResult.success) {
-    return dormsResult;
-  }
-
-  const dorms = dormsResult.data || [];
-
-  const currentMonth = Utilities.formatDate(
-    new Date(),
-    Session.getScriptTimeZone(),
-    "yyyy-MM"
+  Logger.log(
+    "คัดลอกค่าตั้งของหอ \"" + String(row[1] || "") +
+    "\" มาเป็น Script Properties แล้ว"
   );
 
-  const summary = {
-    totalDorms: dorms.length,
-
-    activeDorms: dorms.filter(function (dorm) {
-      return dorm.status.toUpperCase() === "ACTIVE";
-    }).length,
-
-    totalRooms: dorms.reduce(function (sum, dorm) {
-      return sum + dorm.roomCount;
-    }, 0),
-
-    totalTenants: dorms.reduce(function (sum, dorm) {
-      return sum + dorm.activeTenants;
-    }, 0),
-
-    totalUnpaidAmount: dorms.reduce(function (sum, dorm) {
-      return sum + dorm.unpaidAmount;
-    }, 0),
-
-    newDormsThisMonth: dorms.filter(function (dorm) {
-      return dorm.createdAt.slice(0, 7) === currentMonth;
-    }).length
-  };
-
-  return {
-    success: true,
-    message: "โหลดข้อมูลสำเร็จ",
-    data: summary
-  };
-}
-
-/**
- * สร้างหอใหม่ + บัญชี OWNER คนแรกของหอนั้นในคราวเดียว
- * ใช้เฉพาะ SUPER_ADMIN
- */
-function createDorm(request) {
-  const auth = validateToken(request.token);
-
-  if (!auth.success) {
-    return auth;
-  }
-
-  const input = request.dorm || {};
-
-  const dormName = String(
-    input.dormName || ""
-  ).trim();
-
-  const ownerName = String(
-    input.ownerName || ""
-  ).trim();
-
-  const phone = String(input.phone || "").trim();
-  const address = String(input.address || "").trim();
-
-  const ownerUsername = String(
-    input.ownerUsername || ""
-  )
-    .trim()
-    .toLowerCase();
-
-  const ownerPassword = String(
-    input.ownerPassword || ""
+  Logger.log(
+    "พร้อมเพย์: " +
+    (String(row[7] || "").trim() || "(ยังไม่ได้ตั้ง)")
   );
 
-  if (!dormName) {
-    return {
-      success: false,
-      message: "กรุณากรอกชื่อหอ"
-    };
-  }
-
-  if (!ownerName) {
-    return {
-      success: false,
-      message: "กรุณากรอกชื่อเจ้าของหอ"
-    };
-  }
-
-  if (ownerUsername.length < 4) {
-    return {
-      success: false,
-      message: "ชื่อผู้ใช้ต้องมีอย่างน้อย 4 ตัวอักษร"
-    };
-  }
-
-  if (!/^[a-z0-9._-]+$/.test(ownerUsername)) {
-    return {
-      success: false,
-      message:
-        "ชื่อผู้ใช้ใช้ได้เฉพาะภาษาอังกฤษ ตัวเลข จุด ขีดกลาง และขีดล่าง"
-    };
-  }
-
-  if (ownerPassword.length < 8) {
-    return {
-      success: false,
-      message: "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร"
-    };
-  }
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-
-  try {
-    const usersSheet = getUsersSheet_();
-    const userValues = usersSheet.getDataRange().getValues();
-    const userIndex = createHeaderIndex(userValues[0]);
-
-    const duplicateUsername = userValues
-      .slice(1)
-      .some(function (row) {
-        return (
-          String(row[userIndex.username] || "")
-            .trim()
-            .toLowerCase() === ownerUsername
-        );
-      });
-
-    if (duplicateUsername) {
-      return {
-        success: false,
-        message: "ชื่อผู้ใช้นี้มีอยู่ในระบบแล้ว"
-      };
-    }
-
-    const dormId = Utilities.getUuid();
-    const now = new Date().toISOString();
-
-    const dormsSheet = getDormsSheet_();
-
-    dormsSheet.appendRow([
-      dormId,
-      dormName,
-      ownerName,
-      phone,
-      address,
-      "ACTIVE",
-      now
-    ]);
-
-    const userId = Utilities.getUuid();
-    const salt = Utilities.getUuid().replace(/-/g, "");
-    const passwordHash = hashPassword(ownerPassword, salt);
-
-    usersSheet.appendRow([
-      userId,
-      ownerUsername,
-      passwordHash,
-      salt,
-      ownerName,
-      "OWNER",
-      true,
-      dormId
-    ]);
-
-    bumpDormCache_();
-
-    return {
-      success: true,
-      message: "เพิ่มหอใหม่สำเร็จ",
-      data: {
-        dormId: dormId,
-        dormName: dormName,
-        ownerUsername: ownerUsername
-      }
-    };
-  } finally {
-    lock.releaseLock();
-  }
+  Logger.log(
+    "LINE token: " +
+    (String(row[8] || "").trim() ? "มี" : "(ยังไม่ได้ตั้ง)")
+  );
 }
 
-/**
- * รันครั้งเดียวจาก Apps Script editor (ไม่เปิดผ่าน doPost)
- * เพิ่มคอลัมน์ dormId ต่อท้ายชีต Users/Rooms/Tenants/Meters/Bills
- * แล้วเติมค่า DEFAULT_DORM_ID ให้ทุกแถวเดิม + สร้างชีต Dorms
- * พร้อม 1 แถวสำหรับหอเดิมที่มีอยู่ก่อนระบบหลายหอ
- *
- * ใช้ตำแหน่งคอลัมน์คงที่ (ไม่ใช้ getLastColumn()) เพื่อไม่ให้
- * การรันสลับลำดับกับ deploy โค้ดใหม่ทำให้คอลัมน์เพี้ยน
- */
-function migrateAddDormId_() {
-  const targets = [
-    { sheetName: "Users", headerLength: 7 },
-    { sheetName: "Rooms", headerLength: 8 },
-    { sheetName: "Tenants", headerLength: 12 },
-    { sheetName: "Meters", headerLength: 18 },
-    { sheetName: "Bills", headerLength: 21 }
-  ];
+/** ดูว่า collapseToSingleDorm() จะลบอะไรบ้าง โดยยังไม่ลบจริง */
+function previewCollapseToSingleDorm() {
+  collapseToSingleDorm_(true);
+}
+
+/** ลบข้อมูลของหออื่นและคอลัมน์ dormId ออกจริง — ย้อนกลับไม่ได้ */
+function collapseToSingleDorm() {
+  collapseToSingleDorm_(false);
+}
+
+function collapseToSingleDorm_(isDryRun) {
+  const keepDormId = getRequiredProperty_("KEEP_DORM_ID");
+
+  Logger.log(
+    (isDryRun ? "[ทดลอง] " : "[ลบจริง] ") +
+    "เก็บเฉพาะหอ " + keepDormId
+  );
 
   const spreadsheet = getSpreadsheet_();
 
-  targets.forEach(function (target) {
-    const sheet = spreadsheet.getSheetByName(target.sheetName);
+  DORM_SCOPED_SHEETS.forEach(function (sheetName) {
+    const sheet = spreadsheet.getSheetByName(sheetName);
 
     if (!sheet) {
-      Logger.log("ข้าม (ไม่พบชีต): " + target.sheetName);
+      Logger.log(sheetName + ": ไม่พบชีต — ข้าม");
       return;
     }
 
-    const dormIdColumn = target.headerLength + 1;
+    const values = sheet.getDataRange().getValues();
 
-    const headerCell = sheet.getRange(1, dormIdColumn);
-
-    if (
-      String(headerCell.getValue() || "").trim() !== "dormId"
-    ) {
-      headerCell.setValue("dormId");
-    }
-
-    const lastRow = sheet.getLastRow();
-
-    if (lastRow < 2) {
+    if (values.length <= 1) {
+      Logger.log(sheetName + ": ว่าง — ข้าม");
       return;
     }
 
-    const dataRange = sheet.getRange(
-      2,
-      dormIdColumn,
-      lastRow - 1,
-      1
-    );
+    const dormIdColumn = values[0].indexOf("dormId");
 
-    const currentValues = dataRange.getValues();
+    if (dormIdColumn === -1) {
+      Logger.log(
+        sheetName + ": ไม่มีคอลัมน์ dormId แล้ว — ข้าม"
+      );
 
-    const filledValues = currentValues.map(function (row) {
-      const current = String(row[0] || "").trim();
-      return [current === "" ? DEFAULT_DORM_ID : current];
-    });
+      return;
+    }
 
-    dataRange.setValues(filledValues);
+    let deleted = 0;
+    let blank = 0;
+
+    // ไล่จากล่างขึ้นบน เพื่อให้เลขแถวที่ยังไม่ได้ลบไม่เลื่อน
+    for (let i = values.length - 1; i >= 1; i--) {
+      const rowDormId = String(
+        values[i][dormIdColumn] || ""
+      ).trim();
+
+      // แถวที่ไม่มี dormId (เช่น superadmin) ไม่แตะ —
+      // ปล่อยให้เจ้าของระบบตัดสินใจเองทีหลัง
+      if (!rowDormId) {
+        blank++;
+        continue;
+      }
+
+      if (rowDormId === keepDormId) {
+        continue;
+      }
+
+      if (!isDryRun) {
+        sheet.deleteRow(i + 1);
+      }
+
+      deleted++;
+    }
+
+    if (!isDryRun) {
+      sheet.deleteColumn(dormIdColumn + 1);
+    }
 
     Logger.log(
-      "อัปเดต dormId คอลัมน์ " + dormIdColumn +
-      " ของชีต " + target.sheetName +
-      " (" + filledValues.length + " แถว)"
+      sheetName + ": " +
+      (isDryRun ? "จะลบ " : "ลบแล้ว ") + deleted + " แถว" +
+      (blank
+        ? " (ข้าม " + blank + " แถวที่ไม่มี dormId)"
+        : "") +
+      (isDryRun ? " และจะลบคอลัมน์ dormId" : "")
     );
   });
 
-  const dormsSheet = getDormsSheet_();
-  const dormValues = dormsSheet.getDataRange().getValues();
+  const dormsSheet = spreadsheet.getSheetByName("Dorms");
 
-  const defaultDormExists = dormValues
-    .slice(1)
-    .some(function (row) {
-      return String(row[0] || "").trim() === DEFAULT_DORM_ID;
-    });
-
-  if (!defaultDormExists) {
-    dormsSheet.appendRow([
-      DEFAULT_DORM_ID,
-      "หอพักหลัก",
-      "",
-      "",
-      "",
-      "ACTIVE",
-      new Date().toISOString()
-    ]);
-
-    Logger.log("สร้างหอเริ่มต้น (" + DEFAULT_DORM_ID + ") สำเร็จ");
-  } else {
-    Logger.log("มีหอเริ่มต้นอยู่แล้ว");
-  }
-
-  Logger.log("migrateAddDormId_() เสร็จสมบูรณ์");
-}
-
-/**
- * รันครั้งเดียวจาก Apps Script editor (ไม่เปิดผ่าน doPost)
- * เพิ่มคอลัมน์ phone / avatarUrl / avatarFileId ต่อท้ายชีต Users
- * (dormId อยู่คอลัมน์ 8 จาก migrateAddDormId_() แล้ว จึงเริ่มที่ 9)
- *
- * ใช้ตำแหน่งคอลัมน์คงที่เหมือน migrateAddDormId_() —
- * ไม่ต้องเติมค่า default เพราะปล่อยว่างไว้ได้ตามปกติ
- */
-function migrateAddProfileFields_() {
-  const sheet = getSpreadsheet_().getSheetByName("Users");
-
-  if (!sheet) {
-    Logger.log("ข้าม (ไม่พบชีต): Users");
-    return;
-  }
-
-  const columns = [
-    { name: "phone", index: 9 },
-    { name: "avatarUrl", index: 10 },
-    { name: "avatarFileId", index: 11 }
-  ];
-
-  columns.forEach(function (column) {
-    const headerCell = sheet.getRange(1, column.index);
-
-    if (
-      String(headerCell.getValue() || "").trim() !== column.name
-    ) {
-      headerCell.setValue(column.name);
+  if (dormsSheet) {
+    if (!isDryRun) {
+      spreadsheet.deleteSheet(dormsSheet);
     }
-  });
 
-  Logger.log("migrateAddProfileFields_() เสร็จสมบูรณ์");
-}
-
-/**
- * รันครั้งเดียวจาก Apps Script editor (ไม่เปิดผ่าน doPost)
- * เพิ่มคอลัมน์ promptPayId ต่อท้ายชีต Dorms (คอลัมน์ที่ 8
- * ต่อจาก createdAt) — ไม่ต้องเติมค่า default เพราะปล่อยว่าง
- * ไว้ได้ตามปกติ (แปลว่าหอนั้นยังไม่ได้ตั้งค่าพร้อมเพย์)
- */
-function migrateAddPromptPayField_() {
-  const sheet = getSpreadsheet_().getSheetByName("Dorms");
-
-  if (!sheet) {
-    Logger.log("ข้าม (ไม่พบชีต): Dorms");
-    return;
+    Logger.log(
+      isDryRun
+        ? "Dorms: จะลบทั้งชีต"
+        : "Dorms: ลบทั้งชีตแล้ว"
+    );
   }
 
-  const headerCell = sheet.getRange(1, 8);
-
-  if (
-    String(headerCell.getValue() || "").trim() !== "promptPayId"
-  ) {
-    headerCell.setValue("promptPayId");
+  if (!isDryRun) {
+    bumpDormCache_();
   }
-
-  Logger.log("migrateAddPromptPayField_() เสร็จสมบูรณ์");
-}
-
-/**
- * รันครั้งเดียวจาก Apps Script editor — ตัวนี้ตั้งชื่อ
- * แบบไม่มี "_" ต่อท้าย เพื่อให้โผล่ใน dropdown "เรียกใช้"
- * (ฟังก์ชันที่ลงท้ายด้วย _ จะถูกซ่อนจาก dropdown อัตโนมัติ)
- *
- * รวม 4 ขั้นตอน setup ที่ต้องทำครั้งเดียวไว้ในปุ่มเดียว:
- * เพิ่มคอลัมน์ dormId, เพิ่มคอลัมน์ phone/avatarUrl/avatarFileId,
- * เพิ่มคอลัมน์ promptPayId, และสร้างบัญชี superadmin
- */
-function runOneTimeSetup() {
-  // ต้องรันก่อน migrateAddDormId_() เสมอ — migrateAddDormId_()
-  // เรียก getDormsSheet_() ซึ่งจะเช็คว่าหัวตารางครบ 8 คอลัมน์
-  // (รวม promptPayId) ถ้าสลับลำดับ ชีต Dorms ที่มีอยู่แล้ว
-  // (หัวตารางเก่ามีแค่ 7 คอลัมน์) จะ throw ก่อนได้เพิ่มคอลัมน์ที่ 8
-  migrateAddPromptPayField_();
-  migrateAddDormId_();
-  migrateAddProfileFields_();
-  createInitialSuperAdmin();
 
   Logger.log(
-    "runOneTimeSetup() เสร็จสมบูรณ์ทั้งหมด — " +
-    "login ด้วย superadmin และรหัสผ่านที่ตั้งไว้ใน " +
-    "Script Property INITIAL_SUPERADMIN_PASSWORD ได้แล้ว"
+    isDryRun
+      ? "\nนี่คือการทดลองเท่านั้น ยังไม่มีอะไรถูกลบ " +
+        "ถ้าถูกต้องแล้วให้รัน collapseToSingleDorm()"
+      : "\nย้ายมาระบบหอเดียวเรียบร้อย"
   );
 }

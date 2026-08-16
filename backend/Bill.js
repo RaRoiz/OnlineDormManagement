@@ -61,9 +61,6 @@ function getBills(request) {
         row[index.billId] || ""
       ).trim();
     })
-    .filter(function (row) {
-      return rowInDormScope_(row, index, auth);
-    })
     .map(function (row) {
       const bill = billFromRow_(
         row,
@@ -118,10 +115,6 @@ function createBill(request) {
   if (!auth.success) {
     return auth;
   }
-
-  const dormId = String(
-    (auth.user && auth.user.dormId) || ""
-  );
 
   const input =
     validateBillInput_(
@@ -278,8 +271,7 @@ function createBill(request) {
       createdBill.paidAt,
       createdBill.note,
       createdBill.createdAt,
-      createdBill.updatedAt,
-      dormId
+      createdBill.updatedAt
     ]);
 
 bumpDormCache_();
@@ -359,14 +351,6 @@ function updateBill(request) {
     }
 
     if (targetRow === -1) {
-      return {
-        success: false,
-        message:
-          "ไม่พบข้อมูลใบแจ้งหนี้"
-      };
-    }
-
-    if (!rowInDormScope_(values[targetRow - 1], index, auth)) {
       return {
         success: false,
         message:
@@ -615,14 +599,6 @@ function markBillPaid(request) {
         continue;
       }
 
-      if (!rowInDormScope_(row, index, auth)) {
-        return {
-          success: false,
-          message:
-            "ไม่พบข้อมูลใบแจ้งหนี้"
-        };
-      }
-
       const currentStatus =
         String(
           row[
@@ -688,19 +664,7 @@ function markBillPaid(request) {
           confirmedBill.tenantId
         );
 
-        /* ใช้ LINE token ของหอที่บิลใบนี้สังกัด ไม่ใช่ของคนกดยืนยัน —
-           ตั้งแต่เลิกแยกข้อมูลตามหอ คนหอหนึ่งเปิดบิลของอีกหอได้
-           ถ้าใช้ token ของคนกด จะ push ไปหา userId ของอีก channel
-           ซึ่ง LINE ปฏิเสธเสมอ */
-        const billDormId =
-          index.dormId === undefined
-            ? ""
-            : String(row[index.dormId] || "").trim();
-
-        const lineToken = getDormLineCredentials_(
-          billDormId ||
-            String((auth.user && auth.user.dormId) || "")
-        ).token;
+        const lineToken = getLineCredentials_().token;
 
         if (lineUserId && lineToken) {
           pushLineMessage_(lineToken, lineUserId, [{
@@ -788,14 +752,6 @@ function deleteBill(request) {
         ).trim() !== billId
       ) {
         continue;
-      }
-
-      if (!rowInDormScope_(row, index, auth)) {
-        return {
-          success: false,
-          message:
-            "ไม่พบข้อมูลใบแจ้งหนี้"
-        };
       }
 
       const paymentStatus =

@@ -1301,11 +1301,7 @@ function getValidReportRows_(
         return false;
       }
 
-      return rowInDormScope_(
-        row,
-        data.index,
-        auth
-      );
+      return true;
     }
   );
 }

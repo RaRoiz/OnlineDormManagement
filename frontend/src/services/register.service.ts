@@ -18,13 +18,12 @@ export function registerUser(
   });
 }
 
-export function getDormPublicInfo(
-  dormId: string
-): Promise<ApiResponse<DormPublicInfo>> {
+export function getDormPublicInfo(): Promise<
+  ApiResponse<DormPublicInfo>
+> {
   return apiRequest<
     ApiResponse<DormPublicInfo>
   >({
-    action: "getDormPublicInfo",
-    dormId
+    action: "getDormPublicInfo"
   });
 }

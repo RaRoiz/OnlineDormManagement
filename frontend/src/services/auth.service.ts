@@ -5,7 +5,6 @@ export interface User {
   username: string;
   fullName: string;
   role: string;
-  dormId?: string;
   dormName?: string;
   promptPayId?: string;
   lineBotUserId?: string;
@@ -93,16 +92,6 @@ export function isOwner(): boolean {
   );
 }
 
-export function isSuperAdmin(): boolean {
-  const user = getCurrentUser();
-
-  return (
-    String(user?.role ?? "")
-      .trim()
-      .toUpperCase() === "SUPER_ADMIN"
-  );
-}
-
 /**
  * ชื่อบทบาทที่ใช้แสดงผลบนหน้าจอ
  * (ค่าในระบบยังเก็บเป็น USER เหมือนเดิม)
@@ -116,10 +105,6 @@ export function roleLabel(
 
   if (value === "USER") {
     return "STAFF";
-  }
-
-  if (value === "SUPER_ADMIN") {
-    return "ผู้ดูแลระบบ";
   }
 
   return value || "-";

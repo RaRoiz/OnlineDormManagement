@@ -1,7 +1,6 @@
 import {
   isLoggedIn,
-  isOwner,
-  isSuperAdmin
+  isOwner
 } from "../services/auth.service";
 
 /**
@@ -16,7 +15,6 @@ interface SidebarItem {
   label: string;
   accent?: string;
   ownerOnly?: boolean;
-  superAdminOnly?: boolean;
 }
 
 const MENU_ITEMS: SidebarItem[] = [
@@ -62,14 +60,6 @@ const MENU_ITEMS: SidebarItem[] = [
     label: "Dashboard / Report",
     accent: "#ec4899",
     ownerOnly: true
-  },
-
-  {
-    href: "/src/pages/admin/admin.html",
-    icon: "🏢",
-    label: "Admin (ทุกหอ)",
-    accent: "#8b5cf6",
-    superAdminOnly: true
   }
 ];
 
@@ -199,23 +189,8 @@ export function renderSidebar(): void {
   const hideOwnerMenu =
     isLoggedIn() && !isOwner();
 
-  // SUPER_ADMIN ไม่ผูกกับหอไหนเป็นพิเศษ —
-  // เห็นเฉพาะเมนู Admin ไม่เห็นเมนูจัดการห้อง/ผู้เช่าของหอทั่วไป
-  const superAdminUser =
-    isLoggedIn() && isSuperAdmin();
-
   MENU_ITEMS.forEach(item => {
     if (item.ownerOnly && hideOwnerMenu) {
-      return;
-    }
-
-    if (item.superAdminOnly && !superAdminUser) {
-      return;
-    }
-
-    // SUPER_ADMIN เห็นเฉพาะเมนูที่ทำเครื่องหมาย
-    // superAdminOnly ไว้ — ไม่เห็น "หน้าหลัก" ด้วย
-    if (superAdminUser && !item.superAdminOnly) {
       return;
     }
 

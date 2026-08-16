@@ -7,7 +7,6 @@ import {
   getCurrentUser,
   isLoggedIn,
   isOwner,
-  isSuperAdmin,
   logout,
   roleLabel
 } from "../../services/auth.service";
@@ -521,17 +520,9 @@ heroLoginButton?.addEventListener(
   }
 );
 
-// SUPER_ADMIN ไม่มีหอของตัวเอง — หน้านี้ไม่มีประโยชน์
-// สำหรับ SUPER_ADMIN เลย ให้เด้งไปหน้า Admin แทนเสมอ
-if (isLoggedIn() && isSuperAdmin()) {
-  window.location.replace(
-    "/src/pages/admin/admin.html"
-  );
-} else {
-  renderSidebar();
-  updateHome();
+renderSidebar();
+updateHome();
 
-  if (isLoggedIn()) {
-    void loadDashboard();
-  }
+if (isLoggedIn()) {
+  void loadDashboard();
 }
