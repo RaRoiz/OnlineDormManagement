@@ -25,7 +25,7 @@ let dormSpreadsheet_ = null;
 function getSpreadsheet_() {
   if (!dormSpreadsheet_) {
     dormSpreadsheet_ =
-      SpreadsheetApp.openById(SPREADSHEET_ID);
+      SpreadsheetApp.openById(getSpreadsheetId_());
   }
 
   return dormSpreadsheet_;

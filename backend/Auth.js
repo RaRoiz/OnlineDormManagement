@@ -45,8 +45,20 @@ function setProperty_(name, value) {
   }
 }
 
-const SPREADSHEET_ID =
-  getRequiredProperty_("SPREADSHEET_ID");
+/**
+ * ID ของสเปรดชีต — อ่าน "ตอนใช้งาน" ไม่ใช่ตอนโหลดสคริปต์
+ *
+ * ถ้าอ่านเป็น const ระดับบนสุด แล้วยังไม่ได้ตั้งค่า Property
+ * สคริปต์จะ throw ตั้งแต่ก่อนเข้า doPost ทำให้ Apps Script
+ * ตอบกลับเป็นหน้า HTML error ซึ่งไม่มี CORS header
+ * หน้าเว็บจึงเห็นแค่ "Failed to fetch" โดยไม่รู้สาเหตุ
+ *
+ * พออ่านตอนรัน error จะเกิดข้างใน doPost ซึ่งมี try/catch
+ * ครอบอยู่แล้ว ผู้ใช้เลยได้ข้อความบอกสาเหตุจริงเป็น JSON
+ */
+function getSpreadsheetId_() {
+  return getRequiredProperty_("SPREADSHEET_ID");
+}
 
 const USERS_SHEET = "Users";
 const SESSION_SECONDS = 21600; // 6 ชั่วโมง
@@ -660,8 +672,8 @@ function createHeaderIndex(headers) {
 }
 
 function createInitialAdmin() {
-  const spreadsheet =
-    SpreadsheetApp.openById(SPREADSHEET_ID);
+  // ใช้ handle กลางจาก Performance.js
+  const spreadsheet = getSpreadsheet_();
 
   let sheet =
     spreadsheet.getSheetByName(USERS_SHEET);

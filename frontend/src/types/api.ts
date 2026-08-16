@@ -10,15 +10,28 @@ interface ApiRequest {
 export async function apiRequest<T>(
   data: ApiRequest
 ): Promise<T> {
+  let response: Response;
+
   // ห้าม log request/response — มี password และ token ปนอยู่
-  const response = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
-    body: JSON.stringify(data),
-    redirect: "follow"
-  });
+  try {
+    response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(data),
+      redirect: "follow"
+    });
+  } catch {
+    /* fetch โยน TypeError ("Failed to fetch") เมื่อ request
+       ไปไม่ถึงเลย — เน็ตหลุด, ยังไม่ได้ deploy, หรือฝั่ง
+       Apps Script ล้มก่อนถึง doPost จนตอบเป็นหน้า HTML error
+       ที่ไม่มี CORS header */
+    throw new Error(
+      "ติดต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ต " +
+        "หรือแจ้งผู้ดูแลระบบให้ตรวจการตั้งค่า Apps Script"
+    );
+  }
 
   const responseText = await response.text();
 
