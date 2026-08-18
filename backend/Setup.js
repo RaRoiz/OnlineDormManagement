@@ -126,3 +126,314 @@ function showScriptProperties() {
     );
   }
 }
+
+/* เลขห้องที่จะใช้ตรวจใน diagnoseBillLine() — แก้ตรงนี้แล้วกด Run */
+const DIAGNOSE_ROOM_NO = "203";
+
+/**
+ * ไล่ตรวจการจับคู่ "บิล -> ผู้เช่า -> LINE" ของห้องหนึ่ง
+ *
+ * ใช้ตอนลงทะเบียน LINE สำเร็จแล้ว แต่กดส่งบิลไม่ออก
+ * แก้ค่า DIAGNOSE_ROOM_NO ด้านบนให้เป็นเลขห้องที่ต้องการ
+ * แล้วเลือกฟังก์ชัน diagnoseBillLine ใน editor กด Run
+ */
+function diagnoseBillLine() {
+  const roomNo = String(DIAGNOSE_ROOM_NO).trim();
+
+  Logger.log("=== ตรวจการส่งบิลทาง LINE ห้อง " + roomNo + " ===\n");
+
+  /* 1) ห้อง -> roomId */
+  const roomMap = getRoomMap_();
+  let roomId = "";
+
+  roomMap.forEach(function (no, id) {
+    if (String(no).trim() === roomNo) {
+      roomId = id;
+    }
+  });
+
+  if (!roomId) {
+    Logger.log("x ไม่พบห้องเลข " + roomNo + " ในชีต Rooms");
+    return;
+  }
+
+  Logger.log("1. ห้อง " + roomNo + " -> roomId " + roomId);
+
+  /* 2) ผู้เช่า ACTIVE ของห้องนี้ */
+  const tenantSheet = getTenantsSheet_();
+  const tenantValues = tenantSheet.getDataRange().getValues();
+  const tenantIndex = getTenantHeaderIndex_(tenantValues[0]);
+
+  let tenant = null;
+
+  for (let i = 1; i < tenantValues.length; i++) {
+    const row = tenantValues[i];
+
+    const sameRoom =
+      String(row[tenantIndex.roomId] || "").trim() === roomId;
+
+    const isActive =
+      String(row[tenantIndex.status] || "")
+        .trim()
+        .toUpperCase() === "ACTIVE";
+
+    if (sameRoom && isActive) {
+      tenant = {
+        tenantId: String(
+          row[tenantIndex.tenantId] || ""
+        ).trim(),
+
+        fullName: String(
+          row[tenantIndex.fullName] || ""
+        ).trim()
+      };
+
+      break;
+    }
+  }
+
+  if (!tenant) {
+    Logger.log(
+      "x ห้องนี้ไม่มีผู้เช่าสถานะ ACTIVE — ส่งบิลไม่ได้"
+    );
+
+    return;
+  }
+
+  Logger.log(
+    "2. ผู้เช่า \"" + tenant.fullName + "\"" +
+    " -> tenantId [" + tenant.tenantId + "]"
+  );
+
+  /* 3) การลงทะเบียน LINE */
+  const linkSheet = getLineLinksSheet_();
+  const linkValues = linkSheet.getDataRange().getValues();
+
+  let linkedTenantId = "";
+  let lineUserId = "";
+
+  for (let i = 1; i < linkValues.length; i++) {
+    if (
+      String(linkValues[i][3] || "").trim() === roomNo ||
+      String(linkValues[i][1] || "").trim() === tenant.tenantId
+    ) {
+      linkedTenantId = String(linkValues[i][1] || "").trim();
+      lineUserId = String(linkValues[i][0] || "").trim();
+      break;
+    }
+  }
+
+  if (!lineUserId) {
+    Logger.log(
+      "x ไม่พบการลงทะเบียน LINE ของห้องนี้ในชีต LineLinks\n" +
+      "  -> ให้ผู้เช่าแอด OA แล้วพิมพ์ " + roomNo + " อีกครั้ง"
+    );
+
+    return;
+  }
+
+  Logger.log(
+    "3. LineLinks -> tenantId [" + linkedTenantId + "]" +
+    " lineUserId ****" + lineUserId.slice(-6)
+  );
+
+  if (linkedTenantId !== tenant.tenantId) {
+    Logger.log(
+      "\n!! tenantId ใน LineLinks ไม่ตรงกับผู้เช่าปัจจุบัน\n" +
+      "   -> ให้ผู้เช่าพิมพ์เลขห้องใหม่อีกครั้งเพื่ออัปเดต"
+    );
+  }
+
+  /* 4) บิลของผู้เช่าคนนี้ */
+  const billSheet = getBillsSheet_();
+  const billValues = billSheet.getDataRange().getValues();
+  const billIndex = getBillHeaderIndex_(billValues[0]);
+
+  let roomBills = 0;
+  let matched = 0;
+
+  Logger.log("\n4. บิลของห้อง " + roomNo + ":");
+
+  for (let i = 1; i < billValues.length; i++) {
+    const row = billValues[i];
+
+    if (String(row[billIndex.roomNo] || "").trim() !== roomNo) {
+      continue;
+    }
+
+    roomBills++;
+
+    const billTenantId = String(
+      row[billIndex.tenantId] || ""
+    ).trim();
+
+    const ok = billTenantId === tenant.tenantId;
+
+    if (ok) {
+      matched++;
+    }
+
+    Logger.log(
+      "   " + (ok ? "ok  " : "x   ") +
+      "บิล " + String(row[billIndex.billNo] || "") +
+      " (" + String(row[billIndex.billingMonth] || "") + ")" +
+      " สถานะ " + String(row[billIndex.paymentStatus] || "") +
+      " tenantId [" + billTenantId + "]"
+    );
+  }
+
+  if (roomBills === 0) {
+    Logger.log("   (ยังไม่มีบิลของห้องนี้)");
+    return;
+  }
+
+  Logger.log("");
+
+  if (matched === 0) {
+    Logger.log(
+      "x ไม่มีบิลใบไหนที่ tenantId ตรงกับผู้เช่าปัจจุบันเลย\n" +
+      "  นี่คือสาเหตุที่กดส่ง LINE แล้วขึ้นว่า " +
+      "\"ยังไม่ได้ลงทะเบียน LINE\"\n\n" +
+      "  เกิดจากตอนสร้างบิล ระบบคัดลอก tenantId มาจาก" +
+      "รายการมิเตอร์ (Bill.gs) ถ้ามิเตอร์ถูกบันทึกตอนที่" +
+      "ห้องยังไม่มีผู้เช่า หรือเป็นผู้เช่าคนก่อน ค่าจะไม่ตรง\n\n" +
+      "  วิธีแก้: แก้คอลัมน์ tenantId ของบิลในชีต Bills " +
+      "ให้เป็น [" + tenant.tenantId + "]\n" +
+      "  หรือลบบิลแล้วสร้างใหม่จากมิเตอร์รอบใหม่"
+    );
+
+    return;
+  }
+
+  Logger.log(
+    "ok มีบิลที่จับคู่ได้ " + matched + " / " + roomBills + " ใบ\n" +
+    "  ใบที่ขึ้น ok ส่ง LINE ได้ ใบที่ขึ้น x จะส่งไม่ได้"
+  );
+}
+
+/**
+ * ตรวจการตั้งค่า LINE ทั้งเส้นทาง — ใช้ตอนกด "ส่ง LINE" แล้วเงียบ
+ *
+ * เลือกฟังก์ชัน diagnoseLine ใน editor แล้วกด Run
+ * จะบอกว่าติดตรงไหน: token, การเชื่อมต่อ LINE, หรือยังไม่มี
+ * ผู้เช่าคนไหนลงทะเบียนเลย
+ */
+function diagnoseLine() {
+  Logger.log("=== ตรวจการตั้งค่า LINE ===\n");
+
+  /* 1) token อยู่ใน Script Properties หรือยัง */
+  const credentials = getLineCredentials_();
+
+  if (!credentials.token) {
+    Logger.log(
+      "x ยังไม่ได้ตั้ง LINE_CHANNEL_ACCESS_TOKEN\n" +
+      "  -> กดส่ง LINE จะขึ้นว่า \"ยังไม่ได้เชื่อมต่อ LINE " +
+      "Official Account\"\n" +
+      "  -> และ webhook จะไม่ทำงาน ผู้เช่าลงทะเบียนไม่ได้"
+    );
+
+    return;
+  }
+
+  Logger.log(
+    "ok มี token แล้ว (****" +
+    credentials.token.slice(-4) + ")"
+  );
+
+  Logger.log(
+    credentials.botUserId
+      ? "ok มี LINE_BOT_USER_ID แล้ว"
+      : "!  ยังไม่มี LINE_BOT_USER_ID — ระบบยังทำงานได้ " +
+        "แต่จะข้ามการตรวจว่า webhook มาจาก OA ของเราจริง\n" +
+        "  -> แก้ได้โดยกรอก token ใหม่ที่หน้าโปรไฟล์ " +
+        "(ระบบจะดึงค่านี้มาให้เอง)"
+  );
+
+  /* 2) token ใช้ได้จริงไหม — ถามตรงกับ LINE */
+  const response = UrlFetchApp.fetch(
+    "https://api.line.me/v2/bot/info",
+    {
+      headers: {
+        Authorization: "Bearer " + credentials.token
+      },
+      muteHttpExceptions: true
+    }
+  );
+
+  if (response.getResponseCode() >= 300) {
+    Logger.log(
+      "\nx LINE ปฏิเสธ token นี้ (HTTP " +
+      response.getResponseCode() + ")\n" +
+      "  " + response.getContentText() + "\n" +
+      "  -> token หมดอายุหรือถูก revoke ให้ออกใหม่ใน " +
+      "LINE Developers แล้วกรอกที่หน้าโปรไฟล์"
+    );
+
+    return;
+  }
+
+  const botInfo = JSON.parse(response.getContentText());
+
+  Logger.log(
+    "\nok LINE ยอมรับ token — OA ชื่อ \"" +
+    String(botInfo.displayName || "") + "\""
+  );
+
+  if (
+    credentials.botUserId &&
+    credentials.botUserId !== String(botInfo.userId || "")
+  ) {
+    Logger.log(
+      "x LINE_BOT_USER_ID ไม่ตรงกับ OA ของ token นี้!\n" +
+      "  ที่เก็บไว้: " + credentials.botUserId + "\n" +
+      "  ที่ถูกต้อง: " + String(botInfo.userId || "") + "\n" +
+      "  -> webhook ทั้งหมดจะถูกปฏิเสธ ผู้เช่าลงทะเบียนไม่ได้\n" +
+      "  -> แก้โดยกรอก token ใหม่ที่หน้าโปรไฟล์"
+    );
+  }
+
+  /* 3) มีผู้เช่าลงทะเบียน LINE ไว้กี่คน */
+  const sheet = getSpreadsheet_()
+    .getSheetByName("LineLinks");
+
+  if (!sheet) {
+    Logger.log(
+      "\nx ยังไม่มีชีต LineLinks — แปลว่ายังไม่เคยมีใคร" +
+      "ลงทะเบียนสำเร็จเลยสักคน\n" +
+      "  -> ให้ผู้เช่าแอด OA แล้วพิมพ์เลขห้อง (เช่น 101)\n" +
+      "  -> ถ้าพิมพ์แล้วบอทไม่ตอบ = webhook ยังไม่ทำงาน " +
+      "ให้เช็ค Webhook URL ใน LINE Developers"
+    );
+
+    return;
+  }
+
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length <= 1) {
+    Logger.log(
+      "\nx ชีต LineLinks ว่าง — ยังไม่มีผู้เช่าลงทะเบียน\n" +
+      "  -> กดส่ง LINE จะขึ้นว่า \"ผู้เช่า ... ยังไม่ได้ลงทะเบียน LINE\""
+    );
+
+    return;
+  }
+
+  Logger.log(
+    "\nok มีผู้เช่าลงทะเบียนแล้ว " +
+    (values.length - 1) + " คน:"
+  );
+
+  values.slice(1).forEach(function (row) {
+    Logger.log(
+      "   " + String(row[2] || "(ไม่มีชื่อ)") +
+      " ห้อง " + String(row[3] || "-")
+    );
+  });
+
+  Logger.log(
+    "\nถ้ากดส่งบิลให้คนที่อยู่ในรายชื่อนี้แล้วยังไม่ได้รับ " +
+    "ให้ดูรายละเอียดข้อผิดพลาดที่เมนู \"การดำเนินการ\" " +
+    "(Executions) ของ Apps Script"
+  );
+}

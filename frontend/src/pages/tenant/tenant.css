@@ -1,9 +1,26 @@
 @import "../../styles/theme.css";
 
-/* Tenant table is wide — let it scroll comfortably */
+/* ตารางผู้เช่ามี 5 คอลัมน์ (ชื่อ / เบอร์โทร / ห้อง / สถานะ / จัดการ)
+   ค่า min-width เดิมคือ 1240px ซึ่งเหลือมาจากตอนที่ตารางมีคอลัมน์
+   เยอะกว่านี้มาก ทำให้เกิด scroll แนวนอนบนจอปกติจนปุ่มจัดการ
+   โดนตัดขอบขวา — 760px พอสำหรับ 5 คอลัมน์ และไม่ทำให้เกิด scroll
+   บนจอตั้งแต่แท็บเล็ตขึ้นไป (ยังเหลือ overflow-x: auto ของ
+   .table-wrapper ไว้เป็นตัวสำรองสำหรับจอมือถือแคบๆ) */
 
 .tenant-page table {
-  min-width: 1240px;
+  min-width: 820px;
+}
+
+/* คอลัมน์จัดการต้องไม่ตัดบรรทัด ปุ่มจะได้ไม่หลุดขอบ */
+.tenant-page .action-column {
+  white-space: nowrap;
+}
+
+/* ชื่อผู้เช่ายาวได้ ให้ตัดบรรทัดแทนการดันตารางให้กว้าง */
+.tenant-page td:first-child {
+  min-width: 180px;
+  white-space: normal;
+  word-break: break-word;
 }
 
 /* role USER ไม่เห็นเลขประจำตัวผู้เช่า
