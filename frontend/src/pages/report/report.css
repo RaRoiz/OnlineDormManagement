@@ -157,28 +157,6 @@
    Report section
 ========================= */
 
-.report-section {
-  padding: 26px;
-
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-
-  box-shadow: var(--shadow);
-}
-
-.section-heading {
-  margin-bottom: 22px;
-}
-
-.section-heading h3 {
-  margin: 4px 0 0;
-
-  color: var(--ink);
-  font-size: 22px;
-  font-weight: 600;
-}
-
 .report-toolbar {
   display: grid;
   grid-template-columns: 1.1fr 1fr 1fr 1fr 1.5fr;

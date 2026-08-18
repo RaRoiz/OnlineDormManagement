@@ -12,26 +12,40 @@ import { attachDropdown } from "./dropdown";
 
 const RETURN_URL_KEY = "dorm_return_url";
 
+/**
+ * พาไปหน้า login พร้อมจำหน้าที่ตั้งใจจะเข้าไว้
+ * เพื่อเด้งกลับมาให้หลังล็อกอินสำเร็จ (login.ts เป็นคนอ่านค่านี้)
+ */
+export function redirectToLogin(
+  targetPath: string,
+  replace = true
+): void {
+  sessionStorage.setItem(
+    RETURN_URL_KEY,
+    targetPath
+  );
+
+  const loginUrl =
+    `/login.html?redirect=${encodeURIComponent(
+      targetPath
+    )}`;
+
+  if (replace) {
+    window.location.replace(loginUrl);
+  } else {
+    window.location.href = loginUrl;
+  }
+}
+
 export function requireLogin(): boolean {
   if (isLoggedIn()) {
     return true;
   }
 
-  const currentPath =
+  redirectToLogin(
     window.location.pathname +
-    window.location.search;
-
-  sessionStorage.setItem(
-    RETURN_URL_KEY,
-    currentPath
+    window.location.search
   );
-
-  const loginUrl =
-    `/login.html?redirect=${encodeURIComponent(
-      currentPath
-    )}`;
-
-  window.location.replace(loginUrl);
 
   return false;
 }

@@ -34,6 +34,7 @@ import type {
 
 import type { Room } from "../../types/room";
 import type { Tenant } from "../../types/tenant";
+import { escapeHtml } from "../../utils/html";
 
 const PAGE_SIZE = 10;
 
@@ -178,12 +179,6 @@ let tenants: Tenant[] = [];
 
 let editingMeterId: string | null = null;
 let currentPage = 1;
-
-function escapeHtml(value: string): string {
-  const element = document.createElement("div");
-  element.textContent = value;
-  return element.innerHTML;
-}
 
 function numberValue(
   input: HTMLInputElement | null

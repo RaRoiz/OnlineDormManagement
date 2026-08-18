@@ -1,34 +1,13 @@
 @import "../../styles/theme.css";
 
-.users-page table {
-  min-width: 820px;
-}
-
-.search-group {
-  max-width: 360px;
-  margin-bottom: 18px;
-}
-
+/* หน้านี้มีการ์ดหลายใบเรียงกัน — ต้องมีระยะห่าง
+   (ที่เหลือใช้ .report-section ตัวกลางใน theme.css) */
 .report-section {
   margin-bottom: 24px;
-  padding: 26px;
-
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-
-  box-shadow: var(--shadow);
 }
 
-.section-heading {
-  margin-bottom: 22px;
-}
-
-.section-heading h3 {
-  margin: 4px 0 0;
-
-  color: var(--ink);
-  font-size: 22px;
+.users-page table {
+  min-width: 820px;
 }
 
 .create-user-grid {

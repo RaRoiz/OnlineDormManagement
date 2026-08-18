@@ -1,23 +1,11 @@
 import { apiRequest } from "../types/api";
-import { getToken } from "./auth.service";
+import { requireToken } from "./auth.service";
 
 import type {
   ApiResponse,
   MeterInput,
   MeterRecord
 } from "../types/meter";
-
-function requireToken(): string {
-  const token = getToken();
-
-  if (!token) {
-    throw new Error(
-      "ไม่พบข้อมูลการเข้าสู่ระบบ"
-    );
-  }
-
-  return token;
-}
 
 export function getMeters(): Promise<
   ApiResponse<MeterRecord[]>

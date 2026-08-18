@@ -1,5 +1,5 @@
 import { apiRequest } from "../types/api";
-import { getToken } from "./auth.service";
+import { requireToken } from "./auth.service";
 
 import type {
   ApiResponse,
@@ -7,18 +7,6 @@ import type {
   ReportData,
   ReportFilter
 } from "../types/report";
-
-function requireToken(): string {
-  const token = getToken();
-
-  if (!token) {
-    throw new Error(
-      "ไม่พบข้อมูลการเข้าสู่ระบบ"
-    );
-  }
-
-  return token;
-}
 
 export function getDashboardSummary(
   billingMonth: string

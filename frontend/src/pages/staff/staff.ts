@@ -19,6 +19,7 @@ import {
 } from "../../utils/pagination";
 
 import type { StaffMember } from "../../types/staff";
+import { escapeHtml } from "../../utils/html";
 
 const PAGE_SIZE = 10;
 
@@ -49,12 +50,6 @@ const pageMessage =
   document.querySelector<HTMLElement>(
     "#page-message"
   );
-
-function escapeHtml(value: string): string {
-  const element = document.createElement("div");
-  element.textContent = value;
-  return element.innerHTML;
-}
 
 function showMessage(
   message: string,

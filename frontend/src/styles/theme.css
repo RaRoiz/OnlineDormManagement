@@ -497,6 +497,68 @@ h4 {
 }
 
 /* =========================
+   การ์ดหัวข้อที่ใช้ร่วมกันหลายหน้า
+
+   เดิมประกาศซ้ำอยู่ในไฟล์ css ของแต่ละหน้า (report / staff /
+   profile / admin) และเริ่มเพี้ยนกันเอง เช่นหน้า admin ลืมใส่
+   font-weight ทำให้หัวข้อหนากว่าหน้าอื่น ย้ายมาไว้ที่เดียว
+   ส่วนที่ต่างจริงๆ ยังคงเขียนทับได้จากไฟล์ของหน้านั้น
+========================= */
+
+.report-section {
+  padding: 26px;
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+
+  box-shadow: var(--shadow);
+}
+
+.section-heading {
+  margin-bottom: 22px;
+}
+
+.section-heading h3 {
+  margin: 4px 0 0;
+
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.search-group {
+  max-width: 360px;
+  margin-bottom: 18px;
+}
+
+/* แถบสรุปยอดรวมท้ายฟอร์ม — ใช้เหมือนกันทั้งหน้าบิลและหน้ามิเตอร์ */
+.total-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  margin-top: 24px;
+  padding: 20px 24px;
+
+  color: var(--banner-fg);
+  background: var(--banner-bg);
+  border-radius: var(--r);
+}
+
+.total-preview span {
+  font-weight: 500;
+}
+
+.total-preview strong {
+  color: var(--banner-accent);
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+}
+
+/* =========================
    Page container + title
 ========================= */
 

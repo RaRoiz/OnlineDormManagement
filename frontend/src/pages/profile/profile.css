@@ -4,31 +4,14 @@
    Section card (reuse admin/report pattern)
 ========================= */
 
+/* หน้านี้มีการ์ดหลายใบเรียงกัน — ต้องมีระยะห่าง ยกเว้นใบสุดท้าย
+   (ที่เหลือใช้ .report-section ตัวกลางใน theme.css) */
 .report-section {
-  padding: 26px;
   margin-bottom: 24px;
-
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-
-  box-shadow: var(--shadow);
 }
 
 .report-section:last-child {
   margin-bottom: 0;
-}
-
-.section-heading {
-  margin-bottom: 22px;
-}
-
-.section-heading h3 {
-  margin: 4px 0 0;
-
-  color: var(--ink);
-  font-size: 22px;
-  font-weight: 600;
 }
 
 .filter-actions {

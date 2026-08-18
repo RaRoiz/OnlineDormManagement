@@ -36,6 +36,7 @@ import type {
 import type {
   Room
 } from "../../types/room";
+import { escapeHtml } from "../../utils/html";
 
 const formPanel = document.querySelector<HTMLElement>("#tenant-form-panel");
 
@@ -82,12 +83,6 @@ let rooms: Room[] = [];
 
 let editingTenantId: string | null = null;
 const expandedFloors = new Set<number | string>();
-
-function escapeHtml(value: string): string {
-  const element = document.createElement("div");
-  element.textContent = value;
-  return element.innerHTML;
-}
 
 function formatDateTime(value: string): string {
   if (!value) {

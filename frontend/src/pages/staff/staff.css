@@ -4,33 +4,6 @@
   min-width: 700px;
 }
 
-.search-group {
-  max-width: 360px;
-  margin-bottom: 18px;
-}
-
-.report-section {
-  padding: 26px;
-
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-
-  box-shadow: var(--shadow);
-}
-
-.section-heading {
-  margin-bottom: 22px;
-}
-
-.section-heading h3 {
-  margin: 4px 0 0;
-
-  color: var(--ink);
-  font-size: 22px;
-  font-weight: 600;
-}
-
 @media (max-width: 720px) {
   .report-section {
     padding: 20px 16px;

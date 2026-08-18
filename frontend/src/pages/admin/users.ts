@@ -34,6 +34,7 @@ import type {
   ManagedRole,
   ManagedUser
 } from "../../types/admin";
+import { escapeHtml } from "../../utils/html";
 
 const PAGE_SIZE = 10;
 
@@ -94,12 +95,6 @@ const roleSelect =
   document.querySelector<HTMLSelectElement>(
     "#new-role"
   );
-
-function escapeHtml(value: string): string {
-  const element = document.createElement("div");
-  element.textContent = value;
-  return element.innerHTML;
-}
 
 function showMessage(
   message: string,

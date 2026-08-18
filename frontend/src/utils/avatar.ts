@@ -13,8 +13,13 @@ export function renderAvatar(
 
   if (user?.avatarUrl) {
     container.classList.add("has-photo");
+
+    /* JSON.stringify ครอบเครื่องหมายคำพูดและ escape ให้ครบในตัว
+       url() ที่ไม่ครอบคำพูดจะพังถ้า URL มีวงเล็บหรือช่องว่าง
+       และเปิดช่องให้แทรก CSS อื่นต่อท้ายได้ */
     container.style.backgroundImage =
-      `url(${user.avatarUrl})`;
+      `url(${JSON.stringify(user.avatarUrl)})`;
+
     container.textContent = "";
   } else {
     container.classList.remove("has-photo");

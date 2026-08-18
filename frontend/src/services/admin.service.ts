@@ -1,23 +1,11 @@
 import { apiRequest } from "../types/api";
-import { getToken } from "./auth.service";
+import { requireToken } from "./auth.service";
 
 import type {
   ApiResponse,
   CreateUserInput,
   ManagedUser
 } from "../types/admin";
-
-function requireToken(): string {
-  const token = getToken();
-
-  if (!token) {
-    throw new Error(
-      "ไม่พบข้อมูลการเข้าสู่ระบบ"
-    );
-  }
-
-  return token;
-}
 
 export function getUsers(): Promise<
   ApiResponse<ManagedUser[]>

@@ -2,6 +2,19 @@ export const API_URL =
   "https://script.google.com/macros/s/AKfycbzFmXKql5ctO9TDkW7XFRGwr72CFFUOjbBM3tVPe-KYFyw50A98GDYnc325ZFLpYeMG3Q/exec";
 
 
+/**
+ * รูปแบบผลลัพธ์มาตรฐานของทุก action ที่ backend ตอบกลับ
+ *
+ * เดิมประกาศซ้ำเหมือนกันเป๊ะในไฟล์ types ทุกไฟล์ (8 ที่)
+ * ย้ายมาไว้ที่เดียว แล้วให้ไฟล์อื่น re-export ต่อ
+ * เพื่อไม่ให้ import path ของหน้าเพจต้องเปลี่ยน
+ */
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data?: T;
+}
+
 interface ApiRequest {
   action: string;
   [key: string]: unknown;

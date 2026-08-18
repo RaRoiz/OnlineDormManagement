@@ -38,6 +38,7 @@ import type {
 import type {
   Room
 } from "../../types/room";
+import { escapeHtml } from "../../utils/html";
 
 const PAGE_SIZE = 10;
 
@@ -113,15 +114,6 @@ function currentMonth(): string {
       date.getMonth() + 1
     ).padStart(2, "0")
   ].join("-");
-}
-
-function escapeHtml(value: string): string {
-  const element =
-    document.createElement("div");
-
-  element.textContent = value;
-
-  return element.innerHTML;
 }
 
 function formatMoney(value: number): string {

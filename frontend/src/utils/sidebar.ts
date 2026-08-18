@@ -4,6 +4,8 @@ import {
   isSuperAdmin
 } from "../services/auth.service";
 
+import { redirectToLogin } from "./auth.guard";
+
 /**
  * เมนูหลักฝั่งซ้าย (จอเล็กเป็นแถบล่าง)
  * ใช้ร่วมกันทุกหน้า — เรียก renderSidebar()
@@ -144,15 +146,7 @@ function createLink(
     // แล้วเด้งกลับมาหน้าที่ตั้งใจจะเข้า
     event.preventDefault();
 
-    sessionStorage.setItem(
-      "dorm_return_url",
-      item.href
-    );
-
-    window.location.href =
-      `/login.html?redirect=${encodeURIComponent(
-        item.href
-      )}`;
+    redirectToLogin(item.href, false);
   });
 
   return link;

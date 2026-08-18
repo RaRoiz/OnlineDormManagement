@@ -137,6 +137,24 @@ export function getToken(): string | null {
   return sessionStorage.getItem(TOKEN_KEY);
 }
 
+/**
+ * โทเค็นของผู้ใช้ที่ล็อกอินอยู่ — โยน error ถ้ายังไม่ได้ล็อกอิน
+ *
+ * เดิมฟังก์ชันนี้ถูกก็อปซ้ำไว้ในทุกไฟล์ service ย้ายมาไว้ที่เดียว
+ * เพื่อให้ข้อความและพฤติกรรมตรงกันทั้งระบบ
+ */
+export function requireToken(): string {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error(
+      "ไม่พบข้อมูลการเข้าสู่ระบบ"
+    );
+  }
+
+  return token;
+}
+
 export interface ProfileResponse {
   success: boolean;
   message: string;
@@ -150,7 +168,7 @@ export async function updateOwnProfile(
   const result =
     await apiRequest<ProfileResponse>({
       action: "updateOwnProfile",
-      token: getToken(),
+      token: requireToken(),
       fullName,
       phone
     });
@@ -173,7 +191,7 @@ export async function changeOwnPassword(
 ): Promise<ChangePasswordResponse> {
   return apiRequest<ChangePasswordResponse>({
     action: "changeOwnPassword",
-    token: getToken(),
+    token: requireToken(),
     currentPassword,
     newPassword
   });
@@ -187,7 +205,7 @@ export async function uploadAvatar(
   const result =
     await apiRequest<ProfileResponse>({
       action: "uploadAvatar",
-      token: getToken(),
+      token: requireToken(),
       fileName,
       mimeType,
       base64Data
@@ -207,7 +225,7 @@ export async function updateOwnDorm(
   const result =
     await apiRequest<ProfileResponse>({
       action: "updateOwnDorm",
-      token: getToken(),
+      token: requireToken(),
       promptPayId,
       lineChannelAccessToken
     });

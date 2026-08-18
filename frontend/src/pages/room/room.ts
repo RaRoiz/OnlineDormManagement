@@ -16,6 +16,7 @@ import { showToast } from "../../utils/toast";
 
 import type {Room,RoomInput,} from "../../types/room";
 import type { Tenant } from "../../types/tenant";
+import { escapeHtml } from "../../utils/html";
 
 const formPanel = document.querySelector<HTMLElement>("#room-form-panel");
 
@@ -86,12 +87,6 @@ function formatMoney(value: number): string {
     currency: "THB",
     minimumFractionDigits: 0
   }).format(value);
-}
-
-function escapeHtml(value: string): string {
-  const element = document.createElement("div");
-  element.textContent = value;
-  return element.innerHTML;
 }
 
 function showPageMessage(

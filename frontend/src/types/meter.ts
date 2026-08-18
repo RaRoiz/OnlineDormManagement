@@ -40,8 +40,6 @@ export interface MeterInput {
   electricRate: number;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data?: T;
-}
+/* ใช้ ApiResponse ตัวกลางจาก api.ts — re-export ไว้เพื่อให้
+   โค้ดเดิมที่ import จากไฟล์นี้ยังทำงานได้เหมือนเดิม */
+export type { ApiResponse } from "./api";

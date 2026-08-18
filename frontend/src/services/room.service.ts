@@ -1,21 +1,11 @@
 import { apiRequest } from "../types/api";
-import { getToken } from "./auth.service";
+import { requireToken } from "./auth.service";
 
 import type {
   ApiResponse,
   Room,
   RoomInput
 } from "../types/room";
-
-function requireToken(): string {
-  const token = getToken();
-
-  if (!token) {
-    throw new Error("ไม่พบข้อมูลการเข้าสู่ระบบ");
-  }
-
-  return token;
-}
 
 export function getRooms(): Promise<
   ApiResponse<Room[]>
