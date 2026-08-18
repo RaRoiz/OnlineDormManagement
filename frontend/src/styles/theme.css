@@ -507,14 +507,16 @@ h4 {
 .report-page,
 .admin-page,
 .profile-page,
-.staff-page {
+.staff-page,
+.users-page {
   width: min(1200px, calc(100% - 48px));
   margin: 0 auto;
   padding: 52px 0 90px;
 }
 
 .report-page,
-.admin-page {
+.admin-page,
+.users-page {
   width: min(1320px, calc(100% - 48px));
 }
 
@@ -539,7 +541,8 @@ h4 {
   --page-accent: #ec4899;
 }
 
-.admin-page {
+.admin-page,
+.users-page {
   --page-accent: #8b5cf6;
 }
 

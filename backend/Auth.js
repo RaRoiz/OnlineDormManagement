@@ -424,17 +424,31 @@ function changeOwnPassword(request) {
 }
 
 /**
- * หา (หรือสร้าง) โฟลเดอร์ Drive สำหรับเก็บรูปโปรไฟล์
+ * หา (หรือสร้าง) โฟลเดอร์ Drive ตามชื่อ
+ *
+ * getFoldersByName() คืนโฟลเดอร์ที่อยู่ในถังขยะมาด้วย ถ้าเผลอหยิบ
+ * ตัวนั้นมาใช้ ไฟล์ที่สร้างใหม่จะไปอยู่ในถังขยะและถูกลบถาวรภายหลัง
+ * จึงต้องข้ามโฟลเดอร์ที่ถูกทิ้งแล้วเสมอ
  */
-function getAvatarFolder_() {
-  const folderName = "DormManagement Avatars";
+function getOrCreateFolder_(folderName) {
   const folders = DriveApp.getFoldersByName(folderName);
 
-  if (folders.hasNext()) {
-    return folders.next();
+  while (folders.hasNext()) {
+    const folder = folders.next();
+
+    if (!folder.isTrashed()) {
+      return folder;
+    }
   }
 
   return DriveApp.createFolder(folderName);
+}
+
+/**
+ * หา (หรือสร้าง) โฟลเดอร์ Drive สำหรับเก็บรูปโปรไฟล์
+ */
+function getAvatarFolder_() {
+  return getOrCreateFolder_("DormManagement Avatars");
 }
 
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
@@ -576,10 +590,19 @@ function uploadAvatar(request) {
     const folder = getAvatarFolder_();
     const file = folder.createFile(blob);
 
-    file.setSharing(
-      DriveApp.Access.ANYONE_WITH_LINK,
-      DriveApp.Permission.VIEW
-    );
+    /* ตั้งค่าแชร์ลิงก์ล้มได้จากนโยบายแชร์ไฟล์ของบัญชี Google
+       (บัญชีองค์กรมักปิดการแชร์ออกนอก) แต่ไฟล์อัปโหลดสำเร็จแล้ว
+       ห้ามให้ทั้งฟังก์ชันพังจนเกิดไฟล์ค้างที่ไม่มีใครอ้างถึง */
+    try {
+      file.setSharing(
+        DriveApp.Access.ANYONE_WITH_LINK,
+        DriveApp.Permission.VIEW
+      );
+    } catch (error) {
+      Logger.log(
+        "ตั้งค่าแชร์รูปโปรไฟล์ไม่สำเร็จ (ไฟล์บันทึกแล้ว): " + error
+      );
+    }
 
     const oldFileId = String(
       values[targetRow - 1][index.avatarFileId] || ""

@@ -29,6 +29,12 @@ const SETUP_VALUES = {
      (ดูรายชื่อได้จาก listDormsForCleanup ใน Migration.gs) */
   KEEP_DORM_ID: "",
 
+  /* ย้ายที่เก็บรูปสลิป — ID ของโฟลเดอร์ปลายทาง
+     ดูได้จาก URL: drive.google.com/drive/folders/<ตรงนี้>
+     ใช้ Shared Drive (ไดรฟ์ที่แชร์) ได้ ช่วยเรื่องโควตาพื้นที่
+     เว้นว่าง = ใช้โฟลเดอร์ "DormManagement Slips" ใน My Drive ตามเดิม */
+  SLIP_FOLDER_ID: "",
+
   /* ค่าตั้งของหอ — ปกติไม่ต้องกรอกเอง
      ให้รัน importDormSettingsFromSheet() คัดลอกมาจากชีต Dorms */
   DORM_NAME: "",
@@ -436,4 +442,289 @@ function diagnoseLine() {
     "ให้ดูรายละเอียดข้อผิดพลาดที่เมนู \"การดำเนินการ\" " +
     "(Executions) ของ Apps Script"
   );
+}
+
+/**
+ * ตรวจการตั้งค่า LINE ฝั่ง "ขาเข้า" (webhook)
+ *
+ * ใช้ตอนที่ส่งบิลออกไปได้ แต่ผู้เช่าส่งข้อความ/สลิปกลับมาแล้วเงียบ
+ * เพราะการส่งออกใช้แค่ token ส่วนการรับต้องตั้ง Webhook URL ด้วย
+ *
+ * เลือกฟังก์ชัน diagnoseLineSetup ใน editor แล้วกด Run
+ */
+function diagnoseLineSetup() {
+  Logger.log("=== ตรวจการตั้งค่า LINE ===\n");
+
+  const credentials = getLineCredentials_();
+
+  if (!credentials.token) {
+    Logger.log(
+      "x ยังไม่ได้ตั้ง LINE_CHANNEL_ACCESS_TOKEN — จบเลย"
+    );
+
+    return;
+  }
+
+  Logger.log("1. token: ตั้งไว้แล้ว");
+
+  /* ถาม LINE ว่า token นี้เป็นของบอทตัวไหน */
+  const infoResponse = UrlFetchApp.fetch(
+    "https://api.line.me/v2/bot/info",
+    {
+      headers: {
+        Authorization: "Bearer " + credentials.token
+      },
+      muteHttpExceptions: true
+    }
+  );
+
+  if (infoResponse.getResponseCode() >= 300) {
+    Logger.log(
+      "x token ใช้ไม่ได้: " + infoResponse.getContentText()
+    );
+
+    return;
+  }
+
+  const info = JSON.parse(infoResponse.getContentText());
+  const realBotUserId = String(info.userId || "").trim();
+
+  Logger.log(
+    "2. บอทชื่อ \"" + String(info.displayName || "") + "\"" +
+    " userId ****" + realBotUserId.slice(-6)
+  );
+
+  /* จุดที่พลาดง่ายสุด — handleLineWebhook_ จะทิ้ง event เงียบๆ
+     ถ้า LINE_BOT_USER_ID ที่เก็บไว้ไม่ตรงกับ destination ที่ส่งมา */
+  if (!credentials.botUserId) {
+    Logger.log(
+      "3. LINE_BOT_USER_ID: ยังไม่ได้ตั้ง " +
+      "(ไม่เป็นไร ระบบจะข้ามการตรวจ destination)"
+    );
+  } else if (credentials.botUserId !== realBotUserId) {
+    Logger.log(
+      "3. x LINE_BOT_USER_ID ไม่ตรงกับบอทจริง!\n" +
+      "   ที่เก็บไว้ ****" + credentials.botUserId.slice(-6) +
+      " แต่จริงคือ ****" + realBotUserId.slice(-6) + "\n" +
+      "   -> ทุก webhook จะถูกทิ้งเงียบๆ นี่คือสาเหตุ\n" +
+      "   -> แก้โดยตั้ง LINE_BOT_USER_ID ใหม่ให้ตรง " +
+      "หรือเข้าหน้าโปรไฟล์แล้ววาง token ใหม่อีกครั้ง"
+    );
+  } else {
+    Logger.log("3. LINE_BOT_USER_ID: ตรงกับบอทจริง");
+  }
+
+  /* ถาม LINE ว่าตั้ง Webhook URL ไว้หรือยัง */
+  const hookResponse = UrlFetchApp.fetch(
+    "https://api.line.me/v2/bot/channel/webhook/endpoint",
+    {
+      headers: {
+        Authorization: "Bearer " + credentials.token
+      },
+      muteHttpExceptions: true
+    }
+  );
+
+  if (hookResponse.getResponseCode() >= 300) {
+    Logger.log(
+      "4. x ยังไม่ได้ตั้ง Webhook URL ใน LINE Developers Console\n" +
+      "   -> นี่คือสาเหตุที่ส่งข้อความกลับมาแล้วเงียบ\n" +
+      "   (" + hookResponse.getContentText() + ")"
+    );
+  } else {
+    const hook = JSON.parse(hookResponse.getContentText());
+
+    Logger.log(
+      "4. Webhook URL: " + String(hook.endpoint || "(ว่าง)")
+    );
+
+    Logger.log(
+      "   เปิดใช้งาน: " +
+      (hook.active ? "ใช่" : "x ไม่ได้เปิด — ต้องเปิด Use webhook")
+    );
+
+    /* getUrl() ต้องขอสิทธิ์เพิ่ม บางโปรเจกต์เรียกไม่ได้ —
+       ไม่ให้ล้มทั้งการตรวจเพราะข้อนี้ */
+    let deployedUrl = "";
+
+    try {
+      deployedUrl = ScriptApp.getService().getUrl() || "";
+    } catch (error) {
+      Logger.log("   (อ่าน URL ของสคริปต์ไม่ได้: " + error + ")");
+    }
+
+    if (deployedUrl) {
+      Logger.log("   URL ของสคริปต์นี้: " + deployedUrl);
+
+      if (
+        hook.endpoint &&
+        String(hook.endpoint).indexOf(deployedUrl) !== 0
+      ) {
+        Logger.log(
+          "   !! Webhook ชี้ไปคนละ URL กับ deployment ปัจจุบัน\n" +
+          "      -> แก้ URL ใน LINE Developers Console ให้ตรง"
+        );
+      }
+    }
+  }
+
+  /* Drive ใช้เก็บรูปสลิป — ทำซ้ำทั้ง 3 ขั้นที่โค้ดรับสลิปทำจริง
+     (หาโฟลเดอร์ / สร้างไฟล์ / ตั้งค่าแชร์) เพื่อชี้ให้ชัดว่าล้มขั้นไหน
+     แล้วลบไฟล์ทดสอบทิ้ง */
+  let testFolder;
+
+  try {
+    testFolder = getSlipFolder_();
+
+    Logger.log(
+      "5a. Drive: เข้าถึงโฟลเดอร์ \"" +
+      testFolder.getName() + "\" ได้ (" +
+      (getOptionalProperty_("SLIP_FOLDER_ID")
+        ? "จาก SLIP_FOLDER_ID"
+        : "โฟลเดอร์เริ่มต้นใน My Drive") +
+      ")\n    " + testFolder.getUrl()
+    );
+  } catch (error) {
+    Logger.log(
+      "5a. x หาโฟลเดอร์เก็บสลิปไม่ได้: " + error + "\n" +
+      "    -> ต้องอนุญาตสิทธิ์ Drive ใหม่ " +
+      "(รันฟังก์ชันนี้จาก editor แล้วกดอนุญาต)"
+    );
+  }
+
+  if (testFolder) {
+    let testFile;
+
+    try {
+      testFile = testFolder.createFile(
+        Utilities.newBlob(
+          "diagnose",
+          "text/plain",
+          "diagnose-slip-test.txt"
+        )
+      );
+
+      Logger.log("5b. Drive: สร้างไฟล์ได้");
+    } catch (error) {
+      Logger.log(
+        "5b. x สร้างไฟล์ใน Drive ไม่ได้: " + error + "\n" +
+        "    -> มักเกิดจากพื้นที่ Drive เต็ม " +
+        "หรือสิทธิ์ Drive ยังไม่ได้อนุญาต"
+      );
+    }
+
+    if (testFile) {
+      try {
+        testFile.setSharing(
+          DriveApp.Access.ANYONE_WITH_LINK,
+          DriveApp.Permission.VIEW
+        );
+
+        Logger.log("5c. Drive: ตั้งค่าแชร์ลิงก์ได้");
+      } catch (error) {
+        Logger.log(
+          "5c. ! ตั้งค่าแชร์ลิงก์ไม่ได้: " + error + "\n" +
+          "    -> สลิปยังบันทึกได้ปกติ แต่ลิงก์จะเปิดได้เฉพาะ" +
+          "บัญชีเจ้าของหอ (บัญชีองค์กรมักปิดการแชร์ออกนอก)"
+        );
+      }
+
+      testFile.setTrashed(true);
+    }
+  }
+
+  /* มีใครลงทะเบียน LINE ไว้บ้าง */
+  const links = getLineLinksSheet_()
+    .getDataRange()
+    .getValues();
+
+  Logger.log(
+    "6. ผู้เช่าที่ลงทะเบียน LINE แล้ว: " +
+    Math.max(0, links.length - 1) + " คน"
+  );
+
+  Logger.log(
+    "\nถ้าทุกข้อผ่านแต่ยังเงียบ ให้ส่งข้อความหาบอทแล้วดูที่เมนู " +
+    "\"การดำเนินการ\" (Executions) ว่ามี doPost วิ่งหรือไม่\n" +
+    "ถ้าไม่มีเลย = webhook ไม่ถึงสคริปต์\n" +
+    "ถ้ามีแต่ Failed = กดดูรายละเอียดข้อผิดพลาดได้"
+  );
+}
+
+/**
+ * บอกว่าสคริปต์ทำงานด้วยบัญชี Google ไหน
+ *
+ * ใช้ตอนจะให้คนอื่นแชร์โฟลเดอร์เก็บสลิปมาให้ — ต้องแชร์มาที่อีเมล
+ * ที่ฟังก์ชันนี้พิมพ์ออกมา และให้สิทธิ์ระดับ "ผู้แก้ไข" (Editor)
+ */
+function showScriptAccount() {
+  Logger.log(
+    "สคริปต์ทำงานด้วยบัญชี: " +
+    Session.getEffectiveUser().getEmail() + "\n" +
+    "-> ให้เจ้าของโฟลเดอร์แชร์มาที่อีเมลนี้ สิทธิ์ \"ผู้แก้ไข\""
+  );
+}
+
+/**
+ * ตรวจว่า SLIP_FOLDER_ID ที่ตั้งไว้ใช้ได้จริงหรือไม่
+ *
+ * ทดสอบครบทั้งเข้าถึง / เขียนไฟล์ แล้วลบไฟล์ทดสอบทิ้ง
+ * รันก่อนใช้งานจริงเพื่อไม่ให้ไปพังตอนผู้เช่าส่งสลิป
+ */
+function checkSlipFolder() {
+  const folderId = getOptionalProperty_("SLIP_FOLDER_ID");
+
+  if (!folderId) {
+    Logger.log(
+      "ยังไม่ได้ตั้ง SLIP_FOLDER_ID\n" +
+      "-> ระบบจะใช้โฟลเดอร์ \"DormManagement Slips\" " +
+      "ใน My Drive ของบัญชีสคริปต์"
+    );
+
+    return;
+  }
+
+  let folder;
+
+  try {
+    folder = DriveApp.getFolderById(folderId);
+  } catch (error) {
+    Logger.log(
+      "x เปิดโฟลเดอร์ตาม SLIP_FOLDER_ID ไม่ได้: " + error + "\n" +
+      "-> ตรวจว่าคัดลอก ID มาถูก (เอาเฉพาะส่วนหลัง /folders/)\n" +
+      "-> และเจ้าของโฟลเดอร์แชร์มาให้ " +
+      Session.getEffectiveUser().getEmail() +
+      " แล้วหรือยัง"
+    );
+
+    return;
+  }
+
+  Logger.log(
+    "โฟลเดอร์: \"" + folder.getName() + "\"\n" +
+    "เจ้าของ: " +
+    (folder.getOwner()
+      ? folder.getOwner().getEmail()
+      : "ไดรฟ์ที่แชร์ (Shared Drive)") + "\n" +
+    folder.getUrl()
+  );
+
+  try {
+    const testFile = folder.createFile(
+      Utilities.newBlob(
+        "check",
+        "text/plain",
+        "check-slip-folder.txt"
+      )
+    );
+
+    testFile.setTrashed(true);
+
+    Logger.log("OK เขียนไฟล์ลงโฟลเดอร์นี้ได้ พร้อมใช้งาน");
+  } catch (error) {
+    Logger.log(
+      "x เขียนไฟล์ไม่ได้: " + error + "\n" +
+      "-> ต้องได้สิทธิ์ระดับ \"ผู้แก้ไข\" (Editor) ไม่ใช่ \"ผู้อ่าน\""
+    );
+  }
 }
