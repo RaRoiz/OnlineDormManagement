@@ -1916,13 +1916,11 @@ body.has-sidebar {
   color: #fff;
   background: linear-gradient(
     135deg,
-    var(--brand),
-    #2563eb
+    #22d3ee 0%,
+    #0891b2 55%,
+    #0e7490 100%
   );
   border-radius: var(--r);
-
-  font-family: var(--font-display);
-  font-weight: 600;
 }
 
 .sidebar-brand-text strong {
@@ -2088,4 +2086,21 @@ body.has-sidebar {
       88px + env(safe-area-inset-bottom, 0px)
     );
   }
+}
+
+/* =========================
+   Brand mark (โลโก้อาคารหอพัก)
+========================= */
+
+.brand-mark {
+  width: 66%;
+  height: 66%;
+
+  display: block;
+
+  fill: #fff;
+}
+
+.brand-mark-cut {
+  fill: #0e7490;
 }
