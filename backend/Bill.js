@@ -392,6 +392,11 @@ function updateBill(request) {
       };
     }
 
+    if (paymentStatus === "PENDING" &&
+        String(originalRow[index.meterId] || "").trim() !== input.meterId) {
+      return { success: false, message: "บิลที่รอตรวจสอบสลิปไม่สามารถเปลี่ยนรายการมิเตอร์ได้" };
+    }
+
     const duplicate = values
       .slice(1)
       .some(function (row) {
@@ -507,7 +512,7 @@ function updateBill(request) {
       totalAmount,
       dueDate: input.dueDate,
 
-      paymentStatus: "UNPAID",
+      paymentStatus: paymentStatus,
       paidAt: "",
 
       note: input.note,
@@ -634,6 +639,10 @@ function markBillPaid(request) {
 
       const paidAt =
         new Date().toISOString();
+
+      if (currentStatus === "PENDING") {
+        return { success: false, message: "กรุณาตรวจสอบสลิปก่อนยืนยันการชำระเงิน" };
+      }
 
       sheet
         .getRange(

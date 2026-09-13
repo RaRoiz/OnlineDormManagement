@@ -56,7 +56,8 @@ function fixture(options = {}) {
       getDataRange: () => ({ getValues: () => [['billId', 'slipUrl'], ['bill', slipUrl]] })
     }) })
   });
-  for (const name of ['Admin.js', 'Slips.js']) {
+  c.hashPassword = (value, salt) => require('node:crypto').createHash('sha256').update(salt + value).digest('hex');
+  for (const name of ['Admin.js', 'Slips.js', 'SlipReview.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../backend', name), 'utf8'), c);
   }
   return { c, events, file, folder };
@@ -131,10 +132,10 @@ for (const failure of ['', 'folder', 'permissions', 'record']) {
     const messages = [];
     c.console = { error() {} };
     c.findTenantIdByLineUserId_ = () => 'tenant';
-    c.findOldestUnpaidBillByTenantId_ = () => ({
+    c.selectSlipTarget_ = () => ({ target: {
       bill: { billId: 'bill' }, row: 1, index: { paymentStatus: 0 },
       sheet: { getRange: () => ({ setValue(value) { events.push(value); } }) }
-    });
+    } });
     c.UrlFetchApp = { fetch: () => ({
       getResponseCode: () => 200,
       getBlob: () => ({ getBytes: () => [1, 2, 3] })
@@ -154,13 +155,17 @@ for (const failure of ['', 'folder', 'permissions', 'record']) {
       if (failure === 'record') throw Error('sheet error');
       events.push('save');
     };
+    c.recordIncomingSlip_ = target => {
+      c.savePaymentSlip_();
+      target.sheet.getRange().setValue('PENDING');
+    };
     c.SpreadsheetApp = { flush() {} };
     c.bumpDormCache_ = () => events.push('invalidate');
     c.replyLineMessage_ = (token, replyToken, message) => messages.push(message[0].text);
     c.handleSlipImageMessage_({ source: { userId: 'line-user' }, message: { id: 'image' }, replyToken: 'reply' }, 'token');
     if (!failure) {
       assert.deepEqual(events, ['create', 'restrict', 'save', 'PENDING', 'invalidate']);
-      assert.ok(messages[0].includes('ได้รับสลิปแล้ว'));
+      assert.ok(messages[0].includes('ได้รับสลิปสำหรับบิล'));
     } else if (failure === 'record') {
       assert.equal(events.includes('trash'), false);
       assert.equal(events.includes('PENDING'), false);

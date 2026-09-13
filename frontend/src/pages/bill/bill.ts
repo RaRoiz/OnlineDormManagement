@@ -13,6 +13,7 @@ import {
   deleteBill,
   getBills,
   getBillSlip,
+  reviewBillSlip,
   markBillPaid,
   sendBillLine,
   updateBill
@@ -829,20 +830,11 @@ function renderBills(): void {
                               data-action="slip"
                               data-bill-id="${safeBillId}"
                             >
-                              ดูสลิป
+                              ตรวจสอบสลิป
                             </button>
                           `
                           : ""
                       }
-
-                      <button
-                        class="table-button paid-button"
-                        type="button"
-                        data-action="paid"
-                        data-bill-id="${safeBillId}"
-                      >
-                        ยืนยันชำระแล้ว
-                      </button>
 
                       <button
                         class="table-button edit-button"
@@ -1758,7 +1750,7 @@ async function openBillSlip(bill: Bill, button: HTMLButtonElement): Promise<void
     if (!result.success || !result.data) {
       throw new Error(result.message || "โหลดสลิปไม่สำเร็จ");
     }
-    const { mimeType, base64Data } = result.data;
+    const { mimeType, base64Data, reviewVersion, totalAmount, paymentStatus } = result.data;
     if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(mimeType)) {
       throw new Error("รูปแบบสลิปไม่รองรับ");
     }
@@ -1768,7 +1760,14 @@ async function openBillSlip(bill: Bill, button: HTMLButtonElement): Promise<void
     dialog.className = "slip-dialog";
     dialog.setAttribute("aria-label", `สลิปบิล ${bill.billNo}`);
     const heading = document.createElement("h3");
-    heading.textContent = `สลิปบิล ${bill.billNo}`;
+    heading.textContent = `ตรวจสอบสลิป ${result.data.billNo}`;
+    const amount = document.createElement("p");
+    amount.textContent = `ยอดที่ต้องชำระ ${formatMoney(totalAmount)}`;
+    const feedback = document.createElement("p");
+    feedback.className = "page-message error";
+    feedback.setAttribute("role", "alert");
+    let submitting = false;
+    let imageLoaded = false;
     const image = document.createElement("img");
     image.alt = `สลิปชำระเงินบิล ${bill.billNo}`;
     image.src = url;
@@ -1786,7 +1785,66 @@ async function openBillSlip(bill: Bill, button: HTMLButtonElement): Promise<void
       dialog.remove();
       button.focus();
     }, { once: true });
-    dialog.append(heading, image, close);
+    const reviewActions = document.createElement("div");
+    reviewActions.className = "slip-review-actions";
+    const reasonLabel = document.createElement("label");
+    reasonLabel.textContent = "เหตุผลที่ปฏิเสธ (ต้องกรอกเมื่อปฏิเสธสลิป)";
+    const reason = document.createElement("textarea");
+    reason.maxLength = 500;
+    reason.rows = 3;
+    reason.placeholder = "เช่น ยอดไม่ตรง รูปไม่ชัด หรือโอนผิดบัญชี";
+    reasonLabel.append(reason);
+    const approve = document.createElement("button");
+    approve.type = "button";
+    approve.className = "primary-button";
+    approve.textContent = "ยืนยันการชำระเงิน";
+    const reject = document.createElement("button");
+    reject.type = "button";
+    reject.className = "secondary-button";
+    reject.textContent = "ปฏิเสธสลิป";
+    approve.disabled = reject.disabled = true;
+    image.addEventListener("load", () => {
+      imageLoaded = true;
+      approve.disabled = reject.disabled = paymentStatus !== "PENDING";
+    }, { once: true });
+    dialog.addEventListener("cancel", event => {
+      if (submitting) event.preventDefault();
+    });
+    async function submitReview(decision: "APPROVED" | "REJECTED"): Promise<void> {
+      if (submitting || !imageLoaded || paymentStatus !== "PENDING") return;
+      feedback.textContent = "";
+      if (decision === "REJECTED" && !reason.value.trim()) {
+        feedback.textContent = "กรุณาระบุเหตุผลที่ปฏิเสธสลิป";
+        reason.focus();
+        return;
+      }
+      submitting = true;
+      approve.disabled = reject.disabled = close.disabled = reason.disabled = true;
+      try {
+        const reviewed = await reviewBillSlip(bill.billId, reviewVersion, decision, reason.value.trim());
+        if (!reviewed.success) throw new Error(reviewed.message);
+        dialog.close();
+        showToast(reviewed.warning || reviewed.message, reviewed.warning ? "error" : "success");
+        try {
+          await loadData();
+        } catch {
+          showToast("บันทึกผลแล้ว แต่โหลดรายการใหม่ไม่สำเร็จ กรุณารีเฟรชหน้า", "error");
+        }
+      } catch (error) {
+        feedback.textContent = error instanceof Error ? error.message : "บันทึกผลตรวจสอบไม่สำเร็จ";
+      } finally {
+        submitting = false;
+        approve.disabled = reject.disabled = close.disabled = reason.disabled = false;
+      }
+    }
+    approve.addEventListener("click", () => { void submitReview("APPROVED"); });
+    reject.addEventListener("click", () => { void submitReview("REJECTED"); });
+    reviewActions.append(approve, reject, close);
+    if (paymentStatus !== "PENDING") {
+      reasonLabel.hidden = approve.hidden = reject.hidden = true;
+      feedback.textContent = "บิลนี้ไม่ได้รอตรวจสอบแล้ว กรุณาโหลดรายการบิลใหม่";
+    }
+    dialog.append(heading, amount, image, reasonLabel, feedback, reviewActions);
     document.body.append(dialog);
     try {
       dialog.showModal();
