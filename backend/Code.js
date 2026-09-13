@@ -121,6 +121,9 @@ function doPost(e) {
       case "getBillSlip":
         return jsonResponse(getBillSlip(request));
 
+      case "reviewBillSlip":
+        return jsonResponse(reviewBillSlip(request));
+
       case "createBill":
         return jsonResponse(createBill(request));
 
