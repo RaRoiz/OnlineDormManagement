@@ -120,7 +120,7 @@ test('migration reports shared parents and explicit viewers without broad permis
   }
 });
 
-for (const failure of ['', 'folder', 'permissions']) {
+for (const failure of ['', 'folder', 'permissions', 'record']) {
   test('new slip upload: ' + (failure || 'private file saved'), () => {
     const { c } = fixture();
     const source = fs.readFileSync(path.join(__dirname, '../backend/Line.js'), 'utf8');
@@ -139,22 +139,33 @@ for (const failure of ['', 'folder', 'permissions']) {
       getResponseCode: () => 200,
       getBlob: () => ({ getBytes: () => [1, 2, 3] })
     }) };
-    c.getSlipFolder_ = () => ({ createFile() {
+    c.getSlipStorageFolder_ = () => {
+      if (failure === 'folder') throw Error('folder inaccessible');
+      return { createFile() {
       events.push('create');
       return { getId: () => 'new-slip', setTrashed() { events.push('trash'); } };
-    } });
+    } }; };
     c.assertSlipFolderPrivate_ = () => { if (failure === 'folder') throw Error('shared'); };
     c.restrictSlipFile_ = () => {
       events.push('restrict');
       if (failure === 'permissions') throw Error('denied');
     };
-    c.savePaymentSlip_ = () => events.push('save');
+    c.savePaymentSlip_ = () => {
+      if (failure === 'record') throw Error('sheet error');
+      events.push('save');
+    };
+    c.SpreadsheetApp = { flush() {} };
     c.bumpDormCache_ = () => events.push('invalidate');
     c.replyLineMessage_ = (token, replyToken, message) => messages.push(message[0].text);
     c.handleSlipImageMessage_({ source: { userId: 'line-user' }, message: { id: 'image' }, replyToken: 'reply' }, 'token');
     if (!failure) {
       assert.deepEqual(events, ['create', 'restrict', 'save', 'PENDING', 'invalidate']);
       assert.ok(messages[0].includes('ได้รับสลิปแล้ว'));
+    } else if (failure === 'record') {
+      assert.equal(events.includes('trash'), false);
+      assert.equal(events.includes('PENDING'), false);
+      assert.ok(messages[0].includes('SLIP_RECORD'));
+      assert.ok(messages[0].includes('เก็บรูปสลิปไว้แล้ว'));
     } else {
       assert.equal(events.includes('save'), false);
       assert.equal(events.includes('PENDING'), false);
@@ -163,3 +174,40 @@ for (const failure of ['', 'folder', 'permissions']) {
     }
   });
 }
+
+test('shared preferred folder uses a reusable private fallback without changing its permissions', () => {
+  const { c, folder } = fixture({ folderAccess: 'ANYONE_WITH_LINK' });
+  let savedId = '';
+  let created = 0;
+  let unlocked = 0;
+  const privateFolder = {
+    getId: () => 'private-folder', getUrl: () => 'private-url', isTrashed: () => false,
+    getSharingAccess: () => 'PRIVATE', getViewers: () => [], getEditors: () => [],
+    getParents: () => ({ hasNext: () => false })
+  };
+  c.getSlipFolder_ = () => folder;
+  c.getOptionalProperty_ = () => savedId;
+  c.setProperty_ = (key, value) => { assert.equal(key, 'PRIVATE_SLIP_FOLDER_ID'); savedId = value; };
+  c.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() { unlocked++; } }) };
+  c.DriveApp.createFolder = () => { created++; return privateFolder; };
+  c.DriveApp.getFolderById = id => { assert.equal(id, savedId); return privateFolder; };
+  assert.equal(c.getSlipStorageFolder_(), privateFolder);
+  assert.equal(c.getSlipStorageFolder_(), privateFolder);
+  assert.equal(created, 1);
+  assert.equal(unlocked, 2);
+});
+
+test('private preferred folder is retained and already private files need no sharing mutation', () => {
+  const { c, folder, file, events } = fixture();
+  c.getSlipFolder_ = () => folder;
+  assert.equal(c.getSlipStorageFolder_(), folder);
+  file.getSharingAccess = () => 'PRIVATE';
+  c.restrictSlipFile_(file);
+  assert.equal(events.includes('restrict'), false);
+});
+
+test('permission errors do not silently change the configured storage location', () => {
+  const { c } = fixture();
+  c.getSlipFolder_ = () => { throw Error('access denied'); };
+  assert.throws(() => c.getSlipStorageFolder_(), /access denied/);
+});

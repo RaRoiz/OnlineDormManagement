@@ -17,7 +17,9 @@ function assertSlipFolderPrivate_(folder) {
     visited[id] = true;
     if (current.getSharingAccess() !== DriveApp.Access.PRIVATE ||
         current.getViewers().length || current.getEditors().length) {
-      throw new Error("โฟลเดอร์สลิปหรือโฟลเดอร์แม่มีการแชร์ กรุณาใช้โฟลเดอร์ส่วนตัวสำหรับสลิป");
+      const error = new Error("โฟลเดอร์สลิปหรือโฟลเดอร์แม่มีการแชร์ กรุณาใช้โฟลเดอร์ส่วนตัวสำหรับสลิป");
+      error.code = "SLIP_SHARED_FOLDER";
+      throw error;
     }
     const parents = current.getParents();
     while (parents.hasNext()) check(parents.next());
@@ -25,10 +27,43 @@ function assertSlipFolderPrivate_(folder) {
   check(folder);
 }
 
+/* ถ้าโฟลเดอร์เดิมแชร์อยู่ ให้ใช้โฟลเดอร์ส่วนตัวใหม่โดยไม่แตะสิทธิ์เดิม */
+function getSlipStorageFolder_() {
+  const preferred = getSlipFolder_();
+  try {
+    assertSlipFolderPrivate_(preferred);
+    return preferred;
+  } catch (error) {
+    if (error.code !== "SLIP_SHARED_FOLDER") throw error;
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const cachedId = getOptionalProperty_("PRIVATE_SLIP_FOLDER_ID");
+    if (cachedId) {
+      const existing = DriveApp.getFolderById(cachedId);
+      if (!existing.isTrashed()) {
+        assertSlipFolderPrivate_(existing);
+        return existing;
+      }
+    }
+    const folder = DriveApp.createFolder("DormManagement Private Slips");
+    assertSlipFolderPrivate_(folder);
+    setProperty_("PRIVATE_SLIP_FOLDER_ID", folder.getId());
+    console.log("ใช้โฟลเดอร์ส่วนตัวสำหรับสลิป: " + folder.getUrl());
+    return folder;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function restrictSlipFile_(file) {
   const parents = file.getParents();
   while (parents.hasNext()) assertSlipFolderPrivate_(parents.next());
-  file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.VIEW);
+  if (file.getSharingAccess() !== DriveApp.Access.PRIVATE) {
+    file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.VIEW);
+  }
   if (file.getSharingAccess() !== DriveApp.Access.PRIVATE ||
       file.getViewers().length || file.getEditors().length) {
     throw new Error("ไฟล์สลิปยังมีสิทธิ์แชร์โดยตรง กรุณาให้ผู้ดูแลตรวจสิทธิ์ไฟล์ใน Drive");
