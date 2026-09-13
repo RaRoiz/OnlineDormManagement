@@ -2,7 +2,6 @@ import "./register.css";
 import "../../utils/theme";
 
 import {
-  getDormPublicInfo,
   registerUser
 } from "../../services/register.service";
 
@@ -17,11 +16,6 @@ import type { RegisterInput } from "../../types/register";
 const form =
   document.querySelector<HTMLFormElement>(
     "#register-form"
-  );
-
-const dormInviteNameElement =
-  document.querySelector<HTMLElement>(
-    "#dorm-invite-name"
   );
 
 const fullNameInput =
@@ -79,56 +73,9 @@ function clearMessage(): void {
     "register-message";
 }
 
-function setInviteStatus(
-  text: string,
-  isError: boolean
-): void {
-  if (!dormInviteNameElement) {
-    return;
-  }
-
-  dormInviteNameElement.textContent = text;
-
-  dormInviteNameElement.classList.toggle(
-    "is-error",
-    isError
-  );
-}
-
 function setFormEnabled(enabled: boolean): void {
   if (registerButton) {
     registerButton.disabled = !enabled;
-  }
-}
-
-/**
- * โชว์ชื่อหอให้ผู้สมัครเห็นว่ากำลังสมัครเข้าที่ไหน
- * (ตัวรหัสเชิญตรวจจริงที่ฝั่ง backend ตอนกดสมัคร —
- * ไม่ตรวจที่นี่ เพื่อไม่ให้กลายเป็นเครื่องมือเดารหัส)
- */
-async function loadDormName(): Promise<void> {
-  setInviteStatus("กำลังโหลดข้อมูลหอ...", false);
-
-  try {
-    const result = await getDormPublicInfo();
-
-    if (!result.success || !result.data) {
-      setInviteStatus(
-        result.message || "ไม่พบข้อมูลหอ",
-        true
-      );
-
-      return;
-    }
-
-    setInviteStatus(result.data.dormName, false);
-  } catch (error) {
-    setInviteStatus(
-      error instanceof Error
-        ? error.message
-        : "ไม่สามารถโหลดข้อมูลหอได้",
-      true
-    );
   }
 }
 
@@ -279,12 +226,12 @@ function initializeRegisterPage(): void {
     window.location.search
   );
 
-  signupCode = params.get("code");
+  signupCode = params.get("code")?.trim() || null;
 
   if (!signupCode) {
-    setInviteStatus(
-      "ต้องใช้ลิงก์เชิญจากเจ้าของหอ กรุณาขอลิงก์จากเจ้าของหอของคุณ",
-      true
+    showMessage(
+      "กรุณาใช้ลิงก์เชิญจากผู้ดูแลระบบเพื่อสมัครบัญชีพนักงาน",
+      "error"
     );
 
     setFormEnabled(false);
@@ -292,7 +239,6 @@ function initializeRegisterPage(): void {
   }
 
   setFormEnabled(true);
-  void loadDormName();
 }
 
 initializeRegisterPage();

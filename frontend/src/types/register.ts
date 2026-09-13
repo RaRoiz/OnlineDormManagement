@@ -11,10 +11,6 @@ export interface RegisterInput {
   signupCode: string;
 }
 
-export interface DormPublicInfo {
-  dormName: string;
-}
-
 export interface RegisteredUser {
   userId: string;
   username: string;
