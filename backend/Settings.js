@@ -76,7 +76,7 @@ function getDormPublicInfo(request) {
   if (!dormName) {
     return {
       success: false,
-      message: "ยังไม่ได้ตั้งชื่อหอในระบบ"
+      message: "ยังไม่พบชื่อหอพัก กรุณาติดต่อเจ้าของหอ"
     };
   }
 
