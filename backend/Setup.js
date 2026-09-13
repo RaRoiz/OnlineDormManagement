@@ -667,7 +667,18 @@ function showScriptAccount() {
  * ทดสอบครบทั้งเข้าถึง / เขียนไฟล์ แล้วลบไฟล์ทดสอบทิ้ง
  * รันก่อนใช้งานจริงเพื่อไม่ให้ไปพังตอนผู้เช่าส่งสลิป
  */
+function authorizeDriveAccess() {
+  // รันใน editor ด้วยบัญชีที่ deploy และปล่อยให้ Google แสดงคำขอสิทธิ์
+  // ต้องอยู่นอก try/catch เพื่อไม่กลืนขั้นตอนขออนุญาต
+  ScriptApp.requireScopes(ScriptApp.AuthMode.FULL, [
+    "https://www.googleapis.com/auth/drive"
+  ]);
+  DriveApp.getRootFolder().getName();
+  Logger.log("OK อนุญาตให้สคริปต์เข้าถึง Google Drive แล้ว");
+}
+
 function checkSlipFolder() {
+  authorizeDriveAccess();
   const folderId = getOptionalProperty_("SLIP_FOLDER_ID");
 
   if (!folderId) {
