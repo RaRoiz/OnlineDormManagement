@@ -76,7 +76,7 @@ function getDormPublicInfo(request) {
   if (!dormName) {
     return {
       success: false,
-      message: "ยังไม่พบชื่อหอพัก กรุณาติดต่อเจ้าของหอ"
+      message: "ลิงค์เชิญเฉพาะสมัครตำแหน่ง Staff/พนักงานเท่านั้น"
     };
   }
 
