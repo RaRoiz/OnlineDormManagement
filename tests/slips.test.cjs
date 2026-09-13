@@ -38,7 +38,6 @@ function fixture(options = {}) {
       getFileById(id) { events.push('file:' + id); return file; }
     },
     Utilities: { base64Encode: bytes => Buffer.from(bytes).toString('base64') },
-    hashPassword: (value, salt) => require('node:crypto').createHash('sha256').update(value + salt).digest('hex'),
     validateToken: () => options.noSession
       ? { success: false, message: 'expired' }
       : { success: true, user: { userId: 'user', role: 'OWNER' } },
@@ -57,6 +56,7 @@ function fixture(options = {}) {
       getDataRange: () => ({ getValues: () => [['billId', 'slipUrl'], ['bill', slipUrl]] })
     }) })
   });
+  c.hashPassword = (value, salt) => require('node:crypto').createHash('sha256').update(salt + value).digest('hex');
   for (const name of ['Admin.js', 'Slips.js', 'SlipReview.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../backend', name), 'utf8'), c);
   }
@@ -132,15 +132,10 @@ for (const failure of ['', 'folder', 'permissions', 'record']) {
     const messages = [];
     c.console = { error() {} };
     c.findTenantIdByLineUserId_ = () => 'tenant';
-    c.findOldestUnpaidBillByTenantId_ = () => ({
+    c.selectSlipTarget_ = () => ({ target: {
       bill: { billId: 'bill' }, row: 1, index: { paymentStatus: 0 },
       sheet: { getRange: () => ({ setValue(value) { events.push(value); } }) }
-    });
-    c.selectSlipTarget_ = () => ({ target: c.findOldestUnpaidBillByTenantId_() });
-    c.recordIncomingSlip_ = (target, url, userId) => {
-      c.savePaymentSlip_(target.bill.billId, url, userId);
-      target.sheet.getRange().setValue('PENDING');
-    };
+    } });
     c.UrlFetchApp = { fetch: () => ({
       getResponseCode: () => 200,
       getBlob: () => ({ getBytes: () => [1, 2, 3] })
@@ -159,6 +154,10 @@ for (const failure of ['', 'folder', 'permissions', 'record']) {
     c.savePaymentSlip_ = () => {
       if (failure === 'record') throw Error('sheet error');
       events.push('save');
+    };
+    c.recordIncomingSlip_ = target => {
+      c.savePaymentSlip_();
+      target.sheet.getRange().setValue('PENDING');
     };
     c.SpreadsheetApp = { flush() {} };
     c.bumpDormCache_ = () => events.push('invalidate');

@@ -117,6 +117,8 @@ function getBillSlip(request) {
     data: {
       mimeType: mimeType, base64Data: Utilities.base64Encode(blob.getBytes()),
       reviewVersion: slipReviewVersion_(billRow, slipUrl),
+      billNo: String(billRow[index.billNo] || ""),
+      totalAmount: Number(billRow[index.totalAmount] || 0),
       paymentStatus: String(billRow[index.paymentStatus] || "").trim().toUpperCase()
     }
   };

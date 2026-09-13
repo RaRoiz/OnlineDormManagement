@@ -1763,10 +1763,13 @@ async function openBillSlip(bill: Bill, button: HTMLButtonElement): Promise<void
     dialog.className = "slip-dialog";
     dialog.setAttribute("aria-label", `สลิปบิล ${bill.billNo}`);
     const heading = document.createElement("h3");
-    heading.textContent = `สลิปบิล ${bill.billNo}`;
+    heading.textContent = `สลิปบิล ${result.data.billNo || bill.billNo}`;
     const header = document.createElement("header");
     header.className = "slip-dialog-header";
     header.append(heading);
+    const amount = document.createElement("p");
+    amount.textContent = `ยอดที่ต้องชำระ ${formatMoney(result.data.totalAmount)}`;
+    header.append(amount);
     const preview = document.createElement("div");
     preview.className = "slip-dialog-preview";
     const image = document.createElement("img");

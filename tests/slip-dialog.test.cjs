@@ -24,9 +24,9 @@ async function fixture(options = {}) {
   const c = vm.createContext({
     document: { body: new Element('body'), createElement(tag) { const el = new Element(tag); elements.push(el); return el; } },
     URL: { createObjectURL: () => 'blob:test', revokeObjectURL() {} }, Blob, Uint8Array, atob,
-    showToast: text => messages.push(text), loadData: async () => {},
+    showToast: text => messages.push(text), loadData: async () => {}, formatMoney: value => String(value),
     getBillSlip: async () => ({ success: true, data: { mimeType: 'image/png', base64Data: 'AQ==',
-      paymentStatus: 'PENDING', reviewVersion: options.oldBackend ? undefined : 'v' } }),
+      billNo: 'INV-1', totalAmount: 100, paymentStatus: 'PENDING', reviewVersion: options.oldBackend ? undefined : 'v' } }),
     reviewBillSlip: async (...args) => { calls.push(args); return { success: !options.fail, message: options.fail ? 'failed' : 'saved' }; }
   });
   vm.runInContext(script, c);
@@ -67,7 +67,7 @@ test('failed review stays open and shows error; close alone never reviews', asyn
   f.button('ยืนยันการชำระเงิน').emit('click');
   await settle();
   assert.equal(f.get('dialog').open, true);
-  assert.equal(f.get('p').textContent, 'failed');
+  assert.equal(f.elements.find(el => el.className === 'page-message error').textContent, 'failed');
   f.button('ปิด').emit('click');
   assert.equal(f.calls.length, 1);
 });

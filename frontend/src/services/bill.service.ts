@@ -8,13 +8,22 @@ import type {
 } from "../types/bill";
 
 export function getBillSlip(billId: string): Promise<
-  ApiResponse<{ mimeType: string; base64Data: string; reviewVersion: string; paymentStatus: string }>
+  ApiResponse<{
+    mimeType: string; base64Data: string; reviewVersion: string;
+    billNo: string; totalAmount: number; paymentStatus: string;
+  }>
 > {
   return apiRequest({
     action: "getBillSlip",
     token: requireToken(),
     billId
   });
+}
+
+export function reviewBillSlip(
+  billId: string, reviewVersion: string, decision: "APPROVED" | "REJECTED", reason = ""
+): Promise<ApiResponse<Bill> & { warning?: string }> {
+  return apiRequest({ action: "reviewBillSlip", token: requireToken(), billId, reviewVersion, decision, reason });
 }
 
 export function getBills(): Promise<
@@ -24,11 +33,6 @@ export function getBills(): Promise<
     action: "getBills",
     token: requireToken()
   });
-}
-
-export function reviewBillSlip(billId: string, reviewVersion: string,
-  decision: "APPROVED" | "REJECTED", reason: string): Promise<ApiResponse<Bill> & { warning?: string }> {
-  return apiRequest({ action: "reviewBillSlip", token: requireToken(), billId, reviewVersion, decision, reason });
 }
 
 export function createBill(
