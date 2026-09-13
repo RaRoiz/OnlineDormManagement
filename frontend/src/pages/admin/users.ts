@@ -4,7 +4,7 @@ import "../../utils/theme";
 import { renderSidebar } from "../../utils/sidebar";
 
 import {
-  requireSuperAdmin,
+  requireAdmin,
   setupLogoutButton
 } from "../../utils/auth.guard";
 
@@ -111,8 +111,8 @@ function showMessage(
 }
 
 function roleBadgeClass(role: string): string {
-  if (role === "SUPER_ADMIN") {
-    return "role-super-admin";
+  if (role === "ADMIN") {
+    return "role-admin";
   }
 
   if (role === "OWNER") {
@@ -488,7 +488,7 @@ async function loadUsers(): Promise<void> {
 }
 
 async function initializeUsersPage(): Promise<void> {
-  if (!requireSuperAdmin()) {
+  if (!requireAdmin()) {
     return;
   }
 

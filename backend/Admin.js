@@ -1,23 +1,24 @@
 /**
- * Admin.gs — จัดการผู้ใช้ สำหรับ SUPER_ADMIN เท่านั้น
+ * Admin.gs — จัดการผู้ใช้ สำหรับ ADMIN เท่านั้น
  *
  * ลำดับสิทธิ์ในระบบ (หอเดียว):
- *   SUPER_ADMIN — ผู้ดูแลระบบ ทำได้ทุกอย่างที่ OWNER ทำได้
+ *   ADMIN — ผู้ดูแลระบบ ทำได้ทุกอย่างที่ OWNER ทำได้
  *                 บวกกับสร้าง/ปิด/รีเซ็ตรหัสผ่านบัญชีอื่น
  *   OWNER       — เจ้าของหอ ใช้งานทุกฟีเจอร์ของหอ
  *   USER        — พนักงาน ดู/เพิ่ม/แก้ไขได้ แต่ลบไม่ได้
  *                 และเข้าหน้า Report ไม่ได้
  *
- * ทุก action ในไฟล์นี้ต้องผ่าน superAdminOnly_() ใน Code.gs
+ * ทุก action ในไฟล์นี้ต้องผ่าน adminOnly_() ใน Code.gs
  * (ตัวฟังก์ชันเช็ค token ซ้ำเองด้วย เพื่อดึง userId ของผู้เรียก)
  */
 
 const MANAGEABLE_ROLES = ["OWNER", "USER"];
 
 function normalizeRole_(value) {
-  return String(value || "")
+  const role = String(value || "")
     .trim()
     .toUpperCase();
+  return role === "SUPER_ADMIN" ? "ADMIN" : role;
 }
 
 function isTruthyCell_(value) {
@@ -75,9 +76,9 @@ function getUsers(request) {
       };
     })
     .sort(function (a, b) {
-      // SUPER_ADMIN ก่อน แล้ว OWNER แล้ว USER
+      // ADMIN ก่อน แล้ว OWNER แล้ว USER
       const order = {
-        SUPER_ADMIN: 0,
+        ADMIN: 0,
         OWNER: 1,
         USER: 2
       };
@@ -115,7 +116,7 @@ function findUserRow_(values, index, userId) {
 
 /**
  * สร้างบัญชีใหม่ (OWNER หรือ USER)
- * สร้าง SUPER_ADMIN จากหน้าเว็บไม่ได้ — ต้องรัน
+ * สร้าง ADMIN จากหน้าเว็บไม่ได้ — ต้องรัน
  * createInitialSuperAdmin() จาก Apps Script editor เท่านั้น
  * เพื่อไม่ให้บัญชีที่ถูกยึดสร้างผู้ดูแลเพิ่มเองได้
  */
@@ -257,7 +258,7 @@ function setUserActive(request) {
   }
 
   /* กันล็อกตัวเองออกจากระบบ — ถ้าปิดบัญชีตัวเองแล้ว
-     ไม่มี SUPER_ADMIN คนอื่น จะไม่มีใครเปิดกลับได้อีกเลย */
+     ไม่มี ADMIN คนอื่น จะไม่มีใครเปิดกลับได้อีกเลย */
   if (userId === auth.user.userId && !active) {
     return {
       success: false,

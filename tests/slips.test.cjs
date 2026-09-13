@@ -38,6 +38,7 @@ function fixture(options = {}) {
       getFileById(id) { events.push('file:' + id); return file; }
     },
     Utilities: { base64Encode: bytes => Buffer.from(bytes).toString('base64') },
+    hashPassword: (value, salt) => require('node:crypto').createHash('sha256').update(value + salt).digest('hex'),
     validateToken: () => options.noSession
       ? { success: false, message: 'expired' }
       : { success: true, user: { userId: 'user', role: 'OWNER' } },
@@ -56,13 +57,13 @@ function fixture(options = {}) {
       getDataRange: () => ({ getValues: () => [['billId', 'slipUrl'], ['bill', slipUrl]] })
     }) })
   });
-  for (const name of ['Admin.js', 'Slips.js']) {
+  for (const name of ['Admin.js', 'Slips.js', 'SlipReview.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../backend', name), 'utf8'), c);
   }
   return { c, events, file, folder };
 }
 
-for (const role of ['OWNER', 'SUPER_ADMIN', 'USER']) {
+for (const role of ['OWNER', 'ADMIN', 'SUPER_ADMIN', 'USER']) {
   test(role + ' receives image bytes, not a Drive URL', () => {
     const { c, events } = fixture({ role });
     const result = c.getBillSlip({ token: 'session', billId: 'bill', fileId: 'unrelated' });
@@ -135,6 +136,11 @@ for (const failure of ['', 'folder', 'permissions', 'record']) {
       bill: { billId: 'bill' }, row: 1, index: { paymentStatus: 0 },
       sheet: { getRange: () => ({ setValue(value) { events.push(value); } }) }
     });
+    c.selectSlipTarget_ = () => ({ target: c.findOldestUnpaidBillByTenantId_() });
+    c.recordIncomingSlip_ = (target, url, userId) => {
+      c.savePaymentSlip_(target.bill.billId, url, userId);
+      target.sheet.getRange().setValue('PENDING');
+    };
     c.UrlFetchApp = { fetch: () => ({
       getResponseCode: () => 200,
       getBlob: () => ({ getBytes: () => [1, 2, 3] })
@@ -160,7 +166,7 @@ for (const failure of ['', 'folder', 'permissions', 'record']) {
     c.handleSlipImageMessage_({ source: { userId: 'line-user' }, message: { id: 'image' }, replyToken: 'reply' }, 'token');
     if (!failure) {
       assert.deepEqual(events, ['create', 'restrict', 'save', 'PENDING', 'invalidate']);
-      assert.ok(messages[0].includes('ได้รับสลิปแล้ว'));
+      assert.ok(messages[0].includes('ได้รับสลิปสำหรับบิล'));
     } else if (failure === 'record') {
       assert.equal(events.includes('trash'), false);
       assert.equal(events.includes('PENDING'), false);

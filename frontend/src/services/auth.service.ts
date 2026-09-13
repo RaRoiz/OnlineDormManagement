@@ -28,6 +28,11 @@ export interface LoginResponse {
 const TOKEN_KEY = "dorm_access_token";
 const USER_KEY = "dorm_current_user";
 
+export function normalizeRole(role: string | undefined): string {
+  const value = String(role ?? "").trim().toUpperCase();
+  return value === "SUPER_ADMIN" ? "ADMIN" : value;
+}
+
 export async function login(
   username: string,
   password: string
@@ -44,6 +49,7 @@ export async function login(
     result.token &&
     result.user
   ) {
+    result.user.role = normalizeRole(result.user.role);
     sessionStorage.setItem(
       TOKEN_KEY,
       result.token
@@ -74,7 +80,9 @@ export function getCurrentUser(): User | null {
   }
 
   try {
-    return JSON.parse(storedUser) as User;
+    const user = JSON.parse(storedUser) as User;
+    user.role = normalizeRole(user.role);
+    return user;
   } catch {
     sessionStorage.removeItem(USER_KEY);
     return null;
@@ -84,46 +92,45 @@ export function getCurrentUser(): User | null {
 export function setCurrentUser(user: User): void {
   sessionStorage.setItem(
     USER_KEY,
-    JSON.stringify(user)
+    JSON.stringify({ ...user, role: normalizeRole(user.role) })
   );
+  window.dispatchEvent(new Event("profile-updated"));
 }
 
-/** SUPER_ADMIN อยู่เหนือ OWNER จึงถือว่ามีสิทธิ์ระดับ OWNER ด้วย */
+/** ADMIN อยู่เหนือ OWNER จึงถือว่ามีสิทธิ์ระดับ OWNER ด้วย */
 export function isOwner(): boolean {
   const role = String(getCurrentUser()?.role ?? "")
     .trim()
     .toUpperCase();
 
-  return role === "OWNER" || role === "SUPER_ADMIN";
+  return role === "OWNER" || role === "ADMIN";
 }
 
 /** ผู้ดูแลระบบ — อยู่เหนือ OWNER ทำได้ทุกอย่างที่ OWNER ทำได้ */
-export function isSuperAdmin(): boolean {
+export function isAdmin(): boolean {
   const user = getCurrentUser();
 
   return (
     String(user?.role ?? "")
       .trim()
-      .toUpperCase() === "SUPER_ADMIN"
+      .toUpperCase() === "ADMIN"
   );
 }
 
 /**
  * ชื่อบทบาทที่ใช้แสดงผลบนหน้าจอ
- * แสดง ADMIN/STAFF โดยคงรหัสในระบบเป็น SUPER_ADMIN/USER
+ * แสดง ADMIN/STAFF และรองรับชื่อบทบาทเก่า
  */
 export function roleLabel(
   role: string | undefined
 ): string {
-  const value = String(role ?? "")
-    .trim()
-    .toUpperCase();
+  const value = normalizeRole(role);
 
   if (value === "USER") {
     return "STAFF";
   }
 
-  if (value === "SUPER_ADMIN") {
+  if (value === "ADMIN") {
     return "ADMIN";
   }
 

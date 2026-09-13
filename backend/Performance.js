@@ -127,7 +127,7 @@ function cachedList_(name, request, loader) {
 /* =========================================
    สิทธิ์ตามบทบาท (Role)
    -----------------------------------------
-   SUPER_ADMIN: ผู้ดูแลระบบ — ทำได้ทุกอย่างที่ OWNER ทำได้
+   ADMIN: ผู้ดูแลระบบ — ทำได้ทุกอย่างที่ OWNER ทำได้
                 บวกกับจัดการบัญชีผู้ใช้ (Admin.gs)
    OWNER      : เจ้าของหอ ใช้ได้ทุกฟีเจอร์ของหอ
    USER       : ดู/เพิ่ม/แก้ไขได้ แต่ห้ามลบ
@@ -135,14 +135,12 @@ function cachedList_(name, request, loader) {
 ========================================= */
 
 function authRole_(auth) {
-  return String(
+  return normalizeRole_(
     (auth.user && auth.user.role) || ""
-  )
-    .trim()
-    .toUpperCase();
+  );
 }
 
-/* SUPER_ADMIN อยู่เหนือ OWNER จึงผ่าน ownerOnly_ ด้วยเสมอ */
+/* ADMIN อยู่เหนือ OWNER จึงผ่าน ownerOnly_ ด้วยเสมอ */
 function ownerOnly_(request, handler) {
   const auth = validateToken(request.token);
 
@@ -152,7 +150,7 @@ function ownerOnly_(request, handler) {
 
   const role = authRole_(auth);
 
-  if (role !== "OWNER" && role !== "SUPER_ADMIN") {
+  if (role !== "OWNER" && role !== "ADMIN") {
     return {
       success: false,
       message:
@@ -164,18 +162,18 @@ function ownerOnly_(request, handler) {
 }
 
 /* เฉพาะผู้ดูแลระบบ — ใช้กับ action จัดการบัญชีใน Admin.gs */
-function superAdminOnly_(request, handler) {
+function adminOnly_(request, handler) {
   const auth = validateToken(request.token);
 
   if (!auth.success) {
     return auth;
   }
 
-  if (authRole_(auth) !== "SUPER_ADMIN") {
+  if (authRole_(auth) !== "ADMIN") {
     return {
       success: false,
       message:
-        "สิทธิ์ไม่เพียงพอ ฟีเจอร์นี้ใช้ได้เฉพาะผู้ดูแลระบบ (SUPER_ADMIN)"
+        "สิทธิ์ไม่เพียงพอ ฟีเจอร์นี้ใช้ได้เฉพาะผู้ดูแลระบบ (ADMIN)"
     };
   }
 

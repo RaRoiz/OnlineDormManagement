@@ -167,7 +167,7 @@ function login(request) {
         username: String(row[userIndex.username]),
         fullName: String(row[userIndex.fullName]),
         avatarUrl: String(row[userIndex.avatarUrl] || "").trim(),
-        role: String(row[userIndex.role]),
+        role: normalizeRole_(row[userIndex.role]),
         dormName: getDormName_(),
         promptPayId: getPromptPayId_(),
         lineBotUserId: getLineCredentials_().botUserId
@@ -219,10 +219,9 @@ function validateToken(token) {
     };
   }
 
-  return {
-    success: true,
-    user: JSON.parse(session)
-  };
+  const user = JSON.parse(session);
+  user.role = normalizeRole_(user.role);
+  return { success: true, user: user };
 }
 
 function logout(token) {
@@ -592,20 +591,15 @@ function uploadAvatar(request) {
     const file = folder.createFile(blob);
     let warning = "";
 
-    /* ตั้งค่าแชร์ลิงก์ล้มได้จากนโยบายแชร์ไฟล์ของบัญชี Google
-       (บัญชีองค์กรมักปิดการแชร์ออกนอก) แต่ไฟล์อัปโหลดสำเร็จแล้ว
-       ห้ามให้ทั้งฟังก์ชันพังจนเกิดไฟล์ค้างที่ไม่มีใครอ้างถึง */
+    /* หากการตั้งสิทธิ์ล้มเหลว ให้หยุดก่อนแทนที่รูปเดิม */
     try {
       file.setSharing(
         DriveApp.Access.ANYONE_WITH_LINK,
         DriveApp.Permission.VIEW
       );
     } catch (error) {
-      warning = "บันทึกรูปใน Google Drive แล้ว แต่ตั้งสิทธิ์แชร์ไม่สำเร็จ " +
-        "รูปอาจไม่แสดง กรุณาให้ผู้ดูแลตรวจสิทธิ์แชร์ไฟล์ใน Google Drive";
-      Logger.log(
-        "ตั้งค่าแชร์รูปโปรไฟล์ไม่สำเร็จ (ไฟล์บันทึกแล้ว): " + error
-      );
+      try { file.setTrashed(true); } catch (cleanupError) { Logger.log("เก็บกวาดรูปใหม่ไม่สำเร็จ"); }
+      return { success: false, message: "ตั้งสิทธิ์รูปใหม่ไม่สำเร็จ ระบบยังเก็บรูปเดิมไว้ กรุณาติดต่อผู้ดูแล" };
     }
 
     const oldFileId = String(
@@ -616,6 +610,8 @@ function uploadAvatar(request) {
       "https://drive.google.com/uc?export=view&id=" +
       file.getId();
 
+    const oldUrl = values[targetRow - 1][index.avatarUrl] || "";
+    try {
     sheet
       .getRange(targetRow, index.avatarUrl + 1, 1, 1)
       .setValue(avatarUrl);
@@ -638,6 +634,16 @@ function uploadAvatar(request) {
       JSON.stringify(updatedUser),
       SESSION_SECONDS
     );
+    } catch (error) {
+      // Keep the old file even when Sheets or cache fails; delete the new file only after rollback succeeds.
+      try {
+        sheet.getRange(targetRow, index.avatarUrl + 1).setValue(oldUrl);
+        sheet.getRange(targetRow, index.avatarFileId + 1).setValue(oldFileId);
+        SpreadsheetApp.flush();
+        file.setTrashed(true);
+      } catch (rollbackError) { Logger.log("คืนค่ารูปเดิมไม่สำเร็จ เก็บไฟล์ทั้งสองไว้เพื่อตรวจสอบ"); }
+      throw error;
+    }
 
     if (oldFileId) {
       try {
@@ -654,7 +660,7 @@ function uploadAvatar(request) {
       success: true,
       message: "อัปโหลดรูปโปรไฟล์สำเร็จ",
       warning: warning,
-      user: updatedUser
+      user: Object.assign({}, auth.user, { avatarUrl: avatarUrl })
     };
   } finally {
     lock.releaseLock();
@@ -771,7 +777,7 @@ function createInitialAdmin() {
 /**
  * รันครั้งเดียวจาก Apps Script editor เพื่อสร้างบัญชีผู้ดูแลระบบ
  *
- * สร้างจากหน้าเว็บไม่ได้โดยตั้งใจ — SUPER_ADMIN จัดการบัญชีคนอื่นได้
+ * สร้างจากหน้าเว็บไม่ได้โดยตั้งใจ — ADMIN จัดการบัญชีคนอื่นได้
  * ถ้าเปิดให้สร้างผ่าน API บัญชีที่ถูกยึดจะสร้างผู้ดูแลเพิ่มเองได้
  *
  * ตั้ง Script Property ชื่อ INITIAL_SUPERADMIN_PASSWORD ก่อนรัน
@@ -810,7 +816,7 @@ function createInitialSuperAdmin() {
 
     sheet
       .getRange(targetRow, index.role + 1, 1, 1)
-      .setValue("SUPER_ADMIN");
+      .setValue("ADMIN");
 
     sheet
       .getRange(targetRow, index.active + 1, 1, 1)
@@ -833,7 +839,7 @@ function createInitialSuperAdmin() {
   newRow[index.passwordHash] = passwordHash;
   newRow[index.salt] = salt;
   newRow[index.fullName] = "ผู้ดูแลระบบ";
-  newRow[index.role] = "SUPER_ADMIN";
+  newRow[index.role] = "ADMIN";
   newRow[index.active] = true;
 
   sheet.appendRow(newRow);

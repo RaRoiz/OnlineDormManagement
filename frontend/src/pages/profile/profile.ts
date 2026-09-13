@@ -10,6 +10,7 @@ import {
 
 import { showToast } from "../../utils/toast";
 import { renderAvatar } from "../../utils/avatar";
+import { cropAvatar } from "../../utils/avatar-crop";
 import { buildStaffInviteLink } from "../../utils/invite-link";
 
 import {
@@ -251,30 +252,6 @@ function loadUserIntoForm(): void {
 
 }
 
-function readFileAsBase64(
-  file: File
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const result = String(
-        reader.result || ""
-      );
-
-      const base64 =
-        result.split(",")[1] ?? "";
-
-      resolve(base64);
-    };
-
-    reader.onerror = () => {
-      reject(new Error("ไม่สามารถอ่านไฟล์ได้"));
-    };
-
-    reader.readAsDataURL(file);
-  });
-}
 
 changeAvatarButton?.addEventListener(
   "click",
@@ -292,9 +269,9 @@ avatarFileInput?.addEventListener(
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       showToast(
-        "กรุณาเลือกไฟล์รูปภาพ",
+        "กรุณาเลือก JPG, PNG หรือ WebP",
         "error"
       );
 
@@ -315,17 +292,19 @@ avatarFileInput?.addEventListener(
     if (changeAvatarButton) {
       changeAvatarButton.disabled = true;
       changeAvatarButton.textContent =
-        "กำลังอัปโหลด...";
+        "กำลังปรับรูป...";
     }
 
     try {
-      const base64Data =
-        await readFileAsBase64(file);
+      const base64Data = await cropAvatar(file);
+      if (!base64Data) return;
+      if (base64Data.length * 3 / 4 > MAX_AVATAR_BYTES) throw new Error("รูปหลังปรับขนาดเกิน 2 MB กรุณาเลือกรูปอื่น");
+      if (changeAvatarButton) changeAvatarButton.textContent = "กำลังอัปโหลด...";
 
       setMessage(profileMessage, "", "success");
       const result = await uploadAvatar(
-        file.name,
-        file.type,
+        "avatar.png",
+        "image/png",
         base64Data
       );
 

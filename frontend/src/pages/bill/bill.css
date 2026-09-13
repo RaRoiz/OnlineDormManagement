@@ -118,10 +118,12 @@
 
 /* ยอดค้างจากเดือนก่อน — แสดงใต้ยอดรวมในตารางบิล */
 .slip-dialog {
-  width: min(720px, 90vw);
-  max-height: 90vh;
+  box-sizing: border-box;
+  width: min(760px, calc(100vw - 32px));
+  max-height: 92vh;
+  max-height: 92dvh;
   overflow: auto;
-  padding: 24px;
+  padding: 20px;
   color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--line);
@@ -136,7 +138,59 @@
   display: block;
   width: 100%;
   height: auto;
+  max-height: 55vh;
+  max-height: 55dvh;
+  object-fit: contain;
+  margin: 0;
+}
+
+.slip-dialog-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.slip-dialog-preview {
   margin: 16px 0;
+  padding: 12px;
+  background: rgb(0 0 0 / 12%);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.slip-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.slip-dialog .page-message:empty {
+  display: none;
+}
+
+.slip-dialog [hidden] { display: none !important; }
+.slip-dialog .slip-reject-button { color: var(--danger, #ef4444); }
+
+.slip-dialog textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 80px;
+  margin: 8px 0 16px;
+  padding: 12px;
+  resize: vertical;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+@media (max-width: 520px) {
+  .slip-dialog { padding: 16px; }
+  .slip-review-actions > button { flex: 1 1 auto; }
 }
 
 .arrears-note {

@@ -54,7 +54,7 @@ function backend(options = {}) {
   return { c, reads: () => propertyReads };
 }
 
-for (const role of ['OWNER', 'SUPER_ADMIN']) {
+for (const role of ['OWNER', 'ADMIN', 'SUPER_ADMIN']) {
   test(role + ' can fetch the invite code', () => {
     const { c } = backend({ role });
     const result = c.getStaffInvite({ token: 'session' });

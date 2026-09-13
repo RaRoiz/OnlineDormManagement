@@ -70,7 +70,7 @@ function restrictSlipFile_(file) {
   }
 }
 
-function getBillSlip(request) {
+function authorizeSlipUser_(request) {
   const auth = validateToken(request.token);
   if (!auth.success) return auth;
 
@@ -80,15 +80,22 @@ function getBillSlip(request) {
   const row = own.values[own.targetRow - 1];
   const role = normalizeRole_(row[own.index.role]);
   if (!isTruthyCell_(row[own.index.active]) ||
-      ["OWNER", "SUPER_ADMIN", "USER"].indexOf(role) === -1) {
+      ["OWNER", "ADMIN", "USER"].indexOf(role) === -1) {
     return { success: false, message: "บัญชีนี้ไม่มีสิทธิ์ดูสลิป" };
   }
 
+  return auth;
+}
+
+function getBillSlip(request) {
+  const auth = authorizeSlipUser_(request);
+  if (!auth.success) return auth;
   const billId = String(request.billId || "").trim();
   if (!billId) return { success: false, message: "กรุณาระบุบิล" };
   const bills = getBillsSheet_().getDataRange().getValues();
   const index = getBillHeaderIndex_(bills[0]);
-  if (!bills.slice(1).some(row => String(row[index.billId] || "").trim() === billId)) {
+  const billRow = bills.slice(1).find(row => String(row[index.billId] || "").trim() === billId);
+  if (!billRow) {
     return { success: false, message: "ไม่พบใบแจ้งหนี้" };
   }
   const slipUrl = getSlipUrlByBillId_()[billId];
@@ -107,7 +114,11 @@ function getBillSlip(request) {
   return {
     success: true,
     message: "โหลดสลิปสำเร็จ",
-    data: { mimeType: mimeType, base64Data: Utilities.base64Encode(blob.getBytes()) }
+    data: {
+      mimeType: mimeType, base64Data: Utilities.base64Encode(blob.getBytes()),
+      reviewVersion: slipReviewVersion_(billRow, slipUrl),
+      paymentStatus: String(billRow[index.paymentStatus] || "").trim().toUpperCase()
+    }
   };
 }
 

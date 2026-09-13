@@ -384,11 +384,11 @@ function updateBill(request) {
         .trim()
         .toUpperCase();
 
-    if (paymentStatus === "PAID") {
+    if (paymentStatus === "PAID" || paymentStatus === "PENDING") {
       return {
         success: false,
         message:
-          "ไม่สามารถแก้ไขบิลที่ชำระแล้ว"
+          "ไม่สามารถแก้ไขบิลที่ชำระแล้วหรือมีสลิปรอตรวจสอบ กรุณาตรวจสลิปก่อน"
       };
     }
 
@@ -634,6 +634,10 @@ function markBillPaid(request) {
 
       const paidAt =
         new Date().toISOString();
+
+      if (currentStatus === "PENDING") {
+        return { success: false, message: "กรุณาเปิดตรวจสอบสลิปเพื่อยืนยันการชำระเงิน" };
+      }
 
       sheet
         .getRange(

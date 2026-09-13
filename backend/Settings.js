@@ -48,7 +48,7 @@ function getStaffInvite(request) {
   const row = own.values[own.targetRow - 1];
   const role = normalizeRole_(row[own.index.role]);
   if (!isTruthyCell_(row[own.index.active]) ||
-      (role !== "OWNER" && role !== "SUPER_ADMIN")) {
+      (role !== "OWNER" && role !== "ADMIN")) {
     return { success: false, message: "เฉพาะเจ้าของหอและผู้ดูแลระบบเท่านั้นที่ดูลิงก์เชิญได้" };
   }
   const signupCode = getOptionalProperty_("STAFF_SIGNUP_CODE");

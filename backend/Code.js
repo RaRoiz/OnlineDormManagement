@@ -53,6 +53,8 @@ function doPost(e) {
 
       case "uploadAvatar":
         return jsonResponse(uploadAvatar(request));
+      case "getOwnAvatar":
+        return jsonResponse(getOwnAvatar(request));
 
       /* ชื่อหอ: แก้ได้เฉพาะ OWNER */
       case "updateOwnDorm":
@@ -120,6 +122,8 @@ function doPost(e) {
 
       case "getBillSlip":
         return jsonResponse(getBillSlip(request));
+      case "reviewBillSlip":
+        return jsonResponse(reviewBillSlip(request));
 
       case "createBill":
         return jsonResponse(createBill(request));
@@ -172,24 +176,24 @@ function doPost(e) {
       case "getReportPageData":
         return jsonResponse(ownerOnly_(request, getReportPageData));
 
-      /* ========== จัดการบัญชีผู้ใช้ (SUPER_ADMIN) ========== */
+      /* ========== จัดการบัญชีผู้ใช้ (ADMIN) ========== */
 
       case "getUsers":
-        return jsonResponse(superAdminOnly_(request, getUsers));
+        return jsonResponse(adminOnly_(request, getUsers));
 
       case "createManagedUser":
         return jsonResponse(
-          superAdminOnly_(request, createManagedUser)
+          adminOnly_(request, createManagedUser)
         );
 
       case "setUserActive":
         return jsonResponse(
-          superAdminOnly_(request, setUserActive)
+          adminOnly_(request, setUserActive)
         );
 
       case "resetUserPassword":
         return jsonResponse(
-          superAdminOnly_(request, resetUserPassword)
+          adminOnly_(request, resetUserPassword)
         );
 
       /* default ต้องอยู่ท้ายสุดเสมอ */

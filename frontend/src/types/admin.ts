@@ -1,6 +1,6 @@
 export type ManagedRole = "OWNER" | "USER";
 
-export type UserRole = ManagedRole | "SUPER_ADMIN";
+export type UserRole = ManagedRole | "ADMIN";
 
 export interface ManagedUser {
   userId: string;

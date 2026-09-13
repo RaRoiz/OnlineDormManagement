@@ -1,7 +1,7 @@
 import {
   isLoggedIn,
   isOwner,
-  isSuperAdmin
+  isAdmin
 } from "../services/auth.service";
 
 import { redirectToLogin } from "./auth.guard";
@@ -18,7 +18,7 @@ interface SidebarItem {
   label: string;
   accent?: string;
   ownerOnly?: boolean;
-  superAdminOnly?: boolean;
+  adminOnly?: boolean;
 }
 
 const MENU_ITEMS: SidebarItem[] = [
@@ -71,7 +71,7 @@ const MENU_ITEMS: SidebarItem[] = [
     icon: "🛡️",
     label: "จัดการผู้ใช้",
     accent: "#8b5cf6",
-    superAdminOnly: true
+    adminOnly: true
   }
 ];
 
@@ -195,16 +195,16 @@ export function renderSidebar(): void {
   const hideOwnerMenu =
     isLoggedIn() && !isOwner();
 
-  // เมนูจัดการผู้ใช้เห็นเฉพาะ SUPER_ADMIN
-  const superAdminUser =
-    isLoggedIn() && isSuperAdmin();
+  // เมนูจัดการผู้ใช้เห็นเฉพาะ ADMIN
+  const adminUser =
+    isLoggedIn() && isAdmin();
 
   MENU_ITEMS.forEach(item => {
     if (item.ownerOnly && hideOwnerMenu) {
       return;
     }
 
-    if (item.superAdminOnly && !superAdminUser) {
+    if (item.adminOnly && !adminUser) {
       return;
     }
 
