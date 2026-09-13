@@ -117,6 +117,28 @@
 }
 
 /* ยอดค้างจากเดือนก่อน — แสดงใต้ยอดรวมในตารางบิล */
+.slip-dialog {
+  width: min(720px, 90vw);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 24px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+.slip-dialog::backdrop {
+  background: rgb(0 0 0 / 60%);
+}
+
+.slip-dialog img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 16px 0;
+}
+
 .arrears-note {
   display: inline-block;
   margin-top: 4px;

@@ -615,17 +615,13 @@ function diagnoseLineSetup() {
 
     if (testFile) {
       try {
-        testFile.setSharing(
-          DriveApp.Access.ANYONE_WITH_LINK,
-          DriveApp.Permission.VIEW
-        );
+        restrictSlipFile_(testFile);
 
-        Logger.log("5c. Drive: ตั้งค่าแชร์ลิงก์ได้");
+        Logger.log("5c. Drive: จำกัดสิทธิ์ไฟล์สลิปได้");
       } catch (error) {
         Logger.log(
-          "5c. ! ตั้งค่าแชร์ลิงก์ไม่ได้: " + error + "\n" +
-          "    -> สลิปยังบันทึกได้ปกติ แต่ลิงก์จะเปิดได้เฉพาะ" +
-          "บัญชีเจ้าของหอ (บัญชีองค์กรมักปิดการแชร์ออกนอก)"
+          "5c. ! จำกัดสิทธิ์สลิปไม่ได้: " + error + "\n" +
+          "    -> กรุณาใช้โฟลเดอร์สลิปส่วนตัวที่ไม่มีการแชร์"
         );
       }
 

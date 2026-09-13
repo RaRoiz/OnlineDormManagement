@@ -62,6 +62,9 @@ function doPost(e) {
       case "getStaff":
         return jsonResponse(ownerOnly_(request, getStaff));
 
+      case "getStaffInvite":
+        return jsonResponse(getStaffInvite(request));
+
       /* ========== Rooms ========== */
 
       // อ่านผ่าน cache (Performance.gs) — เขียนยังใช้ตัวเดิม
@@ -114,6 +117,9 @@ function doPost(e) {
 
       case "getBills":
         return jsonResponse(getBillsCached(request));
+
+      case "getBillSlip":
+        return jsonResponse(getBillSlip(request));
 
       case "createBill":
         return jsonResponse(createBill(request));

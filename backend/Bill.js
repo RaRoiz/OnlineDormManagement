@@ -73,8 +73,7 @@ function getBills(request) {
         index
       );
 
-      bill.slipUrl =
-        slipUrlByBillId[bill.billId] || "";
+      bill.hasSlip = Boolean(slipUrlByBillId[bill.billId]);
 
       const arrears =
         arrearsByBillId[bill.billId] || {};

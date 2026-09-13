@@ -38,10 +38,38 @@ function getLineCredentials_() {
   };
 }
 
-/**
- * ดูชื่อหอแบบสาธารณะ — ไม่ต้อง login
- * (หน้า register เรียกเพื่อโชว์ว่ากำลังสมัครเข้าหอชื่ออะไร)
- */
+/** อ่านรหัสเชิญเฉพาะบัญชีเจ้าของหอ/ผู้ดูแลที่ยังเปิดใช้งาน */
+function getStaffInvite(request) {
+  const auth = validateToken(request.token);
+  if (!auth.success) return auth;
+
+  const own = findOwnUserRow_(auth.user.userId);
+  if (own.targetRow === -1) return { success: false, message: "ไม่พบบัญชีผู้ใช้" };
+  const row = own.values[own.targetRow - 1];
+  const role = normalizeRole_(row[own.index.role]);
+  if (!isTruthyCell_(row[own.index.active]) ||
+      (role !== "OWNER" && role !== "SUPER_ADMIN")) {
+    return { success: false, message: "เฉพาะเจ้าของหอและผู้ดูแลระบบเท่านั้นที่ดูลิงก์เชิญได้" };
+  }
+  const signupCode = getOptionalProperty_("STAFF_SIGNUP_CODE");
+  if (!signupCode) {
+    return {
+      success: false,
+      message: "ยังไม่ได้ตั้งรหัสเชิญ กรุณาตั้ง STAFF_SIGNUP_CODE ใน Script Properties แล้วโหลดหน้านี้ใหม่"
+    };
+  }
+  // ไม่ใส่รหัสเชิญใน login/session หรือ public info และไม่ cache ผลลัพธ์นี้
+  return {
+    success: true,
+    message: "โหลดลิงก์เชิญสำเร็จ",
+    data: {
+      signupCode: signupCode,
+      frontendUrl: getOptionalProperty_("FRONTEND_URL")
+    }
+  };
+}
+
+/** ดูชื่อหอแบบสาธารณะ โดยไม่ส่งรหัสเชิญ */
 function getDormPublicInfo(request) {
   const dormName = getDormName_();
 

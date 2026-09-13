@@ -1,4 +1,10 @@
-import { apiRequest } from "../types/api";
+import { apiRequest, type ApiResponse } from "../types/api";
+
+export function getStaffInvite(): Promise<
+  ApiResponse<{ signupCode: string; frontendUrl: string }>
+> {
+  return apiRequest({ action: "getStaffInvite", token: requireToken() });
+}
 
 export interface User {
   userId: string;
@@ -104,7 +110,7 @@ export function isSuperAdmin(): boolean {
 
 /**
  * ชื่อบทบาทที่ใช้แสดงผลบนหน้าจอ
- * (ค่าในระบบยังเก็บเป็น USER เหมือนเดิม)
+ * แสดง ADMIN/STAFF โดยคงรหัสในระบบเป็น SUPER_ADMIN/USER
  */
 export function roleLabel(
   role: string | undefined
@@ -118,7 +124,7 @@ export function roleLabel(
   }
 
   if (value === "SUPER_ADMIN") {
-    return "ผู้ดูแลระบบ";
+    return "ADMIN";
   }
 
   if (value === "OWNER") {
@@ -158,6 +164,7 @@ export function requireToken(): string {
 export interface ProfileResponse {
   success: boolean;
   message: string;
+  warning?: string;
   user?: User;
 }
 

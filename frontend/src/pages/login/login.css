@@ -134,6 +134,7 @@ input[type="password"]::-ms-clear {
 ========================= */
 
 .login-message {
+  overflow-wrap: anywhere;
   min-height: 0;
   margin-bottom: 14px;
 

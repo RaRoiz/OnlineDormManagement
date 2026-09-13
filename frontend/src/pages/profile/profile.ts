@@ -10,10 +10,12 @@ import {
 
 import { showToast } from "../../utils/toast";
 import { renderAvatar } from "../../utils/avatar";
+import { buildStaffInviteLink } from "../../utils/invite-link";
 
 import {
   changeOwnPassword,
   getCurrentUser,
+  getStaffInvite,
   isOwner,
   roleLabel,
   updateOwnDorm,
@@ -148,6 +150,32 @@ const copyInviteLinkButton =
     "#copy-invite-link-button"
   );
 
+const inviteLinkMessage = document.querySelector<HTMLElement>("#invite-link-message");
+
+async function loadStaffInvite(): Promise<void> {
+  if (!inviteLinkInput || !copyInviteLinkButton) return;
+  inviteLinkInput.value = "";
+  copyInviteLinkButton.disabled = true;
+  if (!isOwner()) return;
+  inviteLinkInput.placeholder = "กำลังโหลดลิงก์เชิญ...";
+  setMessage(inviteLinkMessage, "", "success");
+  try {
+    const result = await getStaffInvite();
+    if (!result.success || !result.data) {
+      throw new Error(result.message || "โหลดลิงก์เชิญไม่สำเร็จ");
+    }
+    inviteLinkInput.value = buildStaffInviteLink(
+      result.data.signupCode,
+      result.data.frontendUrl
+    );
+    copyInviteLinkButton.disabled = false;
+  } catch (error) {
+    inviteLinkInput.placeholder = "ยังไม่มีลิงก์เชิญที่พร้อมใช้งาน";
+    setMessage(inviteLinkMessage,
+      error instanceof Error ? error.message : "โหลดลิงก์เชิญไม่สำเร็จ", "error");
+  }
+}
+
 function setMessage(
   element: HTMLElement | null,
   text: string,
@@ -221,13 +249,6 @@ function loadUserIntoForm(): void {
       : "status-badge status-unpaid";
   }
 
-  /* ลิงก์เชิญพนักงาน — ต่อท้ายด้วยรหัสเชิญที่ตั้งไว้ใน
-     Script Property ชื่อ STAFF_SIGNUP_CODE (ไม่ส่งค่ารหัส
-     มาที่ฝั่งเว็บ เพื่อไม่ให้หลุดผ่าน sessionStorage) */
-  if (inviteLinkInput) {
-    inviteLinkInput.value =
-      `${window.location.origin}/src/pages/register/register.html?code=`;
-  }
 }
 
 function readFileAsBase64(
@@ -301,6 +322,7 @@ avatarFileInput?.addEventListener(
       const base64Data =
         await readFileAsBase64(file);
 
+      setMessage(profileMessage, "", "success");
       const result = await uploadAvatar(
         file.name,
         file.type,
@@ -324,10 +346,15 @@ avatarFileInput?.addEventListener(
         );
       }
 
-      showToast(
-        "อัปโหลดรูปโปรไฟล์สำเร็จ",
-        "success"
-      );
+      if (result.warning) {
+        setMessage(profileMessage, result.warning, "error");
+        showToast(result.warning, "error");
+      } else {
+        showToast(
+          result.message || "อัปโหลดรูปโปรไฟล์สำเร็จ",
+          "success"
+        );
+      }
     } catch (error) {
       showToast(
         error instanceof Error
@@ -566,7 +593,7 @@ dormForm?.addEventListener(
 copyInviteLinkButton?.addEventListener(
   "click",
   async () => {
-    if (!inviteLinkInput?.value) {
+    if (copyInviteLinkButton?.disabled || !inviteLinkInput?.value) {
       return;
     }
 
@@ -595,6 +622,7 @@ function initializeProfilePage(): void {
   setupLogoutButton();
   renderSidebar();
   loadUserIntoForm();
+  void loadStaffInvite();
 }
 
 initializeProfilePage();

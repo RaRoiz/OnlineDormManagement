@@ -198,7 +198,7 @@ function getMetersCached(request) {
 }
 
 function getBillsCached(request) {
-  return cachedList_("bills", request, getBills);
+  return cachedList_("bills:private-slips", request, getBills);
 }
 
 /* =========================================
@@ -219,7 +219,7 @@ function getBillPageData(request) {
     return auth;
   }
 
-  const cacheName = "page:bill";
+  const cacheName = "page:bill:private-slips";
   const cached = getDormCache_(cacheName);
 
   if (cached) {

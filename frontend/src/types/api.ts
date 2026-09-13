@@ -46,19 +46,33 @@ export async function apiRequest<T>(
     );
   }
 
-  const responseText = await response.text();
-
   if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error(
+        "ไม่พบปลายทางของระบบ (HTTP 404) กรุณาแจ้งผู้ดูแลให้ตรวจ URL และการเผยแพร่ Web App"
+      );
+    }
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        `เข้าถึงระบบไม่ได้ (HTTP ${response.status}) กรุณาแจ้งผู้ดูแลให้ตรวจสิทธิ์ Web App`
+      );
+    }
     throw new Error(
-      `HTTP ${response.status}: ${responseText}`
+      `ระบบตอบกลับผิดพลาด (HTTP ${response.status}) กรุณาลองใหม่ภายหลัง`
     );
   }
 
+  let result: unknown;
   try {
-    return JSON.parse(responseText) as T;
+    result = await response.json();
   } catch {
     throw new Error(
-      "ข้อมูลจาก API ไม่ใช่ JSON: " + responseText
+      "ระบบส่งข้อมูลกลับมาไม่ถูกต้อง กรุณาแจ้งผู้ดูแลให้ตรวจการเผยแพร่ Web App"
     );
   }
+  if (!result || typeof result !== "object" ||
+      !("success" in result) || typeof result.success !== "boolean") {
+    throw new Error("รูปแบบข้อมูลจากระบบไม่ถูกต้อง กรุณาแจ้งผู้ดูแลระบบ");
+  }
+  return result as T;
 }

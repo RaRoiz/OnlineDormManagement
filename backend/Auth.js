@@ -166,6 +166,7 @@ function login(request) {
         userId: String(row[userIndex.userId]),
         username: String(row[userIndex.username]),
         fullName: String(row[userIndex.fullName]),
+        avatarUrl: String(row[userIndex.avatarUrl] || "").trim(),
         role: String(row[userIndex.role]),
         dormName: getDormName_(),
         promptPayId: getPromptPayId_(),
@@ -589,6 +590,7 @@ function uploadAvatar(request) {
 
     const folder = getAvatarFolder_();
     const file = folder.createFile(blob);
+    let warning = "";
 
     /* ตั้งค่าแชร์ลิงก์ล้มได้จากนโยบายแชร์ไฟล์ของบัญชี Google
        (บัญชีองค์กรมักปิดการแชร์ออกนอก) แต่ไฟล์อัปโหลดสำเร็จแล้ว
@@ -599,6 +601,8 @@ function uploadAvatar(request) {
         DriveApp.Permission.VIEW
       );
     } catch (error) {
+      warning = "บันทึกรูปใน Google Drive แล้ว แต่ตั้งสิทธิ์แชร์ไม่สำเร็จ " +
+        "รูปอาจไม่แสดง กรุณาให้ผู้ดูแลตรวจสิทธิ์แชร์ไฟล์ใน Google Drive";
       Logger.log(
         "ตั้งค่าแชร์รูปโปรไฟล์ไม่สำเร็จ (ไฟล์บันทึกแล้ว): " + error
       );
@@ -607,17 +611,6 @@ function uploadAvatar(request) {
     const oldFileId = String(
       values[targetRow - 1][index.avatarFileId] || ""
     ).trim();
-
-    if (oldFileId) {
-      try {
-        DriveApp.getFileById(oldFileId).setTrashed(true);
-      } catch (error) {
-        // ไฟล์เก่าอาจถูกลบไปแล้ว — ข้ามได้ ไม่ใช่ error ร้ายแรง
-        Logger.log(
-          "ลบไฟล์รูปเก่าไม่สำเร็จ: " + error
-        );
-      }
-    }
 
     const avatarUrl =
       "https://drive.google.com/uc?export=view&id=" +
@@ -631,6 +624,9 @@ function uploadAvatar(request) {
       .getRange(targetRow, index.avatarFileId + 1, 1, 1)
       .setValue(file.getId());
 
+    // ให้การเขียนข้อมูลรูปใหม่ลงชีตเสร็จก่อนทิ้งรูปเดิม
+    SpreadsheetApp.flush();
+
     const updatedUser = Object.assign(
       {},
       auth.user,
@@ -643,9 +639,21 @@ function uploadAvatar(request) {
       SESSION_SECONDS
     );
 
+    if (oldFileId) {
+      try {
+        DriveApp.getFileById(oldFileId).setTrashed(true);
+      } catch (error) {
+        // รูปใหม่บันทึกสำเร็จแล้ว การทิ้งรูปเดิมล้มเหลวไม่ควรขัดขวางผลลัพธ์
+        Logger.log(
+          "ลบไฟล์รูปเก่าไม่สำเร็จ: " + error
+        );
+      }
+    }
+
     return {
       success: true,
       message: "อัปโหลดรูปโปรไฟล์สำเร็จ",
+      warning: warning,
       user: updatedUser
     };
   } finally {

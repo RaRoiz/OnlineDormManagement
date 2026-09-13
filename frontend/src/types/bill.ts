@@ -31,7 +31,7 @@ export interface Bill {
   paymentStatus: BillStatus;
   paidAt: string;
 
-  slipUrl?: string;
+  hasSlip?: boolean;
 
   /* ยอดค้างจากบิลเดือนก่อนของผู้เช่าคนเดียวกัน (สถานะ UNPAID)
      คำนวณที่ backend — ดู Arrears.gs */

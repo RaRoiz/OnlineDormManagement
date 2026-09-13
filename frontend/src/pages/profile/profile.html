@@ -196,17 +196,20 @@
             <input
               id="invite-link-input"
               type="text"
+              aria-describedby="invite-link-message"
               readonly
             />
 
             <button
               id="copy-invite-link-button"
+              disabled
               class="secondary-button"
               type="button"
             >
               คัดลอกลิงก์
             </button>
           </div>
+          <p id="invite-link-message" class="page-message" role="status"></p>
         </div>
       </section>
 

@@ -12,6 +12,7 @@ import {
   createBill,
   deleteBill,
   getBills,
+  getBillSlip,
   markBillPaid,
   sendBillLine,
   updateBill
@@ -820,16 +821,16 @@ function renderBills(): void {
                   : bill.paymentStatus === "PENDING"
                     ? `
                       ${
-                        bill.slipUrl
+                        bill.hasSlip
                           ? `
-                            <a
+                            <button
                               class="table-button"
-                              href="${escapeHtml(bill.slipUrl)}"
-                              target="_blank"
-                              rel="noopener"
+                              type="button"
+                              data-action="slip"
+                              data-bill-id="${safeBillId}"
                             >
                               ดูสลิป
-                            </a>
+                            </button>
                           `
                           : ""
                       }
@@ -1748,6 +1749,60 @@ async function openBillQr(bill: Bill): Promise<void> {
   }
 }
 
+async function openBillSlip(bill: Bill, button: HTMLButtonElement): Promise<void> {
+  button.disabled = true;
+  const originalText = button.textContent;
+  button.textContent = "กำลังโหลด...";
+  try {
+    const result = await getBillSlip(bill.billId);
+    if (!result.success || !result.data) {
+      throw new Error(result.message || "โหลดสลิปไม่สำเร็จ");
+    }
+    const { mimeType, base64Data } = result.data;
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(mimeType)) {
+      throw new Error("รูปแบบสลิปไม่รองรับ");
+    }
+    const bytes = Uint8Array.from(atob(base64Data), char => char.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], { type: mimeType }));
+    const dialog = document.createElement("dialog");
+    dialog.className = "slip-dialog";
+    dialog.setAttribute("aria-label", `สลิปบิล ${bill.billNo}`);
+    const heading = document.createElement("h3");
+    heading.textContent = `สลิปบิล ${bill.billNo}`;
+    const image = document.createElement("img");
+    image.alt = `สลิปชำระเงินบิล ${bill.billNo}`;
+    image.src = url;
+    image.addEventListener("error", () => {
+      dialog.close();
+      showToast("ไม่สามารถแสดงรูปสลิปได้", "error");
+    }, { once: true });
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "secondary-button";
+    close.textContent = "ปิด";
+    close.addEventListener("click", () => dialog.close());
+    dialog.addEventListener("close", () => {
+      URL.revokeObjectURL(url);
+      dialog.remove();
+      button.focus();
+    }, { once: true });
+    dialog.append(heading, image, close);
+    document.body.append(dialog);
+    try {
+      dialog.showModal();
+    } catch (error) {
+      URL.revokeObjectURL(url);
+      dialog.remove();
+      throw error;
+    }
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : "โหลดสลิปไม่สำเร็จ", "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+}
+
 async function handleBillAction(
   target: HTMLButtonElement
 ): Promise<void> {
@@ -1771,6 +1826,11 @@ async function handleBillAction(
 
     if (action === "print") {
       void printBill(bill);
+      return;
+    }
+
+    if (action === "slip") {
+      await openBillSlip(bill, target);
       return;
     }
 

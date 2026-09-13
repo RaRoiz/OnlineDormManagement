@@ -7,6 +7,16 @@ import type {
   BillInput
 } from "../types/bill";
 
+export function getBillSlip(billId: string): Promise<
+  ApiResponse<{ mimeType: string; base64Data: string }>
+> {
+  return apiRequest({
+    action: "getBillSlip",
+    token: requireToken(),
+    billId
+  });
+}
+
 export function getBills(): Promise<
   ApiResponse<Bill[]>
 > {
