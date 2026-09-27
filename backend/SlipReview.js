@@ -128,6 +128,18 @@ function selectSlipTarget_(tenantId) {
   const index = getBillHeaderIndex_(values[0]);
   const candidates = values.map((row, i) => ({ row: row, position: i })).filter(item =>
     item.position > 0 && String(item.row[index.tenantId]) === tenantId);
+  const billIds = new Set();
+  const billNumbers = new Set();
+  for (const item of candidates) {
+    const id = String(item.row[index.billId] || "").trim();
+    const number = String(item.row[index.billNo] || "").trim();
+    if (!id || billIds.has(id) || (number && billNumbers.has(number)) ||
+        values.slice(1).filter(row => String(row[index.billId] || "").trim() === id).length !== 1) {
+      return { message: "พบบิลซ้ำหรือรหัสบิลไม่ถูกต้อง กรุณาแจ้งเจ้าของหอตรวจสอบก่อนส่งสลิป" };
+    }
+    billIds.add(id);
+    if (number) billNumbers.add(number);
+  }
   if (candidates.some(item => String(item.row[index.paymentStatus]).toUpperCase() === "PENDING")) {
     return { message: "มีสลิปของคุณรอตรวจสอบอยู่แล้ว กรุณารอผลหรือติดต่อเจ้าของหอ ก่อนส่งสลิปเพิ่ม" };
   }
@@ -150,11 +162,13 @@ function recordIncomingSlip_(target, slipUrl, lineUserId) {
   lock.waitLock(10000);
   try {
     // อ่านแถวใหม่ภายใต้ lock เพราะระหว่างโหลดรูปอาจมีการแก้บิล/ลบบิล
+    assertSlipSenderMatches_(lineUserId, target.bill);
     const selection = selectSlipTarget_(target.bill.tenantId);
     const current = selection.target;
     if (!current || current.bill.billId !== target.bill.billId) {
       throw new Error("สถานะบิลเปลี่ยนระหว่างรับสลิป กรุณาตรวจสอบข้อมูลบิล");
     }
+    assertSlipSenderMatches_(lineUserId, current.bill);
     savePaymentSlip_(current.bill.billId, slipUrl, lineUserId);
     current.sheet.getRange(current.row + 1, current.index.paymentStatus + 1).setValue("PENDING");
     current.sheet.getRange(current.row + 1, current.index.updatedAt + 1).setValue(new Date().toISOString());

@@ -132,6 +132,8 @@ for (const failure of ['', 'folder', 'permissions', 'record']) {
     const messages = [];
     c.console = { error() {} };
     c.findTenantIdByLineUserId_ = () => 'tenant';
+    c.resolveSlipSender_ = () => ({ tenantId: 'tenant' });
+    c.assertSlipSenderMatches_ = () => {};
     c.selectSlipTarget_ = () => ({ target: {
       bill: { billId: 'bill' }, row: 1, index: { paymentStatus: 0 },
       sheet: { getRange: () => ({ setValue(value) { events.push(value); } }) }

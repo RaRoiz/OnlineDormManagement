@@ -33,7 +33,7 @@ function fixture() {
       releaseLock() { held = false; }
     }) }
   });
-  for (const file of ['Bill.js', 'SlipReview.js']) {
+  for (const file of ['Bill.js', 'SlipReview.js', 'LineBinding.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../backend', file), 'utf8'), c);
   }
   const headers = Array.from(vm.runInContext('BILL_HEADERS', c));
@@ -51,6 +51,10 @@ function fixture() {
   c.getSpreadsheet_ = () => ({ getSheetByName: name => sheets[name] || null,
     insertSheet: name => (sheets[name] = new Sheet()) });
   c.getBillsSheet_ = () => bills;
+  c.getLineLinksSheet_ = () => new Sheet([['lineUserId', 'tenantId', 'fullName', 'roomNo'], ['line-user', 'tenant', 'Tenant', '101']]);
+  c.getTenantsSheet_ = () => new Sheet([['tenantId', 'roomId', 'status'], ['tenant', 'room', 'ACTIVE']]);
+  c.getTenantHeaderIndex_ = () => ({ tenantId: 0, roomId: 1, status: 2 });
+  c.getRoomMap_ = () => new Map([['room', '101']]);
   c.getPaymentSlipsSheet_ = () => slips;
   c.billFromRow_ = row => Object.fromEntries(headers.map((key, i) => [key, row[i]]));
   c.hashPassword = (data, salt) => crypto.createHash('sha256').update(salt + data).digest('hex');
@@ -210,4 +214,29 @@ test('new incoming slip changes the selected bill row, not the header or previou
   assert.equal(f.bills.rows[1][f.index.paymentStatus], 'PAID');
   assert.equal(f.bills.rows[2][f.index.paymentStatus], 'PENDING');
   assert.equal(f.bills.rows[0][f.index.paymentStatus], 'paymentStatus');
+});
+
+test('different LINE sender cannot link a slip to another tenant bill', () => {
+  const f = fixture();
+  f.c.reviewBillSlip(f.request('REJECTED'));
+  const target = f.c.selectSlipTarget_('tenant').target;
+  assert.throws(() => f.c.recordIncomingSlip_(target, 'wrong-slip', 'other-line'));
+  assert.equal(f.bills.rows[1][f.index.paymentStatus], 'UNPAID');
+  assert.ok(f.slips.rows[1][1].endsWith('original'));
+});
+
+test('room changed during upload is rejected before slip storage', () => {
+  const f = fixture();
+  f.c.reviewBillSlip(f.request('REJECTED'));
+  const target = f.c.selectSlipTarget_('tenant').target;
+  f.bills.rows[1][f.index.roomId] = 'different-room';
+  assert.throws(() => f.c.recordIncomingSlip_(target, 'wrong-slip', 'line-user'));
+  assert.ok(f.slips.rows[1][1].endsWith('original'));
+});
+
+test('duplicate bill numbers block automatic selection', () => {
+  const f = fixture();
+  f.bills.rows[1][f.index.paymentStatus] = 'UNPAID';
+  f.bills.rows[2][f.index.billNo] = f.bills.rows[1][f.index.billNo];
+  assert.ok(f.c.selectSlipTarget_('tenant').message.includes('ซ้ำ'));
 });
